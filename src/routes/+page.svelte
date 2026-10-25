@@ -213,7 +213,7 @@
                         Beim <span class="term term--primary">Lernen</span>
                         bewertest du jede Karte nach dem Leitner-System – von
                         <span class="term term--primary">I</span>
-                        bis <span class="term term--primary">VI</span> und dann in
+                        bis <span class="term term--primary">V</span> und dann in
                         <span class="term term--success">Gelernt</span>. Falsch
                         beantwortete Karten rutschen zurück in
                         <span class="term term--primary">I</span>. Ein optionaler
