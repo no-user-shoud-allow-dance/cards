@@ -13,7 +13,7 @@ export const TIMER_PRESETS = [
 
 // The timer only runs while the user is active; after this much time
 // without a learning action it pauses and waits for new activity.
-const INACTIVITY_LIMIT_MS = 30_000;
+const INACTIVITY_LIMIT_MS = 60_000;
 
 // After the countdown finishes, the OK button stays disabled for a
 // fraction of the timer's duration.
