@@ -5,6 +5,7 @@
     import { userDecks } from "#lib/store/userDecks.svelte";
     import AppHeader from "#lib/components/layout/AppHeader.svelte";
     import AppFooter from "#lib/components/layout/AppFooter.svelte";
+    import PrivacyToast from "#lib/components/layout/PrivacyToast.svelte";
 
     let { children } = $props();
 
@@ -35,6 +36,8 @@
     </main>
 
     <AppFooter />
+
+    <PrivacyToast />
 </div>
 
 <style>
