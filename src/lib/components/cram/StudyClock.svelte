@@ -111,7 +111,7 @@
     .clock-zone {
         position: fixed;
         left: 1.1rem;
-        top: calc(100vh - 1.1rem - 64px);
+        top: calc(50dvh - 64px);
         z-index: 40;
 
         transform: translate(0, 0);
@@ -257,8 +257,9 @@
 
     .menu {
         position: absolute;
-        bottom: calc(100% + 0.65rem);
-        left: 0;
+        top: 50%;
+        left: calc(100% + 0.5rem);
+        transform: translateY(-50%);
         z-index: 50;
 
         display: flex;
