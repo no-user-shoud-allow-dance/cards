@@ -12,7 +12,7 @@
     <p class="subtitle">Kurz und verständlich erklärt.</p>
 
     <p>
-        Wenn Sie weiterhin irgendwelche Fragen haben, bitte wenden Sie sich an <a
+        Haben Sie Fragen? Schreiben Sie an <a
             href="mailto:nousad@web.de">nousad@web.de</a
         >.
     </p>
@@ -86,8 +86,8 @@
             <br />
             {#if cardStore.googleDisabled}
                 <i
-                    >Ausgeschaltet — über den Schalter unten können Sie die
-                    Suche wieder aktivieren.</i
+                    >Ausgeschaltet — über den Schalter unten können Sie Google
+                    wieder aktivieren.</i
                 >
             {:else}
                 Beim Laden der App werden Schriftarten von
@@ -107,8 +107,8 @@
             <br />
             {#if cardStore.googleDisabled}
                 <i
-                    >Ausgeschaltet — über den Schalter unten können Sie die
-                    Suche wieder aktivieren.</i
+                    >Ausgeschaltet — über den Schalter unten können Sie Google
+                    wieder aktivieren.</i
                 >
             {:else}
                 Diese Schaltflächen öffnen eine
@@ -127,13 +127,13 @@
 
     <div class="google-toggle">
         <Toggle
-            label="Allow google"
+            label="Google erlauben"
             checked={!cardStore.googleDisabled}
             onchange={(value) => cardStore.setGoogleDisabled(!value)}
         />
         <p>
-            Blendet die Hilfe- und Mnemotechnik-Suche ein, die eine Google-Suche
-            öffnet.
+            Lädt Schriftarten von Google Fonts nach und blendet die Hilfe- und
+            Mnemotechnik-Suche ein, die eine Google-Suche öffnet.
         </p>
     </div>
 

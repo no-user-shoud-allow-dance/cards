@@ -3,7 +3,7 @@ import { studyTimeStore } from "#lib/store/studyTimeStore.svelte";
 import { timerStateStore } from "#lib/store/timerStateStore.svelte";
 
 export const TIMER_PRESETS = [
-    { label: "Test", ms: 10_000 },
+    { label: "10 Sekunden", ms: 10_000 },
     { label: "5 Minuten", ms: 5 * 60_000 },
     { label: "10 Minuten", ms: 10 * 60_000 },
     { label: "15 Minuten", ms: 15 * 60_000 },

@@ -171,6 +171,10 @@
     const cardIds = $derived(deck ? deck.cards.map((c) => c.id) : []);
 </script>
 
+<svelte:head>
+    <title>{deck?.name ?? "Stapel nicht gefunden"} – NSC</title>
+</svelte:head>
+
 {#if !deck}
     <div class="page"><p>Stapel nicht gefunden.</p></div>
 {:else}

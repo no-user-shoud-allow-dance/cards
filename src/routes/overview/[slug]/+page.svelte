@@ -21,6 +21,10 @@
     });
 </script>
 
+<svelte:head>
+    <title>Übersicht – NSC</title>
+</svelte:head>
+
 <svelte:window onkeydown={session.handleKeydown} />
 
 {#if !deck}

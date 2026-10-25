@@ -12,7 +12,7 @@
 </script>
 
 <button type="button" class="reset-timer" onclick={resetTimer}>
-    Timer zurücksetzen
+    Timer und Lernzeit zurücksetzen
 </button>
 
 <style>

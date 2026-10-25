@@ -11,8 +11,8 @@
     <p class="subtitle">NSC ist ein privates, nicht-kommerzielles Projekt.</p>
 
     <p>
-        Wenn Sie weiterhin irgendwelche Fragen haben, bitte wenden Sie sich
-        an <a href="mailto:nousad@web.de">nousad@web.de</a>.
+        Haben Sie Fragen? Schreiben Sie an
+        <a href="mailto:nousad@web.de">nousad@web.de</a>.
     </p>
 
     <h2>Software und Inhalte</h2>

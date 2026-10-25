@@ -34,7 +34,7 @@
         class="intro-title"
         style="animation-delay: {TITLE_DELAY}ms"
     >
-        Wie lange sollen die Sessions heute wohl sein?
+        Wie lange möchtest du heute lernen?
     </h2>
 
     <!-- Spacer matching the intro clock size so the buttons

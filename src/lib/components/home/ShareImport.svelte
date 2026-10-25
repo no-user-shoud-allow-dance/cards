@@ -60,7 +60,7 @@
         try {
             const { deck } = await userDecks.add(
                 pending.raw,
-                pending.title ?? "Geteiltes Deck",
+                pending.title ?? "Geteilter Stapel",
                 "Geteilt",
                 deckType,
             );
@@ -98,12 +98,12 @@
     <section class="share-banner" transition:slide={{ duration: 200 }}>
         <div class="share-info">
             <strong>
-                Geteiltes Deck{pending.title ? `: ${pending.title}` : ""}
+                Geteilter Stapel{pending.title ? `: ${pending.title}` : ""}
             </strong>
             <span>
                 {countCards(pending.cardCount)}
                 {#if pending.errorCount > 0}
-                    · {pending.errorCount} Hinweise beim Parsen
+                    · {pending.errorCount} Fehler beim Parsen
                 {/if}
             </span>
         </div>

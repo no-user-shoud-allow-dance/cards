@@ -3,7 +3,7 @@
 </script>
 
 <div class="errors">
-    <h3>Fehler in der Stapel-Datei</h3>
+    <h3>Fehler beim Parsen</h3>
     <ul>
         {#each errors as e}
             <li>{e}</li>

@@ -35,18 +35,17 @@
 {#if show}
     <aside
         class="privacy-toast"
-        aria-label="Privacy policy notice"
+        aria-label="Hinweis zur Datenschutzerklärung"
         transition:fly={{ y: 16, duration: 200 }}
     >
         <p class="toast-text">
-            Please read our
-            <a href={resolve("/legal/datenschutz")} onclick={dismiss}>privacy policy</a>
-            before using
+            Bitte lies unsere
+            <a href={resolve("/legal/datenschutz")} onclick={dismiss}>Datenschutzerklärung</a>, bevor du die App nutzt.
         </p>
         <button
             type="button"
             class="toast-close"
-            aria-label="Close"
+            aria-label="Schließen"
             onclick={dismiss}
         >
             <span aria-hidden="true">×</span>

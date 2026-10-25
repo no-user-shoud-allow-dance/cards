@@ -51,7 +51,7 @@
             {#if shareState === "warning"}
                 <h2>Großer Link</h2>
                 <p>
-                    Der Link enthält etwa {formatShareLength(shareLength)} an Daten.
+                    Der Link ist etwa {formatShareLength(shareLength)} lang.
                     Links über ~1 MB funktionieren nicht zuverlässig — zum Beispiel in
                     Safari oder wenn der Link über Chat-Apps weitergegeben wird
                     (Chrome unterstützt bis etwa 2 MB).

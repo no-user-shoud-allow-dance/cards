@@ -162,15 +162,14 @@
             {/if}
             {#if preview && preview.errors.length > 0}
                 <p class="message message-error">
-                    Die Datei ist fehlerhaft formatiert — siehe die Hinweise
-                    in der Vorschau. Korrigiere die Datei und wähle sie erneut
-                    aus.
+                    Die Datei ist fehlerhaft formatiert — siehe die Fehler in
+                    der Vorschau. Korrigiere die Datei und wähle sie erneut aus.
                 </p>
             {/if}
             <p class="hint">
                 Format: eine Zeile <code># Titel</code> und pro Karte eine
-                Zeile <code>Vorderseite - Rückseite</code>. Der Typ wird aus
-                dem Inhalt erraten und kann oben angepasst werden.
+                Zeile <code>Vorderseite - Rückseite</code>. Der Typ wird anhand
+                des Inhalts vorgeschlagen und kann oben angepasst werden.
             </p>
         </form>
     </section>
@@ -194,7 +193,7 @@
             {#if preview.errors.length > 0}
                 <details class="message message-warn">
                     <summary>
-                        {preview.errors.length} Hinweise beim Parsen
+                        {preview.errors.length} Fehler beim Parsen
                     </summary>
                     <ul>
                         {#each preview.errors as warning}

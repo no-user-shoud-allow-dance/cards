@@ -197,8 +197,8 @@
             {#if showIntro}
                 <div class="intro-body" transition:slide={{ duration: 200 }}>
                     <p>
-                        Lerne mit Karteikarten in Ordnern und Stapeln. Jeder Stapel
-                        durchläuft drei Phasen:
+                        Lerne mit Karteikarten in Ordnern und Stapeln. Dabei
+                        durchläufst du drei Phasen:
                         <br />
                         <span class="term term--overview">Übersicht</span>,
                         <span class="term term--primary">Lernen</span> und
@@ -217,7 +217,7 @@
                         <span class="term term--success">Gelernt</span>. Falsch
                         beantwortete Karten rutschen zurück in
                         <span class="term term--primary">I</span>. Ein optionaler
-                        Timer sorgt für Pausen.
+                        Timer erinnert dich an Pausen.
                     </p>
                     <p>
                         Sind alle Karten <span class="term term--success"

@@ -81,6 +81,10 @@
     });
 </script>
 
+<svelte:head>
+    <title>Lernmodus – NSC</title>
+</svelte:head>
+
 <svelte:window onkeydown={handleKeydown} />
 
 {#if !deck}

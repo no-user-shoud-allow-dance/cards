@@ -94,6 +94,6 @@ export async function decodeDeckShare(
 /** Human-readable hash size for the share warning (German UI). */
 export function formatShareLength(chars: number): string {
     if (chars >= 1_000_000)
-        return `~${(chars / 1_000_000).toFixed(1)} Mio. Zeichen`;
-    return `~${Math.max(1, Math.round(chars / 1000))} Tsd. Zeichen`;
+        return `${(chars / 1_000_000).toFixed(1)} Mio. Zeichen`;
+    return `${Math.max(1, Math.round(chars / 1000))} Tsd. Zeichen`;
 }
