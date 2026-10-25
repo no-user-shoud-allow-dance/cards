@@ -10,8 +10,35 @@
     import ShareImport from "#lib/components/home/ShareImport.svelte";
     import { userDecks } from "#lib/store/userDecks.svelte";
     import { slide } from "svelte/transition";
+    import { onMount } from "svelte";
+
+    const INTRO_STORAGE_KEY = "kk_intro_open";
 
     let introOpen = $state(true);
+    let mounted = $state(false);
+
+    // Restore the expanded/collapsed state from the last visit. Gated on
+    // mounted so the server render and the first client render agree.
+    onMount(() => {
+        try {
+            const saved = localStorage.getItem(INTRO_STORAGE_KEY);
+            if (saved !== null) introOpen = saved === "true";
+        } catch {
+            /* ignore */
+        }
+        mounted = true;
+    });
+
+    const showIntro = $derived(mounted && introOpen);
+
+    function toggleIntro(): void {
+        introOpen = !introOpen;
+        try {
+            localStorage.setItem(INTRO_STORAGE_KEY, String(introOpen));
+        } catch {
+            /* ignore */
+        }
+    }
 
     const folders = DECKS.map((folder) => ({
         folder: folder.folder,
@@ -160,14 +187,14 @@
         <div class="intro-box">
             <button
                 class="intro-header"
-                class:intro-header--open={introOpen}
-                onclick={() => (introOpen = !introOpen)}
-                aria-expanded={introOpen}
+                class:intro-header--open={showIntro}
+                onclick={toggleIntro}
+                aria-expanded={showIntro}
             >
                 <span class="intro-title">NSC</span>
                 <span class="intro-chevron" aria-hidden="true">▾</span>
             </button>
-            {#if introOpen}
+            {#if showIntro}
                 <div class="intro-body" transition:slide={{ duration: 200 }}>
                     <p>
                         Lerne mit Karteikarten in Ordnern und Stapeln. Jeder Stapel
