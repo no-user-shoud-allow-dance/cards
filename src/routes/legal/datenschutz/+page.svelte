@@ -14,9 +14,20 @@
     subtitle="Kurz und verständlich erklärt."
 />
 
+<div class="legal-notice">
+    <p>
+        <strong>Hinweis:</strong>
+        <br />
+        Diese App speichert <Term>alle Daten</Term> – Ordner, Stapel, Karten und
+        Lernfortschritt – ausschließlich <Term variant="overview">lokal</Term> auf deinem Gerät. Es findet keine
+        Übertragung an einen Server statt; es gibt keine Konten, kein Tracking und
+        keine Analyse-Tools.
+    </p>
+</div>
+
 <p>
-    Haben Sie Fragen? Schreiben Sie an <a
-        href="mailto:nousad@web.de">nousad@web.de</a
+    Haben Sie Fragen? Schreiben Sie an <a href="mailto:nousad@web.de"
+        >nousad@web.de</a
     >.
 </p>
 
@@ -31,14 +42,12 @@
 </p>
 <ul>
     <li>
-        <Term>Local Storage</Term>:
-        Lernfortschritt, Einstellungen (z. B.
-        <Term>Pur-Modus</Term>), Lernzeit und
-        Timer.
+        <Term>Local Storage</Term>: Lernfortschritt, Einstellungen (z. B.
+        <Term>Pur-Modus</Term>), Lernzeit und Timer.
     </li>
     <li>
-        <Term>IndexedDB</Term>: Stapel, die Sie
-        selbst hochladen (Name, Ordner und Kartentext).
+        <Term>IndexedDB</Term>: Stapel, die Sie selbst hochladen (Name, Ordner
+        und Kartentext).
     </li>
 </ul>
 <p>
@@ -57,8 +66,8 @@
     Daten übertragen.
 </p>
 
-<strong>Teilen-Links:</strong> Geteilte Stapel stecken komprimiert in der
-URL (im Hash).
+<strong>Teilen-Links:</strong> Geteilte Stapel stecken komprimiert in der URL
+(im Hash).
 <span class="key-statement">
     Der Hash wird <strong>nicht</strong> an den Server gesendet.
 </span>
@@ -69,15 +78,12 @@ URL (im Hash).
         <strong>Hosting:</strong>
         <br />
         Die App wird über
-        <a
-            href="https://vercel.com/"
-            target="_blank"
-            rel="noopener noreferrer">Vercel</a
+        <a href="https://vercel.com/" target="_blank" rel="noopener noreferrer"
+            >Vercel</a
         >
         ausgeliefert. Dabei verarbeitet der Anbieter technisch notwendige
         <Term>Verbindungsdaten</Term> (z. B. Ihre
-        <Term>IP-Adresse</Term>), um die Seite zu
-        laden. Datenschutzerklärung:
+        <Term>IP-Adresse</Term>), um die Seite zu laden. Datenschutzerklärung:
         <a
             href="https://vercel.com/legal/privacy"
             target="_blank"
@@ -115,9 +121,8 @@ URL (im Hash).
             >
         {:else}
             Diese Schaltflächen öffnen eine
-            <Term>Google-Suche</Term> in einem
-            neuen Tab. Dabei wird eine Suchanfrage mit dem jeweiligen Wort
-            an Google übertragen — erst auf Ihren Klick hin.
+            <Term>Google-Suche</Term> in einem neuen Tab. Dabei wird eine Suchanfrage
+            mit dem jeweiligen Wort an Google übertragen — erst auf Ihren Klick hin.
             Datenschutzerklärung:
             <a
                 href="https://policies.google.com/privacy"
@@ -143,25 +148,25 @@ URL (im Hash).
 <h2>Inhalte und Urheberrecht</h2>
 <ul>
     <li>
-        <strong>Hochgeladene Stapel</strong> stammen von Ihnen. Sie sind dafür
-        verantwortlich, dass Sie die nötigen Rechte an den Inhalten besitzen.
+        <strong>Hochgeladene Stapel</strong> stammen von Ihnen. Sie sind dafür verantwortlich,
+        dass Sie die nötigen Rechte an den Inhalten besitzen.
     </li>
     <li>
-        <strong>Geteilte Stapel</strong> gehen an die Personen, denen Sie den
-        Link schicken. Teilen Sie nur Inhalte, die Sie verbreiten dürfen.
+        <strong>Geteilte Stapel</strong> gehen an die Personen, denen Sie den Link
+        schicken. Teilen Sie nur Inhalte, die Sie verbreiten dürfen.
     </li>
 </ul>
 <p>
-    Die Software selbst ist als Public Domain (Unlicense) freigegeben und
-    darf frei genutzt, verändert und weitergegeben werden.
+    Die Software selbst ist als Public Domain (Unlicense) freigegeben und darf
+    frei genutzt, verändert und weitergegeben werden.
 </p>
 
 <h2>Fragen oder Daten löschen?</h2>
 <p>
     Da alles lokal in Ihrem Browser gespeichert ist, können Sie Ihre Daten
     jederzeit löschen, indem Sie die
-    <Term>Website-Daten</Term> dieser Seite in
-    den Einstellungen Ihres Browsers entfernen. Bei Fragen schreiben Sie an
+    <Term>Website-Daten</Term> dieser Seite in den Einstellungen Ihres Browsers entfernen.
+    Bei Fragen schreiben Sie an
     <a href="mailto:nousad@web.de">nousad@web.de</a>.
 </p>
 
@@ -175,6 +180,20 @@ URL (im Hash).
         text-decoration-color: var(--primary);
         text-decoration-thickness: 1.5px;
         text-underline-offset: 3px;
+    }
+
+    .legal-notice {
+        margin: 1.5rem 0;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--primary);
+        border-left: 4px solid var(--primary);
+        border-radius: 6px;
+        background: color-mix(in srgb, var(--primary) 6%, transparent);
+    }
+
+    .legal-notice p {
+        margin: 0;
+        line-height: 1.7;
     }
 
     .google-toggle {
