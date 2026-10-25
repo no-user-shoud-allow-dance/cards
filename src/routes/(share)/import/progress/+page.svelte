@@ -13,6 +13,7 @@
     import {
         DECK_PREFIX,
         decodeProgressShare,
+        extractShareHash,
         LEGACY_DECK_PREFIX,
         PROGRESS_PREFIX,
         type ProgressSharePayload,
@@ -69,17 +70,17 @@
         deck = null;
         diff = [];
         stashed = false;
-        const input = linkInput.trim();
+        // Accepts a full URL, a bare hash, or the payload alone.
+        const input = extractShareHash(linkInput);
         if (!input) {
             error = "Bitte füge einen Link ein.";
             return;
         }
         const progress = await decodeProgressShare(input);
         if (!progress) {
-            const bare = input.replace(/^#/, "");
             error =
-                bare.startsWith(DECK_PREFIX) ||
-                bare.startsWith(LEGACY_DECK_PREFIX)
+                input.startsWith(DECK_PREFIX) ||
+                input.startsWith(LEGACY_DECK_PREFIX)
                     ? "Das ist ein Stapel-Link — bitte nutze „Stapel importieren“."
                     : "Der Link ist ungültig oder beschädigt.";
             return;

@@ -2,9 +2,35 @@ import { BOX_COUNT, type DeckType } from "./types";
 
 /**
  * Share links carry data in the URL hash: a gzip-compressed payload,
- * base64url-encoded. The hash is never sent to the server, so no storage
- * backend is involved — the link IS the transfer, and everything stays
- * stateless.
+ * encoded in a custom base-128 alphabet (exactly 7 bits per character).
+ * The hash is never sent to the server, so no storage backend is
+ * involved — the link IS the transfer, and everything stays stateless.
+ *
+ * ── The alphabet ────────────────────────────────────────────────────
+ *
+ *   128 symbols = 2^7, so each character carries exactly 7 bits:
+ *
+ *   1. the 64 URL-safe base64 symbols   A–Z a–z 0–9 - _
+ *   2. a 64-symbol Unicode addition:
+ *        ¡ ¢ £ § © ® ¿          (U+00A1, A2, A3, A7, A9, AE, BF)
+ *        À–Ö  (U+00C0–U+00D6)   Ø–Þ  (U+00D8–U+00DE)
+ *        ß–ö  (U+00DF–U+00F6)   ø ù ú (U+00F8–U+00FA)
+ *
+ *   The Unicode addition was proposed as 69 code points (…ø–ÿ) and
+ *   trimmed to 64 so the full alphabet stays a power of two — a
+ *   non-power-of-two alphabet would need fractional bits per character.
+ *
+ *   The printable form is more compact than the URL suggests: browsers
+ *   percent-encode non-ASCII fragment characters (e.g. "§" shows up as
+ *   "%C2%A7" — its two UTF-8 bytes), so a link copied from the address
+ *   bar may arrive percent-encoded. Decoders percent-decode before
+ *   mapping symbols to bits, so both forms work.
+ *
+ *   Links shared before this codec used plain base64url. Those payloads
+ *   contain only base64url symbols, while base-128 payloads virtually
+ *   always contain Unicode symbols (gzip output is high-entropy), so the
+ *   decoder detects the codec from the alphabet — no version tag in the
+ *   link, and old links keep working.
  *
  * ── Link kinds ──────────────────────────────────────────────────────
  *
@@ -19,7 +45,7 @@ import { BOX_COUNT, type DeckType } from "./types";
  *
  *   {"t": deckType, "r": rawMarkdown}
  *
- * ── Progress link protocol (plain text, BEFORE gzip+base64url) ──────
+ * ── Progress link protocol (plain text, BEFORE gzip + base-128) ─────
  *
  *   {hash};{s1};{s2};...;{sN};o{0|1};t{ms}
  *
@@ -39,9 +65,10 @@ import { BOX_COUNT, type DeckType } from "./types";
  *
  * The progress payload is gzipped like the deck payload: for realistic
  * deck sizes (30+ cards) the repetitive single-digit states compress to
- * a fraction of the plain form and base64url wins overall. Below ~30
- * cards the plain form would be a few chars shorter, but one encoding
- * pipeline keeps the code — and the protocol — simple.
+ * a fraction of the plain form, and the base-128 codec packs 7 bits per
+ * character (vs 6 for base64url). Below ~30 cards the plain form would
+ * be a few chars shorter, but one encoding pipeline keeps the code —
+ * and the protocol — simple.
  */
 
 /** Soft size limit for a share-link hash; above this the user is warned. */
@@ -74,17 +101,84 @@ const DECK_TYPES_LIST: readonly DeckType[] = ["english", "latin", "greek"];
 
 const STATE_PATTERN = new RegExp(`^[0-${BOX_COUNT}]$`);
 
-function bytesToBase64Url(bytes: Uint8Array): string {
-    let binary = "";
-    const chunkSize = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-    }
-    return btoa(binary)
-        .replaceAll("+", "-")
-        .replaceAll("/", "_")
-        .replace(/=+$/, "");
+// ── Base-128 codec (7 bits per character) ────────────────────────────
+
+const BASE64URL_ALPHABET =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+function codePointRange(from: number, to: number): number[] {
+    const points: number[] = [];
+    for (let cp = from; cp <= to; cp++) points.push(cp);
+    return points;
 }
+
+/**
+ * The Unicode addition to the alphabet, trimmed from the proposed 69
+ * code points to 64 (the last five — û ü ý þ ÿ — are dropped) so the
+ * full alphabet is exactly 128 symbols = 7 bits per character.
+ */
+const UNICODE_ADDITION = [
+    0x00a1, 0x00a2, 0x00a3, 0x00a7, 0x00a9, 0x00ae, 0x00bf,
+    ...codePointRange(0x00c0, 0x00d6),
+    ...codePointRange(0x00d8, 0x00de),
+    ...codePointRange(0x00df, 0x00f6),
+    0x00f8, 0x00f9, 0x00fa,
+];
+
+/** The 128-symbol share alphabet: base64url + the Unicode addition. */
+export const SHARE_ALPHABET =
+    BASE64URL_ALPHABET +
+    UNICODE_ADDITION.map((cp) => String.fromCodePoint(cp)).join("");
+
+const ALPHABET_VALUE = new Map(
+    [...SHARE_ALPHABET].map((char, value) => [char, value] as const),
+);
+
+/** Encodes bytes as base-128 text: 7 bits per character. */
+function bytesToBase128(bytes: Uint8Array): string {
+    let out = "";
+    let buffer = 0;
+    let bits = 0;
+    for (const byte of bytes) {
+        buffer = ((buffer << 8) | byte) & 0xffff;
+        bits += 8;
+        while (bits >= 7) {
+            bits -= 7;
+            out += SHARE_ALPHABET[(buffer >>> bits) & 0x7f];
+        }
+        buffer &= (1 << bits) - 1;
+    }
+    // Trailing bits, zero-padded to a full 7-bit character. The decoder
+    // recovers the byte count as floor(chars * 7 / 8), so no explicit
+    // padding marker is needed.
+    if (bits > 0) {
+        out += SHARE_ALPHABET[(buffer << (7 - bits)) & 0x7f];
+    }
+    return out;
+}
+
+/** Decodes base-128 text back to bytes; throws on invalid characters. */
+function base128ToBytes(text: string): Uint8Array<ArrayBuffer> {
+    let buffer = 0;
+    let bits = 0;
+    const bytes: number[] = [];
+    for (const char of text) {
+        const value = ALPHABET_VALUE.get(char);
+        if (value === undefined) {
+            throw new Error(`invalid share character: ${char}`);
+        }
+        buffer = ((buffer << 7) | value) & 0xffff;
+        bits += 7;
+        while (bits >= 8) {
+            bits -= 8;
+            bytes.push((buffer >>> bits) & 0xff);
+        }
+        buffer &= (1 << bits) - 1;
+    }
+    return new Uint8Array(bytes);
+}
+
+// ── Legacy base64url codec (links shared before the base-128 codec) ──
 
 function base64UrlToBytes(value: string): Uint8Array<ArrayBuffer> {
     const base64 = value.replaceAll("-", "+").replaceAll("_", "/");
@@ -93,6 +187,36 @@ function base64UrlToBytes(value: string): Uint8Array<ArrayBuffer> {
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     return bytes;
+}
+
+/**
+ * Decodes a payload body with the codec it was encoded in, detected
+ * from the alphabet: legacy base64url payloads contain only base64url
+ * symbols, base-128 payloads virtually always contain Unicode symbols.
+ */
+function decodePayloadBytes(body: string): Uint8Array<ArrayBuffer> {
+    if (/^[A-Za-z0-9\-_]*$/.test(body)) return base64UrlToBytes(body);
+    return base128ToBytes(body);
+}
+
+/**
+ * Extracts the share payload from user input: accepts a full URL
+ * ("https://…/#c.…"), a bare hash ("#c.…"), or the payload alone
+ * ("c.…"). Percent-decoding is applied because browsers percent-encode
+ * non-ASCII characters in the fragment (e.g. "§" arrives as "%C2%A7").
+ */
+export function extractShareHash(input: string): string {
+    let text = input.trim();
+    const hashIndex = text.indexOf("#");
+    if (hashIndex !== -1) text = text.slice(hashIndex + 1);
+    if (text.startsWith("#")) text = text.slice(1);
+    try {
+        return decodeURIComponent(text);
+    } catch {
+        // Malformed percent sequences: use the text as-is; the codec
+        // decode will reject it if it is not a valid payload.
+        return text;
+    }
 }
 
 async function gzip(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
@@ -116,17 +240,19 @@ export async function encodeDeckShare(
 ): Promise<string> {
     const json = JSON.stringify({ t: deckType, r: raw });
     const compressed = await gzip(new TextEncoder().encode(json));
-    return `${DECK_PREFIX}${bytesToBase64Url(compressed)}`;
+    return `${DECK_PREFIX}${bytesToBase128(compressed)}`;
 }
 
 /**
  * Decodes a deck link payload back into the deck source; null if invalid.
- * Accepts both the current `#c.…` prefix and the legacy `#deck=v1.` alias.
+ * Accepts both the current `#c.…` prefix and the legacy `#deck=v1.` alias,
+ * and both the base-128 and the legacy base64url codec. The input may be
+ * a full URL, a bare hash, or the payload alone (see extractShareHash).
  */
 export async function decodeDeckShare(
     hash: string,
 ): Promise<SharePayload | null> {
-    const payload = hash.startsWith("#") ? hash.slice(1) : hash;
+    const payload = extractShareHash(hash);
     let body: string;
     if (payload.startsWith(DECK_PREFIX)) {
         body = payload.slice(DECK_PREFIX.length);
@@ -136,7 +262,9 @@ export async function decodeDeckShare(
         return null;
     }
     try {
-        const json = new TextDecoder().decode(await gunzip(base64UrlToBytes(body)));
+        const json = new TextDecoder().decode(
+            await gunzip(decodePayloadBytes(body)),
+        );
         const data: unknown = JSON.parse(json);
         if (
             typeof data !== "object" ||
@@ -172,23 +300,23 @@ export async function encodeProgressShare(
     parts.push(`o${extras.overviewDone ? 1 : 0}`);
     parts.push(`t${Math.max(0, Math.round(extras.studyTimeMs))}`);
     const compressed = await gzip(new TextEncoder().encode(parts.join(";")));
-    return `${PROGRESS_PREFIX}${bytesToBase64Url(compressed)}`;
+    return `${PROGRESS_PREFIX}${bytesToBase128(compressed)}`;
 }
 
 /**
  * Decodes a progress link payload; null if invalid. See the protocol
- * description at the top of this file for the plain-text format.
+ * description at the top of this file for the plain-text format. The
+ * input may be a full URL, a bare hash, or the payload alone.
  */
 export async function decodeProgressShare(
     hash: string,
 ): Promise<ProgressSharePayload | null> {
-    const payload = hash.startsWith("#") ? hash.slice(1) : hash;
+    const payload = extractShareHash(hash);
     if (!payload.startsWith(PROGRESS_PREFIX)) return null;
+    const body = payload.slice(PROGRESS_PREFIX.length);
     try {
         const plain = new TextDecoder().decode(
-            await gunzip(
-                base64UrlToBytes(payload.slice(PROGRESS_PREFIX.length)),
-            ),
+            await gunzip(decodePayloadBytes(body)),
         );
         // {hash};{s1};...;{sN};o{0|1};t{ms} — the overview and study-time
         // fields are always the last two segments.

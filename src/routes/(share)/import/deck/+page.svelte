@@ -11,6 +11,7 @@
     import {
         DECK_PREFIX,
         decodeDeckShare,
+        extractShareHash,
         LEGACY_DECK_PREFIX,
         PROGRESS_PREFIX,
     } from "#lib/utils/share";
@@ -62,16 +63,15 @@
         error = null;
         preview = null;
         existing = null;
-        const input = linkInput.trim();
+        // Accepts a full URL, a bare hash, or the payload alone.
+        const input = extractShareHash(linkInput);
         if (!input) {
             error = "Bitte füge einen Link ein.";
             return;
         }
         const payload = await decodeDeckShare(input);
         if (!payload) {
-            error = input
-                .replace(/^#/, "")
-                .startsWith(PROGRESS_PREFIX)
+            error = input.startsWith(PROGRESS_PREFIX)
                 ? "Das ist ein Fortschritt-Link — bitte nutze „Fortschritt importieren“."
                 : "Der Link ist ungültig oder beschädigt.";
             return;
