@@ -6,9 +6,24 @@
     import { DECK_TYPE_OPTIONS } from "#lib/decks/deckTypes";
     import { parseDeck } from "#lib/decks/parser";
     import { userDecks } from "#lib/store/userDecks.svelte";
+    import { hashDeckContent } from "#lib/utils/hash";
+    import {
+        applyAllPendingProgress,
+        applyPendingProgressFor,
+        applyProgress,
+        stashPendingProgress,
+    } from "#lib/utils/pendingProgress";
     import { countCards } from "#lib/utils/pure";
-    import { decodeDeckShare, SHARE_PREFIX } from "#lib/utils/share";
-    import type { DeckType } from "#lib/utils/types";
+    import {
+        DECK_PREFIX,
+        decodeDeckShare,
+        decodeProgressShare,
+        LEGACY_DECK_PREFIX,
+        PROGRESS_PREFIX,
+        type ProgressSharePayload,
+    } from "#lib/utils/share";
+    import { formatStudyTime } from "#lib/utils/time";
+    import type { DeckType, UserDeck } from "#lib/utils/types";
     import Button from "../shared/Button.svelte";
 
     interface PendingShare {
@@ -18,7 +33,16 @@
         errorCount: number;
     }
 
+    interface PendingProgress {
+        progress: ProgressSharePayload;
+        deck: UserDeck;
+        learnedCount: number;
+    }
+
     let pending = $state<PendingShare | null>(null);
+    let pendingProgress = $state<PendingProgress | null>(null);
+    let existingDeck = $state<UserDeck | null>(null);
+    let stashed = $state(false);
     let deckType = $state<DeckType>("latin");
     let invalid = $state(false);
     let busy = $state(false);
@@ -32,22 +56,66 @@
     }
 
     onMount(() => {
+        // A progress link may have been stashed earlier; if its deck has
+        // arrived since (other tab, upload), apply it now.
+        void applyAllPendingProgress();
+
         const hash = window.location.hash;
-        if (!hash.startsWith(`#${SHARE_PREFIX}`)) return;
-        decodeDeckShare(hash).then((payload) => {
-            if (payload === null) {
-                invalid = true;
-                return;
-            }
-            const parsed = parseDeck(payload.raw);
-            deckType = payload.deckType;
-            pending = {
-                raw: payload.raw,
-                title: parsed.title,
-                cardCount: parsed.cards.length,
-                errorCount: parsed.errors.length,
-            };
-        });
+        if (hash.startsWith(`#${PROGRESS_PREFIX}`)) {
+            decodeProgressShare(hash).then(async (progress) => {
+                if (progress === null) {
+                    invalid = true;
+                    console.error(progress)
+                    return;
+                }
+                const deck = await userDecks.findByHash(progress.hash);
+                if (!deck) {
+                    // The deck is not here (yet): stash the progress and
+                    // apply it as soon as the deck is imported.
+                    stashPendingProgress(progress);
+                    stashed = true;
+                    return;
+                }
+                pendingProgress = {
+                    progress,
+                    deck,
+                    learnedCount: progress.boxes.filter((box) => box > 0)
+                        .length,
+                };
+            });
+            return;
+        }
+        if (
+            hash.startsWith(`#${DECK_PREFIX}`) ||
+            hash.startsWith(`#${LEGACY_DECK_PREFIX}`)
+        ) {
+            decodeDeckShare(hash).then(async (payload) => {
+                if (payload === null) {
+                    invalid = true;
+                    console.error(payload)
+                    return;
+                }
+                const parsed = parseDeck(payload.raw);
+                deckType = payload.deckType;
+                // The same deck (content + type) may already be stored —
+                // offer to open it instead of creating a duplicate.
+                const contentHash = await hashDeckContent(
+                    payload.raw,
+                    payload.deckType,
+                );
+                const existing = await userDecks.findByHash(contentHash);
+                if (existing) {
+                    existingDeck = existing;
+                    return;
+                }
+                pending = {
+                    raw: payload.raw,
+                    title: parsed.title,
+                    cardCount: parsed.cards.length,
+                    errorCount: parsed.errors.length,
+                };
+            });
+        }
     });
 
     async function importDeck(): Promise<void> {
@@ -60,6 +128,8 @@
                 "Geteilt",
                 deckType,
             );
+            // A progress link shared before this deck: apply it now.
+            await applyPendingProgressFor(deck.contentHash);
             clearHash();
             pending = null;
             goto(resolve("/(deck)/deck/[slug]", { slug: deck.slug }));
@@ -68,9 +138,38 @@
         }
     }
 
+    async function applyProgressShare(): Promise<void> {
+        if (!pendingProgress) return;
+        busy = true;
+        try {
+            const slug = pendingProgress.deck.slug;
+            const loaded = userDecks.load(slug);
+            applyProgress(
+                slug,
+                loaded?.cards.length ?? 0,
+                pendingProgress.progress,
+            );
+            clearHash();
+            pendingProgress = null;
+            goto(resolve("/(deck)/deck/[slug]", { slug }));
+        } finally {
+            busy = false;
+        }
+    }
+
+    function openExisting(): void {
+        if (!existingDeck) return;
+        const slug = existingDeck.slug;
+        dismiss();
+        goto(resolve("/(deck)/deck/[slug]", { slug }));
+    }
+
     function dismiss(): void {
         clearHash();
         pending = null;
+        pendingProgress = null;
+        existingDeck = null;
+        stashed = false;
         invalid = false;
     }
 </script>
@@ -86,6 +185,66 @@
         </div>
         <div class="share-actions">
             <Button onclick={dismiss}>Schließen</Button>
+        </div>
+    </section>
+{:else if stashed}
+    <section class="share-banner" transition:slide={{ duration: 200 }}>
+        <div class="share-info">
+            <strong>Fortschritt gespeichert</strong>
+            <span>
+                Der Fortschritt gehört zu einem Stapel, der auf diesem Gerät
+                noch nicht existiert. Er wird angewendet, sobald du den
+                passenden Stapel importierst.
+            </span>
+        </div>
+        <div class="share-actions">
+            <Button onclick={dismiss}>Verstanden</Button>
+        </div>
+    </section>
+{:else if pendingProgress}
+    <section class="share-banner" transition:slide={{ duration: 200 }}>
+        <div class="share-info">
+            <strong>
+                Geteilter Fortschritt{pendingProgress.deck.name
+                    ? `: ${pendingProgress.deck.name}`
+                    : ""}
+            </strong>
+            <span>
+                {pendingProgress.learnedCount} Karten mit Fortschritt
+                {#if pendingProgress.progress.overviewDone}
+                    · Übersicht abgeschlossen
+                {/if}
+                {#if pendingProgress.progress.studyTimeMs > 0}
+                    · Lernzeit {formatStudyTime(
+                        pendingProgress.progress.studyTimeMs,
+                    )}
+                {/if}
+            </span>
+        </div>
+        <div class="share-actions">
+            <Button
+                variant="primary"
+                onclick={applyProgressShare}
+                disabled={busy}
+            >
+                {busy ? "Wird übernommen …" : "Fortschritt übernehmen"}
+            </Button>
+            <Button onclick={dismiss}>Ignorieren</Button>
+        </div>
+    </section>
+{:else if existingDeck}
+    <section class="share-banner" transition:slide={{ duration: 200 }}>
+        <div class="share-info">
+            <strong>Stapel bereits vorhanden</strong>
+            <span>
+                Dieser Stapel existiert bereits als „{existingDeck.name}“.
+            </span>
+        </div>
+        <div class="share-actions">
+            <Button variant="primary" onclick={openExisting}>
+                Stapel öffnen
+            </Button>
+            <Button onclick={dismiss}>Ignorieren</Button>
         </div>
     </section>
 {:else if pending}

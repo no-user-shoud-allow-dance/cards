@@ -92,6 +92,30 @@ class CardStore {
     this.#persist();
   }
 
+  /**
+   * Merges synced progress into the local states. Per card the higher
+   * box wins, so syncing never regresses a card. A synced box of 1 on a
+   * card without local state is skipped: box 1 is the default, and
+   * writing it would fake "has progress" for the deck.
+   */
+  mergeProgress(synced: CardStates): void {
+    let changed = false;
+    const next = { ...this.states };
+    for (const [cardId, incoming] of Object.entries(synced)) {
+      const prev = next[cardId];
+      const box = Math.max(prev?.box ?? 1, incoming.box);
+      if (!prev && box <= 1) continue;
+      next[cardId] = {
+        box,
+        lastSeen: Math.max(prev?.lastSeen ?? 0, incoming.lastSeen)
+      };
+      changed = true;
+    }
+    if (!changed) return;
+    this.states = next;
+    this.#persist();
+  }
+
   resetCards(cardIds: string[], slug?: string): void {
     const next = { ...this.states };
     for (const id of cardIds) delete next[id];

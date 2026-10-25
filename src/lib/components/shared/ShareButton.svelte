@@ -1,54 +1,104 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { userDecks } from "#lib/store/userDecks.svelte";
+    import { cardStore } from "#lib/store/store.svelte";
+    import { studyTimeStore } from "#lib/store/studyTimeStore.svelte";
+    import { hashDeckContent } from "#lib/utils/hash";
     import {
+        canNativeShare,
         encodeDeckShare,
+        encodeProgressShare,
         formatShareLength,
+        nativeShare,
         SHARE_HASH_LIMIT,
     } from "#lib/utils/share";
     import Button from "./Button.svelte";
+    import ShareLinkCard from "./ShareLinkCard.svelte";
 
-    let { slug }: { slug: string } = $props();
+    let {
+        slug,
+        mode = "deck",
+    }: { slug: string; mode?: "deck" | "sync" } = $props();
 
-    let shareState = $state<"idle" | "copied" | "warning" | "failed">("idle");
-    let shareUrl = $state("");
+    let dialog = $state<"closed" | "warning" | "share">("closed");
+    let deckUrl = $state("");
+    let progressUrl = $state("");
     let shareLength = $state(0);
+    let nativeShareFailed = $state(false);
+    let canShare = $state(false);
 
-    async function copy(url: string): Promise<void> {
-        try {
-            await navigator.clipboard.writeText(url);
-            shareState = "copied";
-            setTimeout(() => {
-                if (shareState === "copied") shareState = "idle";
-            }, 2000);
-        } catch {
-            shareUrl = url;
-            shareState = "failed";
-        }
-    }
+    onMount(() => {
+        // Web Share API: opens the native share sheet on Android/iOS
+        // (WhatsApp, Messages, AirDrop, …). Absent on most desktop
+        // browsers, where copy + QR are the sharing paths instead.
+        canShare = canNativeShare();
+    });
 
     async function onShare(): Promise<void> {
         const deck = userDecks.get(slug);
         if (!deck) return;
-        const payload = await encodeDeckShare(deck.raw, deck.deckType);
-        shareLength = payload.length;
-        const url = `${window.location.origin}/#${payload}`;
-        if (shareLength > SHARE_HASH_LIMIT) {
-            shareUrl = url;
-            shareState = "warning";
-            return;
+        const origin = window.location.origin;
+        deckUrl = `${origin}/#${await encodeDeckShare(deck.raw, deck.deckType)}`;
+        shareLength = deckUrl.length;
+        if (mode === "sync") {
+            const loaded = userDecks.load(slug);
+            // One box per card index; 0 = untouched (keeps the link short).
+            const boxes = loaded
+                ? loaded.cards.map(
+                      (card) => cardStore.states[card.id]?.box ?? 0,
+                  )
+                : [];
+            const contentHash =
+                deck.contentHash ??
+                (await hashDeckContent(deck.raw, deck.deckType));
+            progressUrl = `${origin}/#${await encodeProgressShare(
+                contentHash,
+                boxes,
+                {
+                    overviewDone: cardStore.isOverviewDone(slug),
+                    studyTimeMs: studyTimeStore.get(slug),
+                },
+            )}`;
+            shareLength = Math.max(shareLength, progressUrl.length);
         }
-        await copy(url);
+        nativeShareFailed = false;
+        dialog = shareLength > SHARE_HASH_LIMIT ? "warning" : "share";
+    }
+
+    async function share(): Promise<void> {
+        const deck = userDecks.get(slug);
+        const ok =
+            mode === "sync" && progressUrl
+                ? // Both links in one message: deck and progress travel together.
+                  await nativeShare({
+                      title: deck?.name ?? "NSC Stapel",
+                      text: `NSC Stapel${deck ? ` „${deck.name}“` : ""}:\n${deckUrl}\nFortschritt:\n${progressUrl}`,
+                  })
+                : await nativeShare({
+                      title: deck?.name ?? "NSC Stapel",
+                      text: "NSC Stapel:",
+                      url: deckUrl,
+                  });
+        if (ok) {
+            dialog = "closed";
+        } else {
+            nativeShareFailed = true;
+        }
+    }
+
+    function close(): void {
+        dialog = "closed";
     }
 </script>
 
 <Button onclick={onShare}>
-    {shareState === "copied" ? "Link kopiert ✓" : "Teilen"}
+    {mode === "sync" ? "Synchronisieren" : "Teilen"}
 </Button>
 
-{#if shareState === "warning" || shareState === "failed"}
+{#if dialog !== "closed"}
     <div class="share-overlay" role="dialog" aria-modal="true" aria-label="Link teilen">
         <div class="share-dialog">
-            {#if shareState === "warning"}
+            {#if dialog === "warning"}
                 <h2>Großer Link</h2>
                 <p>
                     Der Link ist etwa {formatShareLength(shareLength)} lang.
@@ -56,31 +106,50 @@
                     Safari oder wenn der Link über Chat-Apps weitergegeben wird
                     (Chrome unterstützt bis etwa 2 MB).
                 </p>
-                <p>Link trotzdem kopieren?</p>
+                <p>Link trotzdem teilen?</p>
                 <div class="share-dialog-actions">
-                    <Button variant="primary" onclick={() => copy(shareUrl)}>
-                        Trotzdem kopieren
+                    <Button variant="primary" onclick={() => (dialog = "share")}>
+                        Trotzdem teilen
                     </Button>
-                    <Button onclick={() => (shareState = "idle")}>
-                        Abbrechen
-                    </Button>
+                    <Button onclick={close}>Abbrechen</Button>
                 </div>
             {:else}
-                <h2>Link teilen</h2>
-                <p>
-                    Der Link konnte nicht automatisch in die Zwischenablage kopiert
-                    werden. Bitte kopiere ihn manuell:
-                </p>
-                <input
-                    class="share-url"
-                    readonly
-                    value={shareUrl}
-                    onclick={(event) => event.currentTarget.select()}
+                <h2>{mode === "sync" ? "Synchronisieren" : "Stapel teilen"}</h2>
+                {#if mode === "sync"}
+                    <p class="share-hint">
+                        Teile beide Links mit einem anderen Gerät. Der
+                        Fortschritt-Link wird angewendet, sobald der Stapel
+                        dort bereits vorhanden ist.
+                    </p>
+                {/if}
+
+                {#if mode === "sync" && progressUrl}
+                    <ShareLinkCard
+                        title="Fortschritt"
+                        url={progressUrl}
+                        copyLabel="Fortschritt-Link kopieren"
+                    />
+                {/if}
+
+                <ShareLinkCard
+                    title={mode === "sync" ? "Stapel" : "Stapel-Link"}
+                    url={deckUrl}
+                    copyLabel="Link kopieren"
                 />
+
+                {#if nativeShareFailed}
+                    <p class="share-note">
+                        Teilen wird von diesem Gerät nicht unterstützt.
+                    </p>
+                {/if}
+
                 <div class="share-dialog-actions">
-                    <Button variant="primary" onclick={() => (shareState = "idle")}>
-                        Schließen
-                    </Button>
+                    {#if canShare}
+                        <Button variant="primary" onclick={share}>
+                            Teilen …
+                        </Button>
+                    {/if}
+                    <Button onclick={close}>Schließen</Button>
                 </div>
             {/if}
         </div>
@@ -103,7 +172,10 @@
     }
 
     .share-dialog {
-        width: min(100%, 30rem);
+        width: min(100%, 42rem);
+        max-height: calc(100vh - 2.5rem);
+        overflow-y: auto;
+
         padding: 1.4rem 1.5rem;
 
         border: 1px solid var(--border);
@@ -128,19 +200,13 @@
         line-height: 1.6;
     }
 
-    .share-url {
-        width: 100%;
+    .share-hint {
+        margin-bottom: 1rem;
+    }
 
-        font: inherit;
-        font-size: 0.78rem;
-
-        padding: 0.5rem 0.65rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface-soft);
-        color: var(--text);
+    .share-note {
+        color: var(--danger-text);
+        font-size: 0.82rem;
     }
 
     .share-dialog-actions {

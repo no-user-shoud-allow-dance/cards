@@ -4,6 +4,7 @@
     import { DECK_TYPES, DECK_TYPE_OPTIONS, guessDeckType } from "#lib/decks/deckTypes";
     import { parseDeck } from "#lib/decks/parser";
     import { userDecks } from "#lib/store/userDecks.svelte";
+    import { applyPendingProgressFor } from "#lib/utils/pendingProgress";
     import { countCards } from "#lib/utils/pure";
     import type { DeckType } from "#lib/utils/types";
     import Page from "#lib/components/shared/Page.svelte";
@@ -88,6 +89,8 @@
         busy = true;
         try {
             const { deck } = await userDecks.add(raw, name, folder, deckType);
+            // A progress link shared before this upload may target this deck.
+            await applyPendingProgressFor(deck.contentHash);
             goto(resolve("/(deck)/deck/[slug]", { slug: deck.slug }));
         } catch {
             error = "Die Datei konnte nicht gelesen werden.";

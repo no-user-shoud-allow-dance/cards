@@ -1,14 +1,11 @@
 import { DECK_TYPES } from "../decks/deckTypes";
 import { parseDeck } from "../decks/parser";
+import { hashDeckContent } from "../utils/hash";
 import type { DeckType, LoadedDeck, UserDeck } from "../utils/types";
 
 const DB_NAME = "nsc-user-decks";
 const DB_VERSION = 1;
 const STORE_NAME = "decks";
-
-function slugify(value: string): string {
-    return value.toLowerCase().replaceAll("/", "-").replaceAll(" ", "-");
-}
 
 function openDatabase(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -64,9 +61,32 @@ class UserDeckStore {
             const next: Record<string, UserDeck> = {};
             for (const deck of stored) next[deck.slug] = deck;
             this.decks = next;
+            await this.#backfillHashes(db);
         } catch {
             this.decks = {};
         }
+    }
+
+    /**
+     * Computes and stores the content hash for decks saved before
+     * hashing existed, so progress links can find them.
+     */
+    async #backfillHashes(db: IDBDatabase): Promise<void> {
+        const missing = Object.values(this.decks).filter(
+            (deck) => !deck.contentHash,
+        );
+        if (missing.length === 0) return;
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const next = { ...this.decks };
+        for (const deck of missing) {
+            const updated: UserDeck = {
+                ...deck,
+                contentHash: await hashDeckContent(deck.raw, deck.deckType),
+            };
+            next[updated.slug] = updated;
+            await toPromise(tx.objectStore(STORE_NAME).put(updated));
+        }
+        this.decks = next;
     }
 
     #db(): Promise<IDBDatabase> {
@@ -77,6 +97,14 @@ class UserDeckStore {
     /** The stored (raw) deck for a slug, if any. */
     get(slug: string): UserDeck | undefined {
         return this.decks[slug];
+    }
+
+    /** The stored deck with this content hash, if any. */
+    async findByHash(hash: string): Promise<UserDeck | undefined> {
+        await this.init();
+        return Object.values(this.decks).find(
+            (deck) => deck.contentHash === hash,
+        );
     }
 
     /** The parsed deck for a slug, or null when the slug is unknown. */
@@ -111,13 +139,22 @@ class UserDeckStore {
         deckType: DeckType,
     ): Promise<AddUserDeckResult> {
         await this.init();
-        const slug = `user-${slugify(name)}-${Math.random().toString(36).slice(2, 8)}`;
+        const contentHash = await hashDeckContent(raw, deckType);
+        // The slug is derived from the content hash: the same deck (same
+        // content + type) gets the same slug — and thus the same card
+        // IDs — on every device. A deliberate duplicate upload collides
+        // and gets a short random suffix.
+        let slug = `user-${contentHash}`;
+        if (this.decks[slug]) {
+            slug = `user-${contentHash}-${Math.random().toString(36).slice(2, 6)}`;
+        }
         const deck: UserDeck = {
             slug,
             name: name.trim() || "Unbenannter Stapel",
             folder: folder.trim() || "Eigene",
             deckType,
             raw,
+            contentHash,
             createdAt: Date.now(),
         };
         const parsed = parseDeck(raw);

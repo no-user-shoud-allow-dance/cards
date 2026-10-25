@@ -121,6 +121,7 @@
         </form>
     {:else}
         <div class="deck-actions-row" transition:fly={{ y: -6, duration: 160 }}>
+            <ShareButton slug={deck.slug} mode="sync" />
             <ShareButton slug={deck.slug} />
             {#key confirmDelete}
                 <div class="delete-action" in:fade={{ duration: 120 }}>
@@ -136,6 +137,16 @@
             {/key}
         </div>
     {/if}
+</div>
+
+<div class="deck-links">
+    <a href="{resolve("/(share)/export/deck")}?slug={deck.slug}">
+        Stapel exportieren
+    </a>
+    <span class="deck-links-separator" aria-hidden="true">·</span>
+    <a href="{resolve("/(share)/export/progress")}?slug={deck.slug}">
+        Fortschritt exportieren
+    </a>
 </div>
 
 <style>
@@ -241,5 +252,32 @@
     .inline-input:focus {
         border-color: var(--primary);
         outline: 2px solid var(--focus-ring);
+    }
+
+    /* Quiet links to the full export pages (with larger QR codes). */
+    .deck-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+
+        margin: -1.1rem 0 1.5rem;
+
+        font-size: 0.8rem;
+    }
+
+    .deck-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+    }
+
+    .deck-links a:hover {
+        color: var(--primary);
+        text-decoration: underline;
+    }
+
+    .deck-links-separator {
+        color: var(--border-strong);
+        user-select: none;
     }
 </style>

@@ -135,6 +135,12 @@
                     <a class="upload-link" href={resolve("/upload")}>
                         Eigenen Stapel hochladen
                     </a>
+                    <a class="upload-link" href={resolve("/(share)/import/deck")}>
+                        Stapel importieren
+                    </a>
+                    <a class="upload-link" href={resolve("/(share)/export/deck")}>
+                        Stapel exportieren
+                    </a>
                 </div>
             {/snippet}
         </PageHeader>

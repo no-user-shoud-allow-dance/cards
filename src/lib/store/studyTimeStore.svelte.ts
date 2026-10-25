@@ -25,6 +25,13 @@ class StudyTimeStore {
     this.#persist();
   }
 
+  /** Sets the total study time absolutely (used when syncing progress). */
+  set(slug: string, ms: number): void {
+    if (ms <= 0) return;
+    this.times = { ...this.times, [slug]: ms };
+    this.#persist();
+  }
+
   reset(slug: string): void {
     const next = { ...this.times };
     delete next[slug];

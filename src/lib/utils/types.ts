@@ -33,6 +33,11 @@ export interface UserDeck {
   deckType: DeckType;
   /** Raw markdown source, as uploaded or received via a share link. */
   raw: string;
+  /**
+   * Content identity of the deck (hashDeckContent over raw + deckType).
+   * The slug is derived from this, and progress links reference it.
+   */
+  contentHash: string;
   createdAt: number;
 }
 

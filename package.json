@@ -25,6 +25,7 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
-		"detectincognitojs": "^1.9.0"
+		"detectincognitojs": "^1.9.0",
+		"qr-code-styling": "^1.9.2"
 	}
 }

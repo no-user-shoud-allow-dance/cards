@@ -17,6 +17,44 @@ export function countCards(n: number): string {
     return n === 1 ? "1 Karte" : `${n} Karten`;
 }
 
+/** A single card's box change when synced progress is applied. */
+export interface ProgressDiffEntry {
+    index: number;
+    front: string;
+    /** Box before the sync; null when the card was untouched. */
+    from: number | null;
+    /** Box after the sync (always higher than the effective current box). */
+    to: number;
+}
+
+/**
+ * Previews which cards a synced progress payload would change. Mirrors
+ * cardStore.mergeProgress exactly: per card the higher box wins, and a
+ * synced box of 1 on an untouched card is skipped (box 1 is the default).
+ */
+export function progressDiff(
+    cards: Card[],
+    states: CardStates,
+    boxes: number[],
+): ProgressDiffEntry[] {
+    const diff: ProgressDiffEntry[] = [];
+    const count = Math.min(boxes.length, cards.length);
+    for (let i = 0; i < count; i++) {
+        const incoming = boxes[i];
+        if (incoming <= 0) continue;
+        const prev = states[cards[i].id];
+        const current = prev?.box ?? 1;
+        if (incoming <= current) continue;
+        diff.push({
+            index: i,
+            front: cards[i].front,
+            from: prev ? prev.box : null,
+            to: incoming,
+        });
+    }
+    return diff;
+}
+
 // Combining diacritics (deliberately without U+0308 - umlaut is retained)
 const DIACRITICS = /[\u0300\u0301\u0304\u0306\u0313\u0314\u0342\u0345]/g;
 
