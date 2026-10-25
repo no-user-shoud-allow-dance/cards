@@ -8,9 +8,6 @@
     {@render children()}
 </Page>
 
-/* Content typography for the legal pages (Impressum, Datenschutz).
-   The styled elements live in the child pages, hence :global — the
-   unused-selector warnings are false positives across that boundary. */
 <!-- svelte-ignore css_unused_selector -->
 <style>
     .legal :global(h2) {
