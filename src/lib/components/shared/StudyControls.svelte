@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { cardStore } from "#lib/store/store.svelte";
+
     let {
         revealed,
         isOverview = false,
@@ -24,7 +26,11 @@
     } = $props();
 </script>
 
-<div class="actions" class:is-overview={isOverview}>
+<div
+    class="actions"
+    class:is-overview={isOverview}
+    class:search-hidden={cardStore.googleDisabled}
+>
     <button
         type="button"
         class="secondary undo"
@@ -76,27 +82,29 @@
         </div>
     {/if}
 
-    <button
-        class="help"
-        onclick={onHelp}
-        disabled={!revealed && !isOverview}
-        aria-label="Hilfe-Suche öffnen"
-        title="Hilfe-Suche öffnen (H)"
-    >
-        <span aria-hidden="true">?</span>
-        <kbd>H</kbd>
-    </button>
+    {#if !cardStore.googleDisabled}
+        <button
+            class="help"
+            onclick={onHelp}
+            disabled={!revealed && !isOverview}
+            aria-label="Hilfe-Suche öffnen"
+            title="Hilfe-Suche öffnen (H)"
+        >
+            <span aria-hidden="true">?</span>
+            <kbd>H</kbd>
+        </button>
 
-    <button
-        class="mnemonic"
-        onclick={onMnemonic}
-        disabled={!revealed && !isOverview}
-        aria-label="Mnemotechnik-Suche öffnen"
-        title="Mnemotechnik-Suche öffnen (M)"
-    >
-        <span aria-hidden="true">M</span>
-        <kbd>M</kbd>
-    </button>
+        <button
+            class="mnemonic"
+            onclick={onMnemonic}
+            disabled={!revealed && !isOverview}
+            aria-label="Mnemotechnik-Suche öffnen"
+            title="Mnemotechnik-Suche öffnen (M)"
+        >
+            <span aria-hidden="true">M</span>
+            <kbd>M</kbd>
+        </button>
+    {/if}
 </div>
 
 <style>
@@ -112,6 +120,17 @@
     .actions.is-overview {
         grid-template-columns: auto 1fr auto auto;
         grid-template-areas: "undo answers help mnemonic";
+    }
+
+    /* Google search disabled: the help/mnemonic columns collapse */
+    .actions.search-hidden {
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas: "undo flip answers";
+    }
+
+    .actions.search-hidden.is-overview {
+        grid-template-columns: auto 1fr;
+        grid-template-areas: "undo answers";
     }
 
     .undo {
@@ -270,6 +289,22 @@
             grid-template-areas:
                 "answers answers"
                 "undo help mnemonic";
+        }
+
+        /* Google search disabled: Zurück takes the last row full-width */
+        .actions.search-hidden {
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas:
+                "flip flip"
+                "answers answers"
+                "undo undo";
+        }
+
+        .actions.search-hidden.is-overview {
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas:
+                "answers answers"
+                "undo undo";
         }
 
         .actions button {

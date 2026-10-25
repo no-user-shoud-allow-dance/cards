@@ -4,6 +4,8 @@ import type { CardState, CardStates } from '../utils/types';
 class CardStore {
   states = $state<CardStates>({});
   pureMode = $state(false);
+  /** Google search buttons (help/mnemonic) hidden by the user. On by default. */
+  googleDisabled = $state(true);
   overviewDone = $state<Record<string, boolean>>({});
   /** Per-deck milestone: every card has reached box 2 (celebrated once). */
   box2Done = $state<Record<string, boolean>>({});
@@ -18,6 +20,9 @@ class CardStore {
 
       const rawPure = localStorage.getItem('kk_pure');
       if (rawPure) this.pureMode = rawPure === 'true';
+
+      const rawGoogle = localStorage.getItem('kk_google_disabled');
+      if (rawGoogle) this.googleDisabled = rawGoogle === 'true';
 
       const rawOverview = localStorage.getItem('kk_overview_done');
       if (rawOverview) this.overviewDone = JSON.parse(rawOverview);
@@ -104,10 +109,16 @@ class CardStore {
     this.#persist();
   }
 
+  setGoogleDisabled(disabled: boolean): void {
+    this.googleDisabled = disabled;
+    this.#persist();
+  }
+
   #persist(): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem('kk_states', JSON.stringify(this.states));
     localStorage.setItem('kk_pure', this.pureMode ? 'true' : 'false');
+    localStorage.setItem('kk_google_disabled', this.googleDisabled ? 'true' : 'false');
     localStorage.setItem('kk_overview_done', JSON.stringify(this.overviewDone));
     localStorage.setItem('kk_box2_done', JSON.stringify(this.box2Done));
   }

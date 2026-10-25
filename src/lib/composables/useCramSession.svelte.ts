@@ -261,7 +261,15 @@ export function useCramSession(resolveDeck: () => LoadedDeck | null) {
 
         if (!revealed) return;
 
-        switch (event.key.toLowerCase()) {
+        const key = event.key.toLowerCase();
+
+        // The Google search actions are unavailable when the user has
+        // disabled them in the privacy settings.
+        if (cardStore.googleDisabled && (key === "h" || key === "m")) {
+            return;
+        }
+
+        switch (key) {
             case "w":
                 event.preventDefault();
                 answer(false);

@@ -141,12 +141,14 @@ export function useOverviewSession(
             return;
         }
 
-        if (event.key.toLowerCase() === "h") {
+        // The Google search actions are unavailable when the user has
+        // disabled them in the privacy settings.
+        if (event.key.toLowerCase() === "h" && !cardStore.googleDisabled) {
             event.preventDefault();
             openHelpSearch();
         }
 
-        if (event.key.toLowerCase() === "m") {
+        if (event.key.toLowerCase() === "m" && !cardStore.googleDisabled) {
             event.preventDefault();
             openMnemonicSearch();
         }
