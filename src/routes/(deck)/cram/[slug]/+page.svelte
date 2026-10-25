@@ -45,10 +45,18 @@
     }
 
     // While the interface is blurred (break dialog or inactivity pause),
-    // a keypress only lifts the blur: the key's action runs on the next
-    // keypress, once the interface is interactive again. With the timer
-    // overlay open, keys are left alone so the overlay stays
-    // keyboard-accessible.
+    // the first interaction only lifts the blur: a keypress or click's
+    // action runs on the next one, once the interface is interactive
+    // again. With the timer overlay open, keys are left alone so the
+    // overlay stays keyboard-accessible.
+    function liftBlur(): void {
+        if (timer.finishedAt !== null) {
+            timer.acknowledge();
+        } else {
+            timer.notifyActivity();
+        }
+    }
+
     function handleKeydown(event: KeyboardEvent): void {
         if (timer.menuOpen) return;
 
@@ -69,11 +77,7 @@
         // Swallow the key so it cannot flip, answer or open a search.
         event.preventDefault();
 
-        if (timer.finishedAt !== null) {
-            timer.acknowledge();
-        } else {
-            timer.notifyActivity();
-        }
+        liftBlur();
     }
 
     onMount(() => {
@@ -92,6 +96,7 @@
 {:else}
     <StudyLayout
         blurred={timer.interfaceBlurred && !showIntro}
+        onBlurredInteract={liftBlur}
         clockSpace
         fullHeight
     >

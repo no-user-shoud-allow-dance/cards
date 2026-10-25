@@ -5,6 +5,7 @@
         blurred = false,
         clockSpace = false,
         fullHeight = false,
+        onBlurredInteract,
         top,
         center,
         bottom,
@@ -16,11 +17,26 @@
         clockSpace?: boolean;
         /** Fill the full viewport (no global header/footer chrome). */
         fullHeight?: boolean;
+        /** Called when the blurred content is clicked; the click itself
+            is swallowed so it cannot trigger any action. */
+        onBlurredInteract?: () => void;
         top?: Snippet;
         center: Snippet;
         bottom?: Snippet;
         overlays?: Snippet;
     } = $props();
+
+    // While the interface is blurred, a click on the content only lifts
+    // the blur: the click is swallowed in the capture phase so it cannot
+    // flip, answer or navigate — the action runs on the next click, once
+    // the interface is interactive again. Overlays (timer menu, break
+    // dialog, clock) sit outside these containers and stay clickable.
+    function handleBlurredClick(event: MouseEvent): void {
+        if (!blurred || onBlurredInteract === undefined) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onBlurredInteract();
+    }
 </script>
 
 <div
@@ -30,11 +46,17 @@
     class:full-height={fullHeight}
 >
     {#if top}
-        <div class="study-top">{@render top()}</div>
+        <div class="study-top" onclickcapture={handleBlurredClick}>
+            {@render top()}
+        </div>
     {/if}
-    <div class="study-center">{@render center()}</div>
+    <div class="study-center" onclickcapture={handleBlurredClick}>
+        {@render center()}
+    </div>
     {#if bottom}
-        <div class="study-bottom">{@render bottom()}</div>
+        <div class="study-bottom" onclickcapture={handleBlurredClick}>
+            {@render bottom()}
+        </div>
     {/if}
     {@render overlays?.()}
 </div>
