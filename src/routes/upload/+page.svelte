@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { DECK_TYPES } from "#lib/decks/deckTypes";
+    import { DECK_TYPES, guessDeckType } from "#lib/decks/deckTypes";
     import { parseDeck } from "#lib/decks/parser";
     import { userDecks } from "#lib/store/userDecks.svelte";
     import { countCards } from "#lib/utils/pure";
@@ -58,6 +58,8 @@
         if (file) {
             try {
                 raw = await file.text();
+                // Suggest the type from the content; the user can override it.
+                deckType = guessDeckType(raw);
             } catch {
                 error = "Die Datei konnte nicht gelesen werden.";
             }
@@ -167,7 +169,8 @@
             {/if}
             <p class="hint">
                 Format: eine Zeile <code># Titel</code> und pro Karte eine
-                Zeile <code>Vorderseite - Rückseite</code>.
+                Zeile <code>Vorderseite - Rückseite</code>. Der Typ wird aus
+                dem Inhalt erraten und kann oben angepasst werden.
             </p>
         </form>
     </section>
