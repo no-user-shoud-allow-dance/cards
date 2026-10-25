@@ -1,0 +1,324 @@
+:root {
+    color-scheme: light;
+
+    /* Typography */
+    --font-sans:
+        "Google Sans",
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    --font-serif:
+        "Noto Serif",
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    /* Surfaces: warm paper, flat and quiet */
+    --bg: #faf9f5;
+    --surface: #ffffff;
+    --surface-soft: #f3f1ea;
+    --surface-hover: #edebe2;
+
+    /* Text */
+    --text: #21201c;
+    --text-muted: #6f6d64;
+
+    /* Borders */
+    --border: #e4e1d8;
+    --border-strong: #c8c4b7;
+
+    /* Accent: a single muted, desaturated blue */
+    --primary: #3d5a80;
+    --primary-hover: #324b6b;
+    --primary-text: #ffffff;
+    --primary-soft: #e8ecf2;
+    --focus-ring: rgb(61 90 128 / 35%);
+
+    /* Feedback */
+    --success-bg: #edf4ee;
+    --success-hover: #e1ede4;
+    --success-border: #cddfd0;
+    --success-text: #37714b;
+
+    --danger-bg: #f8eeec;
+    --danger-hover: #f3e3e0;
+    --danger-border: #e7d2cd;
+    --danger-text: #a04a41;
+
+    --info-bg: #edf1f6;
+    --info-hover: #e2e9f1;
+    --info-text: #3d5a80;
+
+    /* Overview: warm terracotta / brick */
+    --overview: #a05a3c;
+    --overview-hover: #8b4d32;
+    --overview-text: #ffffff;
+    --overview-soft: #f6ede7;
+    --overview-border: #e2d0c4;
+
+    /* Existing feedback-token aliases */
+    --right: var(--success-bg);
+    --right-hover: var(--success-hover);
+    --right-text: var(--success-text);
+
+    --wrong: var(--danger-bg);
+    --wrong-hover: var(--danger-hover);
+    --wrong-text: var(--danger-text);
+
+    --info: var(--info-bg);
+
+    /* Shape */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+    --radius-pill: 999px;
+
+    /* Elevation: barely-there */
+    --shadow-sm: 0 1px 2px rgb(33 32 28 / 5%);
+    --shadow-card: 0 1px 3px rgb(33 32 28 / 6%);
+
+    /* Motion: short, plain eases */
+    --transition-fast: 150ms ease;
+    --transition-normal: 200ms ease;
+    --transition-flip: 420ms ease-in-out;
+
+    /* Layout */
+    --content-width: 880px;
+}
+
+/* One coherent dark theme, rather than isolated dark-mode fixes. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+
+        --bg: #191813;
+        --surface: #201f1a;
+        --surface-soft: #282722;
+        --surface-hover: #31302a;
+
+        --text: #ecebe4;
+        --text-muted: #a09e93;
+
+        --border: #38362f;
+        --border-strong: #4c4a41;
+
+        --primary: #93a9c4;
+        --primary-hover: #a7bbd2;
+        --primary-text: #191813;
+        --primary-soft: #2a3038;
+        --focus-ring: rgb(147 169 196 / 35%);
+
+        --success-bg: #24312a;
+        --success-hover: #2c3d33;
+        --success-border: #3d5748;
+        --success-text: #8fc7a4;
+
+        --danger-bg: #342622;
+        --danger-hover: #3f2c28;
+        --danger-border: #573c36;
+        --danger-text: #e0a49b;
+
+        --info-bg: #26303c;
+        --info-hover: #2e3948;
+        --info-text: #a9bdd6;
+
+        --overview: #c98d6b;
+        --overview-hover: #d89e7d;
+        --overview-text: #191813;
+        --overview-soft: #2e2420;
+        --overview-border: #54403a;
+
+        --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+        --shadow-card: 0 1px 3px rgb(0 0 0 / 35%);
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scrollbar-gutter: stable;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+::selection {
+    background: var(--primary-soft);
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    color: inherit;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+a {
+    color: inherit;
+}
+
+h1,
+h2 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+
+kbd {
+    display: inline-block;
+    padding: 0.05rem 0.38rem;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* Shared page layout */
+
+.page {
+    width: min(100%, var(--content-width));
+    margin-inline: auto;
+    padding: 2.25rem 1.5rem 4rem;
+}
+
+.page h1 {
+    margin: 0 0 0.4rem;
+    font-size: clamp(1.7rem, 3vw, 2.1rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.subtitle {
+    margin: 0 0 1.75rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* Section heading: small, uppercase, muted, with a quiet rule below. */
+
+.section-label {
+    margin: 0 0 0.8rem;
+    padding-bottom: 0.55rem;
+
+    border-bottom: 1px solid var(--border);
+
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+/* Navigation link: deliberately scoped to anchors.
+   A flashcard answer also uses the class name "back". */
+
+a.back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    margin-bottom: 1.1rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+        color var(--transition-fast),
+        background var(--transition-fast);
+}
+
+a.back:hover {
+    background: var(--surface-soft);
+    color: var(--text);
+}
+
+/* Primary action */
+
+.primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    margin: 0 0 1.5rem;
+    padding: 0.7rem 1.15rem;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    color: var(--primary-text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background var(--transition-fast);
+}
+
+.primary:hover {
+    background: var(--primary-hover);
+}
+
+.empty {
+    margin: 1rem 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+@media (max-width: 540px) {
+    .page {
+        padding: 1.5rem 1rem 3rem;
+    }
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -1,0 +1,63 @@
+export interface DeckEntry {
+  slug: string;
+  name: string;
+  file: string;
+  deckType: DeckType;
+  /** Whether this deck offers a pure mode (defined by its deck type). */
+  pureMode: boolean;
+}
+
+export interface FolderEntry {
+  folder: string;
+  decks: DeckEntry[];
+}
+
+export interface RawCard {
+  front: string;
+  back: string;
+}
+
+export interface Card extends RawCard {
+  id: string;
+}
+
+export interface ParsedDeck {
+  title: string | null;
+  cards: RawCard[];
+  errors: string[];
+}
+
+export interface LoadedDeck {
+  slug: string;
+  folder: string;
+  name: string;
+  deckType: DeckType;
+  /** Whether this deck offers a pure mode (defined by its deck type). */
+  pureMode: boolean;
+  title: string | null;
+  cards: Card[];
+  errors: string[];
+}
+
+/** A deck uploaded by the user; persisted in IndexedDB, never on a server. */
+export interface UserDeck {
+  slug: string;
+  name: string;
+  folder: string;
+  deckType: DeckType;
+  /** Raw markdown source, as uploaded or received via a share link. */
+  raw: string;
+  createdAt: number;
+}
+
+export interface CardState {
+  box: number;
+  lastSeen: number;
+}
+
+export type CardStates = Record<string, CardState>;
+
+export type DeckType = 'english' | 'latin' | 'greek';
+
+/** Number of Leitner boxes; a card in box BOX_COUNT counts as learned. */
+export const BOX_COUNT = 6;
