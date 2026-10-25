@@ -167,6 +167,14 @@
         white-space: pre-wrap;
     }
 
+    /* Mobile: tighter card margins so the study page fits the viewport
+       without scrolling. */
+    @media (max-width: 700px) {
+        .card-wrap {
+            margin: 0.5rem 0 0.75rem;
+        }
+    }
+
     @media (max-width: 400px) {
         .card,
         .card-inner {

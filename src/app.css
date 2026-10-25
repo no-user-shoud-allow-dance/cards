@@ -93,7 +93,28 @@
     /* Layout */
     --content-width: 880px;
 
+    --header-h: 3.5rem;
     --footer-h: 3.25rem;
+
+    /* Normal-mode study clock size; the cram mode's top strip reserves
+       this height on mobile so the floating clock never overlaps the
+       card. */
+    --clock-size: 64px;
+}
+
+/* Phones get a compact single-line app bar instead of the
+   logo + breadcrumb header. */
+@media (max-width: 700px) {
+    :root {
+        --header-h: 3.25rem;
+    }
+}
+
+/* Phones get a smaller floating study clock. */
+@media (max-width: 540px) {
+    :root {
+        --clock-size: 54px;
+    }
 }
 
 /* One coherent dark theme, rather than isolated dark-mode fixes. */

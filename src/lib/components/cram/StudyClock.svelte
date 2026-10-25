@@ -108,13 +108,16 @@
 </div>
 
 <style>
+    /* No base transform: a transformed ancestor becomes the containing
+       block for fixed-position descendants, which would break the
+       viewport-relative placement of the menu and backdrop. Intro/break
+       modes set their own transform; "none" interpolates like the
+       identity, so the fly-to-center animation still works. */
     .clock-zone {
         position: fixed;
         left: 1.1rem;
         top: calc(50dvh - 64px);
         z-index: 40;
-
-        transform: translate(0, 0);
 
         transition:
             left 0.7s cubic-bezier(0.34, 1.3, 0.64, 1),
@@ -137,8 +140,8 @@
     .clock {
         display: block;
 
-        width: 64px;
-        height: 64px;
+        width: var(--clock-size);
+        height: var(--clock-size);
         padding: 7px;
 
         border: 1px solid var(--border);
@@ -340,21 +343,35 @@
         background: var(--success-bg);
     }
 
-    @media (max-width: 540px) {
-        .clock-zone {
-            left: 0.75rem;
-            top: calc(100vh - 0.75rem - 54px);
+    /* Mobile: the clock floats in the top-right corner, just below the
+       header, over the progress bar row. The timer menu pops up centered
+       in the viewport, unbound from the clock's position. */
+    @media (max-width: 700px) {
+        .clock-zone:not(.intro-mode):not(.break-mode) {
+            left: auto;
+            right: 0.75rem;
+            top: calc(var(--header-h) + 0.6rem);
         }
 
+        .menu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            width: min(20rem, calc(100vw - 2rem));
+        }
+    }
+
+    @media (max-width: 540px) {
         .clock-zone.intro-mode,
         .clock-zone.break-mode {
             left: 50%;
-            top: 50%;
+            /* top: 50%; */
         }
 
+        /* Size comes from --clock-size (see app.css). */
         .clock {
-            width: 54px;
-            height: 54px;
             padding: 6px;
         }
 

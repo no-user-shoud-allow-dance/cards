@@ -5,6 +5,7 @@
     import FlashCard from "#lib/components/cram/FlashCard.svelte";
     import StudyControls from "#lib/components/shared/StudyControls.svelte";
     import StatusBar from "#lib/components/cram/StatusBar.svelte";
+    import BoxOverview from "#lib/components/cram/BoxOverview.svelte";
     import SessionComplete from "#lib/components/cram/SessionComplete.svelte";
     import { useStudyTimer } from "#lib/composables/useStudyTimer.svelte";
     import StudyClock from "#lib/components/cram/StudyClock.svelte";
@@ -43,6 +44,21 @@
     function completeIntro(): void {
         introCompleted = true;
     }
+
+    // On mobile the box overview moves from the top (above the progress
+    // bar) to the bottom, above the controls. The (deck) layout renders
+    // this page only on the client (after the IndexedDB decks load), so
+    // the viewport can be read synchronously at init.
+    const mobileQuery = window.matchMedia("(max-width: 700px)");
+    let isMobile = $state(mobileQuery.matches);
+
+    onMount(() => {
+        const handleChange = (event: MediaQueryListEvent) => {
+            isMobile = event.matches;
+        };
+        mobileQuery.addEventListener("change", handleChange);
+        return () => mobileQuery.removeEventListener("change", handleChange);
+    });
 
     // While the interface is blurred (break dialog or inactivity pause),
     // the first interaction only lifts the blur: a keypress or click's
@@ -97,14 +113,17 @@
     <StudyLayout
         blurred={timer.interfaceBlurred && !showIntro}
         onBlurredInteract={liftBlur}
-        clockSpace
         fullHeight
     >
         {#snippet top()}
             {#if session.currentCard}
+                {#if !isMobile}
+                    <BoxOverview
+                        boxCounts={session.boxCounts}
+                        currentBox={session.currentBox}
+                    />
+                {/if}
                 <StatusBar
-                    boxCounts={session.boxCounts}
-                    currentBox={session.currentBox}
                     learnedCount={session.learnedCount}
                     totalCards={deck.cards.length}
                     progressRatio={session.progressRatio}
@@ -146,6 +165,12 @@
                     onHelp={session.openHelpSearch}
                     onMnemonic={session.openMnemonicSearch}
                 />
+                {#if isMobile}
+                    <BoxOverview
+                        boxCounts={session.boxCounts}
+                        currentBox={session.currentBox}
+                    />
+                {/if}
             {/if}
         {/snippet}
 

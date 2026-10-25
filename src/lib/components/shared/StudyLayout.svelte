@@ -3,7 +3,6 @@
 
     let {
         blurred = false,
-        clockSpace = false,
         fullHeight = false,
         onBlurredInteract,
         top,
@@ -13,8 +12,6 @@
     }: {
         /** Blur the study interface (timer pause / break dialog). */
         blurred?: boolean;
-        /** Reserve bottom padding for the floating study clock. */
-        clockSpace?: boolean;
         /** Fill the full viewport (no global header/footer chrome). */
         fullHeight?: boolean;
         /** Called when the blurred content is clicked; the click itself
@@ -42,7 +39,6 @@
 <div
     class="study-page"
     class:interface-blurred={blurred}
-    class:clock-space={clockSpace}
     class:full-height={fullHeight}
 >
     {#if top}
@@ -68,7 +64,7 @@
 
         width: min(100%, var(--content-width));
 
-        min-height: calc(100vh - 3.5rem - var(--footer-h));
+        min-height: calc(100vh - var(--header-h) - var(--footer-h));
 
         margin-inline: auto;
         padding: 1.5rem 2rem 4rem 2rem;
@@ -111,13 +107,20 @@
         filter: blur(5px);
     }
 
-    @media (max-width: 540px) {
+    /* Mobile layout: tighter padding, and the top strip reserves the
+       clock's height so the floating clock never overlaps the card —
+       its content is centered against the clock. */
+    @media (max-width: 700px) {
         .study-page {
-            padding: 1rem 1rem 1.5rem;
+            padding: 0.75rem 1rem 1rem;
         }
 
-        .study-page.clock-space {
-            padding-bottom: 4.75rem;
+        .study-top {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            min-height: var(--clock-size);
         }
     }
 </style>

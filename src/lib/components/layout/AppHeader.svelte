@@ -29,10 +29,54 @@
 
     // The deck defines whether a pure mode exists for it.
     let pureModeAvailable = $derived(deck?.pureMode ?? false);
+
+    // Mobile app bar (≤700px): a back button plus the current position
+    // replace the logo and breadcrumb path, which wrap and make the
+    // header too tall on phones. The home page keeps the logo.
+    let backHref = $derived.by(() => {
+        if (isCramPage || isOverviewPage) {
+            return resolve("/(deck)/deck/[slug]", { slug });
+        }
+        if (isDeckPage) return resolve("/");
+        if (routePath === "/") return null;
+        return resolve("/");
+    });
+
+    let mobileTitle = $derived.by(() => {
+        if (isCramPage) return `${deckName} · Lernmodus`;
+        if (isOverviewPage) return `${deckName} · Übersicht`;
+        if (isDeckPage) return deckName;
+        return "";
+    });
 </script>
 
 <header class="app-header">
-    <a class="brand" href={resolve("/")} aria-label="NSC – zur Startseite">
+    {#if backHref}
+        <a class="back" href={backHref} aria-label="Zurück">
+            <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+            >
+                <path
+                    d="M19 12H5m6 7-7-7 7-7"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+            </svg>
+        </a>
+    {/if}
+
+    <a
+        class="brand"
+        class:mobile-hidden={backHref !== null}
+        href={resolve("/")}
+        aria-label="NSC – zur Startseite"
+    >
         <span class="brand-mark" aria-hidden="true">
             <svg
                 width="18"
@@ -109,6 +153,10 @@
             {/if}
         </ol>
     </nav>
+
+    {#if mobileTitle}
+        <span class="mobile-title">{mobileTitle}</span>
+    {/if}
 
     {#if pureModeAvailable}
         <Toggle
@@ -198,10 +246,45 @@
         user-select: none;
     }
 
-    @media (max-width: 540px) {
-        .breadcrumbs {
-            padding-inline: 1rem;
-        }
+    /* Back button of the mobile app bar — hidden on desktop, where
+       the breadcrumb path already provides navigation. */
+    .back {
+        display: none;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+
+        width: 2.2rem;
+        height: 2.2rem;
+
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+
+        color: var(--primary);
+        text-decoration: none;
+        transition:
+            background var(--transition-fast),
+            border-color var(--transition-fast);
+    }
+
+    .back:hover {
+        border-color: var(--primary);
+        background: var(--primary-soft);
+    }
+
+    /* Current position shown next to the back button on mobile. */
+    .mobile-title {
+        display: none;
+        flex: 1;
+        min-width: 0;
+
+        overflow: hidden;
+        color: var(--text);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .app-header {
@@ -217,11 +300,38 @@
         gap: 1rem;
 
         width: 100%;
-        min-height: 3.5rem;
+        min-height: var(--header-h);
         padding: 0.7rem
             max(1rem, calc((100vw - var(--content-width)) / 2 + 1.5rem));
 
         background: var(--surface);
         border-bottom: 1px solid var(--border);
+    }
+
+    /* Mobile app bar: back button + current position instead of the
+       logo and the breadcrumb path (which wrap and make the header
+       too tall). The logo stays only where there is nowhere to go
+       back to (home). */
+    @media (max-width: 700px) {
+        .app-header {
+            gap: 0.75rem;
+            padding-block: 0.5rem;
+        }
+
+        .breadcrumbs {
+            display: none;
+        }
+
+        .brand.mobile-hidden {
+            display: none;
+        }
+
+        .back {
+            display: inline-flex;
+        }
+
+        .mobile-title {
+            display: block;
+        }
     }
 </style>
