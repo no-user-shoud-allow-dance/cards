@@ -162,7 +162,7 @@
         flex-direction: column;
 
         width: min(100%, var(--content-width));
-        min-height: calc(100vh - 3.5rem);
+        min-height: calc(100vh - 3.5rem - var(--footer-h));
         margin-inline: auto;
         padding: 1.5rem 1.5rem 2rem;
     }

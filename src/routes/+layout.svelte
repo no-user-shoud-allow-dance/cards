@@ -4,6 +4,7 @@
     import { cardStore } from "#lib/store/store.svelte";
     import { userDecks } from "#lib/store/userDecks.svelte";
     import AppHeader from "#lib/components/layout/AppHeader.svelte";
+    import AppFooter from "#lib/components/layout/AppFooter.svelte";
 
     let { children } = $props();
 
@@ -26,8 +27,25 @@
     />
 </svelte:head>
 
-<AppHeader />
+<div class="layout">
+    <AppHeader />
 
-<main>
-    {@render children()}
-</main>
+    <main>
+        {@render children()}
+    </main>
+
+    <AppFooter />
+</div>
+
+<style>
+    .layout {
+        display: flex;
+        flex-direction: column;
+
+        min-height: 100vh;
+    }
+
+    .layout > main {
+        flex: 1 0 auto;
+    }
+</style>

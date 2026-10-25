@@ -88,6 +88,8 @@
 
     /* Layout */
     --content-width: 880px;
+
+    --footer-h: 3.25rem;
 }
 
 /* One coherent dark theme, rather than isolated dark-mode fixes. */
@@ -302,6 +304,50 @@ a.back:hover {
     margin: 1rem 0;
     color: var(--text-muted);
     font-size: 0.95rem;
+}
+
+/* Legal pages (Impressum, Datenschutz) */
+
+.legal h2 {
+    margin: 2.25rem 0 0.6rem;
+    font-size: 1.2rem;
+}
+
+.legal p {
+    margin: 0 0 0.9rem;
+}
+
+.legal ul {
+    margin: 0 0 0.9rem;
+    padding-left: 1.25rem;
+}
+
+.legal li {
+    margin-bottom: 0.35rem;
+}
+
+.legal address {
+    margin: 0 0 0.9rem;
+    font-style: normal;
+    line-height: 1.7;
+}
+
+.legal a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.legal a:hover {
+    text-decoration: underline;
+}
+
+/* Fields the operator must fill in (Impressum). */
+.legal .placeholder {
+    padding: 0 0.3rem;
+    border-radius: var(--radius-sm);
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    font-weight: 600;
 }
 
 @media (max-width: 540px) {
