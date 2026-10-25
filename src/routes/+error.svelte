@@ -34,7 +34,6 @@
     </div>
 </Page>
 
-/* .error-page is applied to the Page component's root via its class prop. */
 <!-- svelte-ignore css_unused_selector -->
 <style>
     .error-page {
