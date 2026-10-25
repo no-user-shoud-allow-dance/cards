@@ -6,9 +6,9 @@
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
     import FolderSection from "#lib/components/home/FolderSection.svelte";
     import ContinueCard from "#lib/components/home/ContinueCard.svelte";
-    import UploadDeck from "#lib/components/home/UploadDeck.svelte";
     import ShareImport from "#lib/components/home/ShareImport.svelte";
     import { userDecks } from "#lib/store/userDecks.svelte";
+    import { resolve } from "$app/paths";
     import { slide } from "svelte/transition";
     import { onMount } from "svelte";
 
@@ -233,12 +233,15 @@
     <header class="hero">
         <h1>Ordner</h1>
         <p class="subtitle">Wähle einen Stapel zum Lernen.</p>
-        <p class="hero-stats">
-            {totals.decks} Stapel · {countCards(totals.cards)}
-        </p>
+        <div class="hero-meta">
+            <p class="hero-stats">
+                {totals.decks} Stapel · {countCards(totals.cards)}
+            </p>
+            <a class="upload-link" href={resolve("/upload")}>
+                Eigenen Stapel hochladen
+            </a>
+        </div>
     </header>
-
-    <UploadDeck />
 
     {#if inProgress.length > 0}
         <section class="continue-section" aria-label="Weiterlernen">
@@ -261,7 +264,9 @@
 
     {#if allFolders.length === 0}
         <p class="empty">
-            Keine Stapel gefunden. Lade oben einen eigenen Stapel hoch.
+            Keine Stapel gefunden. <a href={resolve("/upload")}
+                >Lade einen eigenen Stapel hoch</a
+            >.
         </p>
     {/if}
 
@@ -275,12 +280,47 @@
         margin-bottom: 0.35rem;
     }
 
+    .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.9rem;
+
+        margin-bottom: 1.75rem;
+    }
+
     .hero-stats {
-        margin: 0 0 1.75rem;
+        margin: 0;
         color: var(--text-muted);
         font-size: 0.85rem;
         font-weight: 500;
         font-variant-numeric: tabular-nums;
+    }
+
+    .upload-link {
+        display: inline-flex;
+        align-items: center;
+
+        padding: 0.55rem 1.1rem;
+
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+
+        background: var(--surface);
+        color: var(--text);
+
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+
+        transition:
+            border-color var(--transition-fast),
+            background var(--transition-fast);
+    }
+
+    .upload-link:hover {
+        border-color: var(--border-strong);
+        background: var(--surface-hover);
     }
 
     .continue-section {

@@ -19,12 +19,12 @@ export const DECK_TYPES: Record<DeckType, DeckTypeConfig> = {
     greek: { label: "Altgriechisch", language: "Altgriechischen", pureMode: true },
 };
 
-/** Maps content folders to deck types; unknown folders default to latin. */
+/** Maps content folders to deck types; unknown folders default to english. */
 const FOLDER_TYPES: Record<string, DeckType> = {
-    english: "english",
     kairos: "greek",
+    latein: "latin",
 };
 
 export function deckTypeForFolder(folder: string): DeckType {
-    return FOLDER_TYPES[folder.toLowerCase()] ?? "latin";
+    return FOLDER_TYPES[folder.toLowerCase()] ?? "english";
 }
