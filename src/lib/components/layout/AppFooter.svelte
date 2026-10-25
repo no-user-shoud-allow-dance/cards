@@ -7,6 +7,8 @@
         <a href={resolve("/legal/impressum")}>Impressum</a>
         <span class="separator" aria-hidden="true">·</span>
         <a href={resolve("/legal/datenschutz")}>Datenschutz</a>
+        <span class="separator" aria-hidden="true">·</span>
+        <a href={resolve("/legal/lizenzen")}>Lizenzen</a>
     </nav>
 </footer>
 

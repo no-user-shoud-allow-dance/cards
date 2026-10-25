@@ -56,11 +56,6 @@
 
 <style>
     .privacy-toast {
-        position: fixed;
-        right: 1rem;
-        bottom: 1rem;
-        z-index: 60;
-
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -118,12 +113,5 @@
     .toast-close:hover {
         background: var(--surface-hover);
         color: var(--text);
-    }
-
-    @media (max-width: 540px) {
-        .privacy-toast {
-            right: 0.75rem;
-            bottom: 0.75rem;
-        }
     }
 </style>

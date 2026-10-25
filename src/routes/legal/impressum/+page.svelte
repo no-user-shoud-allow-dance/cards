@@ -23,6 +23,14 @@
         jeweiligen Autorinnen und Autoren.
     </p>
     <p>
+        Eingebundene Bibliotheken von Drittanbietern — derzeit
+        <strong>Svelte</strong>, <strong>SvelteKit</strong> und
+        <strong>detectIncognito.js</strong> (jeweils MIT License) — sind auf
+        der Seite
+        <a href={resolve("/legal/lizenzen")}>Lizenzen</a> mit vollständigem
+        Lizenztext aufgeführt.
+    </p>
+    <p>
         Hinweise zur Verarbeitung personenbezogener Daten und zu den Rechten
         an den Inhalten finden Sie in der
         <a href={resolve("/legal/datenschutz")}>Datenschutzerklärung</a>.

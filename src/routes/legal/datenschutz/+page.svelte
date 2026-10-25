@@ -47,6 +47,12 @@
         Die Übertragung der Seite erfolgt verschlüsselt über
         <span class="term term--primary">HTTPS</span>.
     </p>
+    <p>
+        Um vor nicht dauerhaft gespeicherten Daten zu warnen, prüft die App beim
+        Laden einmalig, ob Ihr Browser im Inkognito-/Privatmodus läuft. Diese
+        Prüfung läuft vollständig lokal in Ihrem Browser; es werden dabei keine
+        Daten übertragen.
+    </p>
 
     <strong>Teilen-Links:</strong> Geteilte Stapel stecken komprimiert in der
     URL (im Hash).
@@ -68,8 +74,7 @@
             ausgeliefert. Dabei verarbeitet der Anbieter technisch notwendige
             <span class="term term--primary">Verbindungsdaten</span> (z. B. Ihre
             <span class="term term--primary">IP-Adresse</span>), um die Seite zu
-            laden.
-            Datenschutzerklärung:
+            laden. Datenschutzerklärung:
             <a
                 href="https://vercel.com/legal/privacy"
                 target="_blank"
@@ -86,8 +91,9 @@
                 >
             {:else}
                 Beim Laden der App werden Schriftarten von
-                <span class="term term--primary">Google Fonts</span> nachgeladen;
-                dabei wird Ihre <span class="term term--primary">IP-Adresse</span>
+                <span class="term term--primary">Google Fonts</span>
+                nachgeladen; dabei wird Ihre
+                <span class="term term--primary">IP-Adresse</span>
                 an Google übertragen. Datenschutzerklärung:
                 <a
                     href="https://policies.google.com/privacy"

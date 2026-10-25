@@ -6,6 +6,7 @@
     import AppHeader from "#lib/components/layout/AppHeader.svelte";
     import AppFooter from "#lib/components/layout/AppFooter.svelte";
     import PrivacyToast from "#lib/components/layout/PrivacyToast.svelte";
+    import ImpersistentToast from "#lib/components/layout/ImpersistentToast.svelte";
 
     let { children } = $props();
 
@@ -39,7 +40,10 @@
 
     <AppFooter />
 
-    <PrivacyToast />
+    <div class="toast-stack">
+        <PrivacyToast />
+        <ImpersistentToast />
+    </div>
 </div>
 
 <style>
@@ -52,5 +56,26 @@
 
     .layout > main {
         flex: 1 0 auto;
+    }
+
+    .toast-stack {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 60;
+
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.6rem;
+
+        max-width: min(22rem, calc(100vw - 2rem));
+    }
+
+    @media (max-width: 540px) {
+        .toast-stack {
+            right: 0.75rem;
+            bottom: 0.75rem;
+        }
     }
 </style>

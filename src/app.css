@@ -52,6 +52,10 @@
     --info-hover: #e2e9f1;
     --info-text: #3d5a80;
 
+    --warning-bg: #faf3df;
+    --warning-border: #ead7a4;
+    --warning-text: #8a6a1c;
+
     /* Overview: warm terracotta / brick */
     --overview: #a05a3c;
     --overview-hover: #8b4d32;
@@ -127,6 +131,10 @@
         --info-bg: #26303c;
         --info-hover: #2e3948;
         --info-text: #a9bdd6;
+
+        --warning-bg: #322b1d;
+        --warning-border: #574a2c;
+        --warning-text: #e3c98a;
 
         --overview: #c98d6b;
         --overview-hover: #d89e7d;
