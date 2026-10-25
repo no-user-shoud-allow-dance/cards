@@ -47,10 +47,12 @@
     // While the interface is blurred (break dialog or inactivity pause),
     // a keypress only lifts the blur: the key's action runs on the next
     // keypress, once the interface is interactive again. With the timer
-    // menu open, keys keep their normal behavior so the menu stays
+    // overlay open, keys are left alone so the overlay stays
     // keyboard-accessible.
     function handleKeydown(event: KeyboardEvent): void {
-        if (!timer.interfaceBlurred || showIntro || timer.menuOpen) {
+        if (timer.menuOpen) return;
+
+        if (!timer.interfaceBlurred || showIntro) {
             session.handleKeydown(event);
             return;
         }
@@ -88,7 +90,11 @@
 {#if !deck}
     <DeckNotFound />
 {:else}
-    <StudyLayout blurred={timer.interfaceBlurred && !showIntro} clockSpace>
+    <StudyLayout
+        blurred={timer.interfaceBlurred && !showIntro}
+        clockSpace
+        fullHeight
+    >
         {#snippet top()}
             {#if session.currentCard}
                 <StatusBar

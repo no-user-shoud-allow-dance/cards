@@ -4,6 +4,7 @@
     let {
         blurred = false,
         clockSpace = false,
+        fullHeight = false,
         top,
         center,
         bottom,
@@ -13,6 +14,8 @@
         blurred?: boolean;
         /** Reserve bottom padding for the floating study clock. */
         clockSpace?: boolean;
+        /** Fill the full viewport (no global header/footer chrome). */
+        fullHeight?: boolean;
         top?: Snippet;
         center: Snippet;
         bottom?: Snippet;
@@ -24,6 +27,7 @@
     class="study-page"
     class:interface-blurred={blurred}
     class:clock-space={clockSpace}
+    class:full-height={fullHeight}
 >
     {#if top}
         <div class="study-top">{@render top()}</div>
@@ -45,7 +49,11 @@
         min-height: calc(100vh - 3.5rem - var(--footer-h));
 
         margin-inline: auto;
-        padding: 1.5rem 1.5rem 2rem;
+        padding: 1.5rem 2rem 4rem 2rem;
+    }
+
+    .study-page.full-height {
+        min-height: 100vh;
     }
 
     .study-top {

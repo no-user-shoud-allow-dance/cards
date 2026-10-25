@@ -15,33 +15,38 @@
 <div class="break-overlay" in:fade={{ duration: 250 }}>
     <h2 class="break-title">Zeit für eine Pause!</h2>
 
-    <!-- Spacer matching the intro clock size so the content
-         appears below the centered clock. -->
+    <!-- Transparent spacer matching the clock dimensions. StudyClock
+         measures this element and centers itself on it. -->
     <div class="clock-spacer" aria-hidden="true"></div>
 
-    <!-- Red countdown: time remaining until the OK button is available. -->
-    <div class="countdown">
-        {formatCountdown(timer.okRemainingMs)}
-    </div>
+    <div class="break-bottom">
+        <!-- Red countdown: time remaining until the OK button is available. -->
+        <div class="countdown">
+            {formatCountdown(timer.okRemainingMs)}
+        </div>
 
-    <button
-        type="button"
-        class="ok-btn"
-        use:focusOnMount
-        class:override={timer.overrideOffered}
-        aria-disabled={!timer.okEnabled && !timer.overrideOffered}
-        onclick={timer.acknowledge}
-        ondblclick={timer.offerOverride}
-    >
-        {#if timer.overrideOffered}
-            Weitermachen (Überschreiben?)
-        {:else}
-            Weitermachen
-        {/if}
-    </button>
+        <button
+            type="button"
+            class="ok-btn"
+            use:focusOnMount
+            class:override={timer.overrideOffered}
+            aria-disabled={!timer.okEnabled && !timer.overrideOffered}
+            onclick={timer.acknowledge}
+            ondblclick={timer.offerOverride}
+        >
+            {#if timer.overrideOffered}
+                Weitermachen (Überschreiben?)
+            {:else}
+                Weitermachen
+            {/if}
+        </button>
+    </div>
 </div>
 
 <style>
+    /* space-between pins the title to the top, the spacer to the
+       middle, and the countdown/button to the bottom. StudyClock
+       measures the spacer and centers itself on it. */
     .break-overlay {
         position: fixed;
         inset: 0;
@@ -50,15 +55,18 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
+        gap: 1.25rem;
 
+        overflow: hidden;
         padding: 1.5rem;
 
         background: var(--bg);
     }
 
     .break-title {
-        margin: 0 0 0.75rem;
+        margin: 0;
+        flex-shrink: 0;
 
         font-size: clamp(1.3rem, 3vw, 1.7rem);
         font-weight: 600;
@@ -67,16 +75,22 @@
         text-align: center;
     }
 
-    /* Matches the intro-mode clock dimensions in StudyClock. */
+    /* Matches the break-mode clock dimensions in StudyClock. */
     .clock-spacer {
         width: 180px;
         height: 180px;
-        margin: 0.25rem 0 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .break-bottom {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+        flex-shrink: 0;
     }
 
     .countdown {
-        margin-bottom: 1.5rem;
-
         color: var(--success-text);
         font-size: 1.25rem;
         font-weight: 400;
@@ -124,13 +138,34 @@
     }
 
     @media (max-width: 540px) {
+        .break-overlay {
+            gap: 1rem;
+            padding: 1rem;
+        }
+
         .clock-spacer {
             width: 140px;
             height: 140px;
         }
 
+        .countdown {
+            font-size: 1.1rem;
+        }
+    }
+
+    /* Short viewports (small laptops, landscape phones): tighten
+       spacing so more content fits. */
+    @media (max-height: 600px) {
         .break-overlay {
-            padding: 1rem;
+            gap: 0.75rem;
+        }
+
+        .break-title {
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+        }
+
+        .break-bottom {
+            gap: 1rem;
         }
 
         .countdown {

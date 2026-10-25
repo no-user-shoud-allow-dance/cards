@@ -37,35 +37,42 @@
         Wie lange möchtest du heute lernen?
     </h2>
 
-    <!-- Spacer matching the intro clock size so the buttons
-         appear below the centered clock. -->
+    <!-- Transparent spacer matching the clock dimensions. StudyClock
+         measures this element and centers itself on it, so the clock
+         always sits in the gap between title and buttons. -->
     <div class="clock-spacer" aria-hidden="true"></div>
 
-    <div class="intro-presets">
-        {#each TIMER_PRESETS as preset, i (preset.ms)}
-            <button
-                type="button"
-                class="preset-btn"
-                style="animation-delay: {FIRST_PRESET_DELAY +
-                    i * PRESET_STAGGER}ms"
-                onclick={() => selectPreset(preset.ms)}
-            >
-                {preset.label}
-            </button>
-        {/each}
-    </div>
+    <div class="intro-bottom">
+        <div class="intro-presets">
+            {#each TIMER_PRESETS as preset, i (preset.ms)}
+                <button
+                    type="button"
+                    class="preset-btn"
+                    style="animation-delay: {FIRST_PRESET_DELAY +
+                        i * PRESET_STAGGER}ms"
+                    onclick={() => selectPreset(preset.ms)}
+                >
+                    {preset.label}
+                </button>
+            {/each}
+        </div>
 
-    <button
-        type="button"
-        class="skip-btn"
-        style="animation-delay: {skipDelay}ms"
-        onclick={skip}
-    >
-        Ohne Timer starten
-    </button>
+        <button
+            type="button"
+            class="skip-btn"
+            style="animation-delay: {skipDelay}ms"
+            onclick={skip}
+        >
+            Ohne Timer starten
+        </button>
+    </div>
 </div>
 
 <style>
+    /* space-between pins the title to the top, the spacer to the
+       middle, and the buttons to the bottom. The clock (StudyClock)
+       measures the spacer and centers itself on it, so it always
+       sits in the gap — never covering the title. */
     .intro-overlay {
         position: fixed;
         inset: 0;
@@ -74,15 +81,18 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
+        gap: 1.25rem;
 
-        padding: 1.5rem;
+        overflow: hidden;
+        padding: 2rem;
 
         background: var(--bg);
     }
 
     .intro-title {
-        margin: 0 0 0.75rem;
+        margin: 0;
+        flex-shrink: 0;
 
         font-size: clamp(1.3rem, 3vw, 1.7rem);
         font-weight: 600;
@@ -98,7 +108,17 @@
     .clock-spacer {
         width: 180px;
         height: 180px;
-        margin: 0.25rem 0 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .intro-bottom {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        flex-shrink: 0;
+
+        width: min(100%, 18rem);
     }
 
     .intro-presets {
@@ -106,10 +126,11 @@
         flex-direction: column;
         gap: 0.5rem;
 
-        width: min(100%, 18rem);
+        width: 100%;
     }
 
     .preset-btn {
+        min-height: 2.75rem;
         padding: 0.7rem 1.15rem;
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
@@ -142,7 +163,7 @@
     }
 
     .skip-btn {
-        margin-top: 1rem;
+        min-height: 2.5rem;
         padding: 0.4rem 0.75rem;
         border: 0;
 
@@ -185,13 +206,54 @@
     }
 
     @media (max-width: 540px) {
+        .intro-overlay {
+            gap: 1rem;
+            padding: 1rem;
+        }
+
         .clock-spacer {
             width: 140px;
             height: 140px;
         }
+    }
 
+    /* Short viewports (small laptops, landscape phones): tighten
+       spacing so more content fits. */
+    @media (max-height: 600px) {
         .intro-overlay {
-            padding: 1rem;
+            gap: 0.75rem;
+        }
+
+        .intro-title {
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+        }
+
+        .intro-bottom {
+            gap: 0.75rem;
+        }
+
+        .intro-presets {
+            gap: 0.35rem;
+        }
+    }
+
+    /* Very short viewports (landscape phones): switch the presets
+       to a 2-column grid so all six fit. */
+    @media (max-height: 460px) {
+        .intro-overlay {
+            gap: 0.5rem;
+        }
+
+        .intro-bottom {
+            gap: 0.5rem;
+        }
+
+        .intro-presets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem;
+
+            width: min(100%, 22rem);
         }
     }
 </style>

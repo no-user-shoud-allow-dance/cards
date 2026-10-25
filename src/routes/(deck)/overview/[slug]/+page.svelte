@@ -35,7 +35,7 @@
 {#if !deck}
     <DeckNotFound />
 {:else}
-    <StudyLayout>
+    <StudyLayout fullHeight>
         {#snippet top()}
             {#if session.currentCard}
                 <div class="overview-banner">
