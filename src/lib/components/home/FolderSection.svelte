@@ -1,5 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
+    import SectionLabel from "../shared/SectionLabel.svelte";
     import DeckCard from "./DeckCard.svelte";
 
     interface DeckInfo {
@@ -20,7 +21,7 @@
 </script>
 
 <section class="folder">
-    <h2 class="section-label">
+    <SectionLabel>
         <button
             type="button"
             class="folder-toggle"
@@ -31,7 +32,7 @@
             <span class="folder-title">{folder} · {decks.length} Stapel</span>
             <span class="folder-chevron" class:closed={!open} aria-hidden="true">▾</span>
         </button>
-    </h2>
+    </SectionLabel>
     {#if open}
         <div
             class="deck-grid"

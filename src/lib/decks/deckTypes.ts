@@ -20,15 +20,11 @@ export const DECK_TYPES: Record<DeckType, DeckTypeConfig> = {
     greek: { label: "Altgriechisch", language: "Altgriechischen", pureMode: true },
 };
 
-/** Maps content folders to deck types; unknown folders default to english. */
-const FOLDER_TYPES: Record<string, DeckType> = {
-    kairos: "greek",
-    latein: "latin",
-};
-
-export function deckTypeForFolder(folder: string): DeckType {
-    return FOLDER_TYPES[folder.toLowerCase()] ?? "english";
-}
+/** Deck types as [value, config] pairs, for select dropdowns. */
+export const DECK_TYPE_OPTIONS = Object.entries(DECK_TYPES) as [
+    DeckType,
+    DeckTypeConfig,
+][];
 
 const GREEK_CHAR = /[\u0370-\u03ff\u1f00-\u1fff]/;
 const LATIN_MACRON = /[āēīōū]/i;
@@ -37,8 +33,8 @@ const LATIN_ENDING =
 
 /**
  * Guesses the deck type from the card fronts: Greek by script, Latin by
- * macrons or typical endings on most fronts, English as the default (like
- * deckTypeForFolder). The result is a guess — the user can override it.
+ * macrons or typical endings on most fronts, English as the default.
+ * The result is a guess — the user can override it.
  */
 export function guessDeckType(raw: string): DeckType {
     const { cards } = parseDeck(raw);

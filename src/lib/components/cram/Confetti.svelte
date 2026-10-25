@@ -39,8 +39,11 @@
         }
 
         if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+        const context = canvas.getContext("2d");
+        if (!context) return;
+        // Alias with a non-nullable type so the animation closure below
+        // does not have to re-narrow on every frame.
+        const ctx: CanvasRenderingContext2D = context;
 
         const dpr = window.devicePixelRatio || 1;
         const width = window.innerWidth;

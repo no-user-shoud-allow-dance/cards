@@ -1,8 +1,7 @@
 <script lang="ts">
+    import { BOX_LABELS } from "#lib/utils/types";
     import { countCards } from "#lib/utils/pure";
     import ProgressBar from "../shared/ProgressBar.svelte";
-
-    const BOX_LABELS = ["I", "II", "III", "IV", "V", "Gelernt"];
 
     let {
         boxCounts,

@@ -23,7 +23,7 @@
     } = $props();
 </script>
 
-<a href={resolve("/cram/[slug]", { slug })} class="continue-card">
+<a href={resolve("/(deck)/cram/[slug]", { slug })} class="continue-card">
     <span class="continue-name">
         <span class="continue-folder">{folder}</span>
         {name}

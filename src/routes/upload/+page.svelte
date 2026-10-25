@@ -1,19 +1,19 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { DECK_TYPES, guessDeckType } from "#lib/decks/deckTypes";
+    import { DECK_TYPES, DECK_TYPE_OPTIONS, guessDeckType } from "#lib/decks/deckTypes";
     import { parseDeck } from "#lib/decks/parser";
     import { userDecks } from "#lib/store/userDecks.svelte";
     import { countCards } from "#lib/utils/pure";
     import type { DeckType } from "#lib/utils/types";
+    import Page from "#lib/components/shared/Page.svelte";
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
+    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
+    import Button from "#lib/components/shared/Button.svelte";
+    import Toggle from "#lib/components/shared/Toggle.svelte";
     import CardList from "#lib/components/deck/CardList.svelte";
 
-    const typeOptions = Object.entries(DECK_TYPES) as [
-        DeckType,
-        (typeof DECK_TYPES)[DeckType],
-    ][];
-
-    let fileInput = $state<HTMLInputElement | null>(null);
     let fileName = $state<string | null>(null);
     let raw = $state<string | null>(null);
     let name = $state("");
@@ -88,7 +88,7 @@
         busy = true;
         try {
             const { deck } = await userDecks.add(raw, name, folder, deckType);
-            goto(resolve("/deck/[slug]", { slug: deck.slug }));
+            goto(resolve("/(deck)/deck/[slug]", { slug: deck.slug }));
         } catch {
             error = "Die Datei konnte nicht gelesen werden.";
             busy = false;
@@ -100,14 +100,11 @@
     <title>Stapel hochladen – NSC</title>
 </svelte:head>
 
-<div class="page">
-    <header class="hero">
-        <h1>Stapel hochladen</h1>
-        <p class="subtitle">
-            Lade einen eigenen Stapel als .md-Datei hoch. Vor dem Speichern
-            siehst du eine Vorschau der Karten.
-        </p>
-    </header>
+<Page>
+    <PageHeader
+        title="Stapel hochladen"
+        subtitle="Lade einen eigenen Stapel als .md-Datei hoch. Vor dem Speichern siehst du eine Vorschau der Karten."
+    />
 
     <section class="upload-box" aria-label="Stapel hochladen">
         <form class="upload-body" onsubmit={onSubmit}>
@@ -117,7 +114,6 @@
                     id="upload-file"
                     type="file"
                     accept=".md,text/markdown"
-                    bind:this={fileInput}
                     onchange={onFileChange}
                 />
             </div>
@@ -144,19 +140,19 @@
                             (deckType = (event.currentTarget as HTMLSelectElement)
                                 .value as DeckType)}
                     >
-                        {#each typeOptions as [value, config]}
+                        {#each DECK_TYPE_OPTIONS as [value, config]}
                             <option value={value}>{config.label}</option>
                         {/each}
                     </select>
                 </div>
             </div>
-            <button
+            <Button
+                variant="primary"
                 type="submit"
-                class="submit"
                 disabled={busy || (preview?.errors.length ?? 0) > 0}
             >
                 {busy ? "Wird hochgeladen …" : "Hochladen"}
-            </button>
+            </Button>
             {#if error}
                 <p class="message message-error">{error}</p>
             {/if}
@@ -176,7 +172,7 @@
 
     {#if preview}
         <section class="preview" aria-label="Vorschau des Stapels">
-            <h2 class="section-label">Vorschau</h2>
+            <SectionLabel>Vorschau</SectionLabel>
             <div class="preview-head">
                 <strong class="preview-title">{previewTitle}</strong>
                 <span class="preview-meta">
@@ -184,10 +180,11 @@
                     {#if previewPureMode} · Pur-Modus{/if}
                 </span>
                 {#if pureModeAvailable}
-                    <label class="pure-toggle">
-                        <input type="checkbox" bind:checked={pureMode} />
-                        <span>Pur-Modus</span>
-                    </label>
+                    <Toggle
+                        label="Pur-Modus"
+                        checked={pureMode}
+                        onchange={(value) => (pureMode = value)}
+                    />
                 {/if}
             </div>
             {#if preview.errors.length > 0}
@@ -207,11 +204,11 @@
                     <CardList cards={preview.cards} pureMode={previewPureMode} />
                 </div>
             {:else}
-                <p class="empty">Keine Karten gefunden.</p>
+                <EmptyNote>Keine Karten gefunden.</EmptyNote>
             {/if}
         </section>
     {/if}
-</div>
+</Page>
 
 <style>
     .upload-box {
@@ -307,35 +304,6 @@
         gap: 0.9rem;
     }
 
-    .submit {
-        align-self: flex-start;
-
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-
-        padding: 0.7rem 1.4rem;
-
-        border: 0;
-        border-radius: var(--radius-md);
-
-        background: var(--primary);
-        color: var(--primary-text);
-
-        cursor: pointer;
-
-        transition: background var(--transition-fast);
-    }
-
-    .submit:hover:not(:disabled) {
-        background: var(--primary-hover);
-    }
-
-    .submit:disabled {
-        opacity: 0.6;
-        cursor: default;
-    }
-
     .hint {
         margin: 0;
         color: var(--text-muted);
@@ -393,72 +361,8 @@
         font-variant-numeric: tabular-nums;
     }
 
-    .pure-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.65rem;
-
+    .preview-head :global(.toggle) {
         margin-left: auto;
-
-        color: var(--text-muted);
-        font-size: 0.875rem;
-        font-weight: 500;
-
-        cursor: pointer;
-        user-select: none;
-    }
-
-    /* Custom switch, while preserving the native checkbox interaction. */
-    .pure-toggle input {
-        position: relative;
-        appearance: none;
-        flex: 0 0 auto;
-
-        width: 2.1rem;
-        height: 1.2rem;
-        margin: 0;
-
-        border: 1px solid var(--border-strong);
-        border-radius: var(--radius-pill);
-        background: var(--surface-soft);
-
-        cursor: pointer;
-        transition:
-            background var(--transition-fast),
-            border-color var(--transition-fast);
-    }
-
-    .pure-toggle input::after {
-        position: absolute;
-        top: 2px;
-        left: 2px;
-
-        width: 0.78rem;
-        height: 0.78rem;
-
-        border-radius: 50%;
-        transform: translateY(1px);
-
-        background: var(--text-muted);
-        content: "";
-        transition:
-            transform var(--transition-fast),
-            background var(--transition-fast);
-    }
-
-    .pure-toggle input:checked {
-        border-color: var(--primary);
-        background: var(--primary);
-    }
-
-    .pure-toggle input:checked::after {
-        transform: translateX(0.9rem) translateY(1px);
-        background: var(--primary-text);
-    }
-
-    .pure-toggle input:focus-visible {
-        outline: 3px solid var(--focus-ring);
-        outline-offset: 3px;
     }
 
     .preview .message-warn {

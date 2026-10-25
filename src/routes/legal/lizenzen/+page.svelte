@@ -1,4 +1,6 @@
 <script lang="ts">
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+
     // Verbatim license texts of the bundled third-party libraries, taken
     // from each package's LICENSE file ("MIT License" heading added where
     // the file starts directly with the copyright line).
@@ -67,26 +69,26 @@ SOFTWARE.`,
     <title>Lizenzen – NSC</title>
 </svelte:head>
 
-<div class="page legal">
-    <h1>Lizenzen</h1>
-    <p class="subtitle">Eingebundene Bibliotheken von Drittanbietern.</p>
+<PageHeader
+    title="Lizenzen"
+    subtitle="Eingebundene Bibliotheken von Drittanbietern."
+/>
 
+<p>
+    NSC selbst ist als Public Domain (Unlicense) freigegeben. Diese Seite
+    listet die Lizenzen der in die App eingebundenen Bibliotheken.
+</p>
+
+{#each libraries as lib (lib.name)}
+    <h2>{lib.name}</h2>
     <p>
-        NSC selbst ist als Public Domain (Unlicense) freigegeben. Diese Seite
-        listet die Lizenzen der in die App eingebundenen Bibliotheken.
+        {lib.description} Projektseite:
+        <a href={lib.projectUrl} target="_blank" rel="noopener noreferrer"
+            >GitHub</a
+        >
     </p>
-
-    {#each libraries as lib (lib.name)}
-        <h2>{lib.name}</h2>
-        <p>
-            {lib.description} Projektseite:
-            <a href={lib.projectUrl} target="_blank" rel="noopener noreferrer"
-                >GitHub</a
-            >
-        </p>
-        <pre class="license-text" lang="en">{lib.license}</pre>
-    {/each}
-</div>
+    <pre class="license-text" lang="en">{lib.license}</pre>
+{/each}
 
 <style>
     .license-text {

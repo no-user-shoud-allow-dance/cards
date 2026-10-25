@@ -1,5 +1,7 @@
 <script lang="ts">
     import { cardStore } from "#lib/store/store.svelte";
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import Term from "#lib/components/shared/Term.svelte";
     import Toggle from "#lib/components/shared/Toggle.svelte";
 </script>
 
@@ -7,165 +9,161 @@
     <title>Datenschutz – NSC</title>
 </svelte:head>
 
-<div class="page legal">
-    <h1>Datenschutzerklärung</h1>
-    <p class="subtitle">Kurz und verständlich erklärt.</p>
+<PageHeader
+    title="Datenschutzerklärung"
+    subtitle="Kurz und verständlich erklärt."
+/>
 
-    <p>
-        Haben Sie Fragen? Schreiben Sie an <a
-            href="mailto:nousad@web.de">nousad@web.de</a
-        >.
-    </p>
+<p>
+    Haben Sie Fragen? Schreiben Sie an <a
+        href="mailto:nousad@web.de">nousad@web.de</a
+    >.
+</p>
 
-    <h2>Ihre Daten bleiben auf Ihrem Gerät</h2>
-    <p>
-        NSC ist eine reine Browser-App ohne Nutzerkonten.
-        <span class="key-statement">
-            Es gibt <strong>keine</strong> Registrierung, und es werden
-            <strong>keine</strong> Daten auf einem Server gespeichert.
-        </span>
-        Alles, was anfällt, liegt lokal in Ihrem Browser:
-    </p>
-    <ul>
-        <li>
-            <span class="term term--primary">Local Storage</span>:
-            Lernfortschritt, Einstellungen (z. B.
-            <span class="term term--primary">Pur-Modus</span>), Lernzeit und
-            Timer.
-        </li>
-        <li>
-            <span class="term term--primary">IndexedDB</span>: Stapel, die Sie
-            selbst hochladen (Name, Ordner und Kartentext).
-        </li>
-    </ul>
-    <p>
-        <span class="key-statement">
-            Es werden <strong>keine</strong> Cookies gesetzt,
-            <strong>keine</strong> Tracker oder Analyse-Dienste eingesetzt und
-            <strong>keine</strong> Werbung angezeigt.
-        </span>
-        Die Übertragung der Seite erfolgt verschlüsselt über
-        <span class="term term--primary">HTTPS</span>.
-    </p>
-    <p>
-        Um vor nicht dauerhaft gespeicherten Daten zu warnen, prüft die App beim
-        Laden einmalig, ob Ihr Browser im Inkognito-/Privatmodus läuft. Diese
-        Prüfung läuft vollständig lokal in Ihrem Browser; es werden dabei keine
-        Daten übertragen.
-    </p>
-
-    <strong>Teilen-Links:</strong> Geteilte Stapel stecken komprimiert in der
-    URL (im Hash).
+<h2>Ihre Daten bleiben auf Ihrem Gerät</h2>
+<p>
+    NSC ist eine reine Browser-App ohne Nutzerkonten.
     <span class="key-statement">
-        Der Hash wird <strong>nicht</strong> an den Server gesendet.
+        Es gibt <strong>keine</strong> Registrierung, und es werden
+        <strong>keine</strong> Daten auf einem Server gespeichert.
     </span>
+    Alles, was anfällt, liegt lokal in Ihrem Browser:
+</p>
+<ul>
+    <li>
+        <Term>Local Storage</Term>:
+        Lernfortschritt, Einstellungen (z. B.
+        <Term>Pur-Modus</Term>), Lernzeit und
+        Timer.
+    </li>
+    <li>
+        <Term>IndexedDB</Term>: Stapel, die Sie
+        selbst hochladen (Name, Ordner und Kartentext).
+    </li>
+</ul>
+<p>
+    <span class="key-statement">
+        Es werden <strong>keine</strong> Cookies gesetzt,
+        <strong>keine</strong> Tracker oder Analyse-Dienste eingesetzt und
+        <strong>keine</strong> Werbung angezeigt.
+    </span>
+    Die Übertragung der Seite erfolgt verschlüsselt über
+    <Term>HTTPS</Term>.
+</p>
+<p>
+    Um vor nicht dauerhaft gespeicherten Daten zu warnen, prüft die App beim
+    Laden einmalig, ob Ihr Browser im Inkognito-/Privatmodus läuft. Diese
+    Prüfung läuft vollständig lokal in Ihrem Browser; es werden dabei keine
+    Daten übertragen.
+</p>
 
-    <h2>Dienste von Drittanbietern</h2>
-    <ul>
-        <li>
-            <strong>Hosting:</strong>
-            <br />
-            Die App wird über
-            <a
-                href="https://vercel.com/"
-                target="_blank"
-                rel="noopener noreferrer">Vercel</a
+<strong>Teilen-Links:</strong> Geteilte Stapel stecken komprimiert in der
+URL (im Hash).
+<span class="key-statement">
+    Der Hash wird <strong>nicht</strong> an den Server gesendet.
+</span>
+
+<h2>Dienste von Drittanbietern</h2>
+<ul>
+    <li>
+        <strong>Hosting:</strong>
+        <br />
+        Die App wird über
+        <a
+            href="https://vercel.com/"
+            target="_blank"
+            rel="noopener noreferrer">Vercel</a
+        >
+        ausgeliefert. Dabei verarbeitet der Anbieter technisch notwendige
+        <Term>Verbindungsdaten</Term> (z. B. Ihre
+        <Term>IP-Adresse</Term>), um die Seite zu
+        laden. Datenschutzerklärung:
+        <a
+            href="https://vercel.com/legal/privacy"
+            target="_blank"
+            rel="noopener noreferrer">Vercel</a
+        >
+    </li>
+    <li>
+        <strong>Schriftarten:</strong>
+        <br />
+        {#if cardStore.googleDisabled}
+            <i
+                >Ausgeschaltet — über den Schalter unten können Sie Google
+                wieder aktivieren.</i
             >
-            ausgeliefert. Dabei verarbeitet der Anbieter technisch notwendige
-            <span class="term term--primary">Verbindungsdaten</span> (z. B. Ihre
-            <span class="term term--primary">IP-Adresse</span>), um die Seite zu
-            laden. Datenschutzerklärung:
+        {:else}
+            Beim Laden der App werden Schriftarten von
+            <Term>Google Fonts</Term>
+            nachgeladen; dabei wird Ihre
+            <Term>IP-Adresse</Term>
+            an Google übertragen. Datenschutzerklärung:
             <a
-                href="https://vercel.com/legal/privacy"
+                href="https://policies.google.com/privacy"
                 target="_blank"
-                rel="noopener noreferrer">Vercel</a
+                rel="noopener noreferrer">Google</a
             >
-        </li>
-        <li>
-            <strong>Schriftarten:</strong>
-            <br />
-            {#if cardStore.googleDisabled}
-                <i
-                    >Ausgeschaltet — über den Schalter unten können Sie Google
-                    wieder aktivieren.</i
-                >
-            {:else}
-                Beim Laden der App werden Schriftarten von
-                <span class="term term--primary">Google Fonts</span>
-                nachgeladen; dabei wird Ihre
-                <span class="term term--primary">IP-Adresse</span>
-                an Google übertragen. Datenschutzerklärung:
-                <a
-                    href="https://policies.google.com/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer">Google</a
-                >
-            {/if}
-        </li>
-        <li>
-            <strong>Hilfe- und Mnemotechnik-Suche:</strong>
-            <br />
-            {#if cardStore.googleDisabled}
-                <i
-                    >Ausgeschaltet — über den Schalter unten können Sie Google
-                    wieder aktivieren.</i
-                >
-            {:else}
-                Diese Schaltflächen öffnen eine
-                <span class="term term--primary">Google-Suche</span> in einem
-                neuen Tab. Dabei wird eine Suchanfrage mit dem jeweiligen Wort
-                an Google übertragen — erst auf Ihren Klick hin.
-                Datenschutzerklärung:
-                <a
-                    href="https://policies.google.com/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer">Google</a
-                >
-            {/if}
-        </li>
-    </ul>
+        {/if}
+    </li>
+    <li>
+        <strong>Hilfe- und Mnemotechnik-Suche:</strong>
+        <br />
+        {#if cardStore.googleDisabled}
+            <i
+                >Ausgeschaltet — über den Schalter unten können Sie Google
+                wieder aktivieren.</i
+            >
+        {:else}
+            Diese Schaltflächen öffnen eine
+            <Term>Google-Suche</Term> in einem
+            neuen Tab. Dabei wird eine Suchanfrage mit dem jeweiligen Wort
+            an Google übertragen — erst auf Ihren Klick hin.
+            Datenschutzerklärung:
+            <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer">Google</a
+            >
+        {/if}
+    </li>
+</ul>
 
-    <div class="google-toggle">
-        <Toggle
-            label="Google erlauben"
-            checked={!cardStore.googleDisabled}
-            onchange={(value) => cardStore.setGoogleDisabled(!value)}
-        />
-        <p>
-            Lädt Schriftarten von Google Fonts nach und blendet die Hilfe- und
-            Mnemotechnik-Suche ein, die eine Google-Suche öffnet.
-        </p>
-    </div>
-
-    <h2>Inhalte und Urheberrecht</h2>
-    <ul>
-        <li>
-            <strong>Mitgelieferte Stapel</strong> stammen von ihren ursprünglichen
-            Autorinnen und Autoren; die Rechte daran bleiben bei ihnen.
-        </li>
-        <li>
-            <strong>Hochgeladene Stapel</strong> stammen von Ihnen. Sie sind dafür
-            verantwortlich, dass Sie die nötigen Rechte an den Inhalten besitzen.
-        </li>
-        <li>
-            <strong>Geteilte Stapel</strong> gehen an die Personen, denen Sie den
-            Link schicken. Teilen Sie nur Inhalte, die Sie verbreiten dürfen.
-        </li>
-    </ul>
+<div class="google-toggle">
+    <Toggle
+        label="Google erlauben"
+        checked={!cardStore.googleDisabled}
+        onchange={(value) => cardStore.setGoogleDisabled(!value)}
+    />
     <p>
-        Die Software selbst ist als Public Domain (Unlicense) freigegeben und
-        darf frei genutzt, verändert und weitergegeben werden.
-    </p>
-
-    <h2>Fragen oder Daten löschen?</h2>
-    <p>
-        Da alles lokal in Ihrem Browser gespeichert ist, können Sie Ihre Daten
-        jederzeit löschen, indem Sie die
-        <span class="term term--primary">Website-Daten</span> dieser Seite in
-        den Einstellungen Ihres Browsers entfernen. Bei Fragen schreiben Sie an
-        <a href="mailto:nousad@web.de">nousad@web.de</a>.
+        Lädt Schriftarten von Google Fonts nach und blendet die Hilfe- und
+        Mnemotechnik-Suche ein, die eine Google-Suche öffnet.
     </p>
 </div>
+
+<h2>Inhalte und Urheberrecht</h2>
+<ul>
+    <li>
+        <strong>Hochgeladene Stapel</strong> stammen von Ihnen. Sie sind dafür
+        verantwortlich, dass Sie die nötigen Rechte an den Inhalten besitzen.
+    </li>
+    <li>
+        <strong>Geteilte Stapel</strong> gehen an die Personen, denen Sie den
+        Link schicken. Teilen Sie nur Inhalte, die Sie verbreiten dürfen.
+    </li>
+</ul>
+<p>
+    Die Software selbst ist als Public Domain (Unlicense) freigegeben und
+    darf frei genutzt, verändert und weitergegeben werden.
+</p>
+
+<h2>Fragen oder Daten löschen?</h2>
+<p>
+    Da alles lokal in Ihrem Browser gespeichert ist, können Sie Ihre Daten
+    jederzeit löschen, indem Sie die
+    <Term>Website-Daten</Term> dieser Seite in
+    den Einstellungen Ihres Browsers entfernen. Bei Fragen schreiben Sie an
+    <a href="mailto:nousad@web.de">nousad@web.de</a>.
+</p>
 
 <style>
     i {

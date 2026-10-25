@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { getDeck, getDeckRaw } from "#lib/decks/loader";
+    import { userDecks } from "#lib/store/userDecks.svelte";
     import {
         encodeDeckShare,
         formatShareLength,
         SHARE_HASH_LIMIT,
     } from "#lib/utils/share";
+    import Button from "./Button.svelte";
 
     let { slug }: { slug: string } = $props();
 
@@ -26,10 +27,9 @@
     }
 
     async function onShare(): Promise<void> {
-        const raw = getDeckRaw(slug);
-        if (raw === null) return;
-        const deckType = getDeck(slug)?.deckType ?? "latin";
-        const payload = await encodeDeckShare(raw, deckType);
+        const deck = userDecks.get(slug);
+        if (!deck) return;
+        const payload = await encodeDeckShare(deck.raw, deck.deckType);
         shareLength = payload.length;
         const url = `${window.location.origin}/#${payload}`;
         if (shareLength > SHARE_HASH_LIMIT) {
@@ -41,9 +41,9 @@
     }
 </script>
 
-<button type="button" class="share-button" onclick={onShare}>
+<Button onclick={onShare}>
     {shareState === "copied" ? "Link kopiert ✓" : "Teilen"}
-</button>
+</Button>
 
 {#if shareState === "warning" || shareState === "failed"}
     <div class="share-overlay" role="dialog" aria-modal="true" aria-label="Link teilen">
@@ -58,12 +58,12 @@
                 </p>
                 <p>Link trotzdem kopieren?</p>
                 <div class="share-dialog-actions">
-                    <button type="button" class="primary" onclick={() => copy(shareUrl)}>
+                    <Button variant="primary" onclick={() => copy(shareUrl)}>
                         Trotzdem kopieren
-                    </button>
-                    <button type="button" class="secondary" onclick={() => (shareState = "idle")}>
+                    </Button>
+                    <Button onclick={() => (shareState = "idle")}>
                         Abbrechen
-                    </button>
+                    </Button>
                 </div>
             {:else}
                 <h2>Link teilen</h2>
@@ -78,9 +78,9 @@
                     onclick={(event) => event.currentTarget.select()}
                 />
                 <div class="share-dialog-actions">
-                    <button type="button" class="primary" onclick={() => (shareState = "idle")}>
+                    <Button variant="primary" onclick={() => (shareState = "idle")}>
                         Schließen
-                    </button>
+                    </Button>
                 </div>
             {/if}
         </div>
@@ -88,31 +88,6 @@
 {/if}
 
 <style>
-    .share-button {
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-
-        padding: 0.7rem 1.15rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface);
-        color: var(--text);
-
-        cursor: pointer;
-
-        transition:
-            border-color var(--transition-fast),
-            background var(--transition-fast);
-    }
-
-    .share-button:hover {
-        border-color: var(--border-strong);
-        background: var(--surface-hover);
-    }
-
     .share-overlay {
         position: fixed;
         inset: 0;
@@ -175,49 +150,5 @@
         gap: 0.75rem;
 
         margin-top: 1rem;
-    }
-
-    .share-dialog-actions .primary {
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-
-        padding: 0.7rem 1.15rem;
-
-        border: 0;
-        border-radius: var(--radius-md);
-
-        background: var(--primary);
-        color: var(--primary-text);
-
-        cursor: pointer;
-
-        transition: background var(--transition-fast);
-    }
-
-    .share-dialog-actions .primary:hover {
-        background: var(--primary-hover);
-    }
-
-    .share-dialog-actions .secondary {
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-
-        padding: 0.7rem 1.15rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface);
-        color: var(--text);
-
-        cursor: pointer;
-
-        transition: background var(--transition-fast);
-    }
-
-    .share-dialog-actions .secondary:hover {
-        background: var(--surface-hover);
     }
 </style>

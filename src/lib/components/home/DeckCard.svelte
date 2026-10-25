@@ -13,7 +13,7 @@
     } = $props();
 </script>
 
-<a href={resolve("/deck/[slug]", { slug })} class="deck-card">
+<a href={resolve("/(deck)/deck/[slug]", { slug })} class="deck-card">
     <span class="deck-name">{name}</span>
     <span class="deck-meta">{countCards(count)}</span>
     <span class="deck-arrow" aria-hidden="true">→</span>

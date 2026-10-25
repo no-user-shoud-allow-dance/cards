@@ -1,10 +1,14 @@
-import { slugify } from "../decks/decks";
+import { DECK_TYPES } from "../decks/deckTypes";
 import { parseDeck } from "../decks/parser";
-import type { DeckType, UserDeck } from "../utils/types";
+import type { DeckType, LoadedDeck, UserDeck } from "../utils/types";
 
 const DB_NAME = "nsc-user-decks";
 const DB_VERSION = 1;
 const STORE_NAME = "decks";
+
+function slugify(value: string): string {
+    return value.toLowerCase().replaceAll("/", "-").replaceAll(" ", "-");
+}
 
 function openDatabase(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -33,11 +37,15 @@ export interface AddUserDeckResult {
 /**
  * User-uploaded decks, persisted in IndexedDB. Decks live only in the
  * user's browser — they are never sent to a server or committed to a repo.
+ * The store is also the single source for parsed decks: `load()` turns a
+ * stored deck into a LoadedDeck (cached per deck object, so a renamed or
+ * moved entry is parsed again).
  */
 class UserDeckStore {
     decks = $state<Record<string, UserDeck>>({});
     #dbPromise: Promise<IDBDatabase> | null = null;
     #initPromise: Promise<void> | null = null;
+    #loadedCache = new WeakMap<UserDeck, LoadedDeck>();
 
     /** Loads all stored decks; resolves immediately during SSR. Idempotent. */
     init(): Promise<void> {
@@ -66,8 +74,34 @@ class UserDeckStore {
         return this.#dbPromise;
     }
 
+    /** The stored (raw) deck for a slug, if any. */
     get(slug: string): UserDeck | undefined {
         return this.decks[slug];
+    }
+
+    /** The parsed deck for a slug, or null when the slug is unknown. */
+    load(slug: string): LoadedDeck | null {
+        const deck = this.decks[slug];
+        if (!deck) return null;
+        let loaded = this.#loadedCache.get(deck);
+        if (!loaded) {
+            const parsed = parseDeck(deck.raw);
+            loaded = {
+                slug: deck.slug,
+                folder: deck.folder,
+                name: deck.name,
+                deckType: deck.deckType,
+                pureMode: DECK_TYPES[deck.deckType].pureMode,
+                title: parsed.title,
+                cards: parsed.cards.map((card, index) => ({
+                    ...card,
+                    id: `${deck.slug}/${index}`,
+                })),
+                errors: parsed.errors,
+            };
+            this.#loadedCache.set(deck, loaded);
+        }
+        return loaded;
     }
 
     async add(

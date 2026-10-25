@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { getDeck } from "#lib/decks/loader";
     import { userDecks } from "#lib/store/userDecks.svelte";
     import { useCramSession } from "#lib/composables/useCramSession.svelte";
     import FlashCard from "#lib/components/cram/FlashCard.svelte";
@@ -12,24 +11,27 @@
     import CramIntro from "#lib/components/cram/CramIntro.svelte";
     import CramBreak from "#lib/components/cram/CramBreak.svelte";
     import Confetti from "#lib/components/cram/Confetti.svelte";
+    import StudyLayout from "#lib/components/shared/StudyLayout.svelte";
+    import DeckNotFound from "#lib/components/deck/DeckNotFound.svelte";
+    import DeckEmpty from "#lib/components/deck/DeckEmpty.svelte";
 
     let { data } = $props();
 
-    let deck = $derived(getDeck(data.slug));
+    let deck = $derived(userDecks.load(data.slug));
 
-    const session = useCramSession(() => getDeck(data.slug));
+    const session = useCramSession(() => userDecks.load(data.slug));
 
     const timer = useStudyTimer(() => data.slug);
     timer.observe(session);
 
     // Intro sequence: the timer flies to center and the user picks a
     // session duration. Only shown when no timer is configured yet.
-    let mounted = $state(false);
+    // The parent layout mounts this page only after the user's decks
+    // (IndexedDB) are loaded, so no extra gating is needed here.
     let introCompleted = $state(false);
 
     const showIntro = $derived(
-        mounted &&
-            !introCompleted &&
+        !introCompleted &&
             deck !== null &&
             deck.cards.length > 0 &&
             !session.finished &&
@@ -73,11 +75,7 @@
     }
 
     onMount(() => {
-        // Wait for user-uploaded decks (IndexedDB) before starting.
-        userDecks.init().then(() => {
-            mounted = true;
-            session.start();
-        });
+        session.start();
     });
 </script>
 
@@ -88,17 +86,11 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if !deck}
-    <div class="page">
-        <p>Stapel nicht gefunden.</p>
-    </div>
+    <DeckNotFound />
 {:else}
-    <div class="cram-page" class:interface-blurred={timer.interfaceBlurred && !showIntro}>
-        {#if deck.cards.length === 0}
-            <div class="cram-empty">
-                <p class="empty">Dieser Stapel enthält keine Karten.</p>
-            </div>
-        {:else if session.currentCard}
-            <div class="cram-top">
+    <StudyLayout blurred={timer.interfaceBlurred && !showIntro} clockSpace>
+        {#snippet top()}
+            {#if session.currentCard}
                 <StatusBar
                     boxCounts={session.boxCounts}
                     currentBox={session.currentBox}
@@ -106,9 +98,13 @@
                     totalCards={deck.cards.length}
                     progressRatio={session.progressRatio}
                 />
-            </div>
+            {/if}
+        {/snippet}
 
-            <div class="cram-center">
+        {#snippet center()}
+            {#if deck.cards.length === 0}
+                <DeckEmpty />
+            {:else if session.currentCard}
                 {#key session.currentCardId}
                     <FlashCard
                         frontText={session.frontText}
@@ -117,9 +113,18 @@
                         onFlip={session.toggleFlip}
                     />
                 {/key}
-            </div>
+            {:else if session.finished}
+                <SessionComplete
+                    slug={data.slug}
+                    cardIds={deck.cards.map((c) => c.id)}
+                />
+            {:else}
+                <DeckEmpty text="Keine Karten verfügbar." />
+            {/if}
+        {/snippet}
 
-            <div class="cram-bottom">
+        {#snippet bottom()}
+            {#if session.currentCard}
                 <StudyControls
                     revealed={session.revealed}
                     canGoBack={session.undoStack.length > 0}
@@ -130,93 +135,27 @@
                     onHelp={session.openHelpSearch}
                     onMnemonic={session.openMnemonicSearch}
                 />
-            </div>
-        {:else if session.finished}
-            <div class="cram-center">
-                <SessionComplete
-                    slug={data.slug}
-                    cardIds={deck.cards.map((c) => c.id)}
-                />
-            </div>
-        {:else}
-            <div class="cram-empty">
-                <p class="empty">Keine Karten verfügbar.</p>
-            </div>
-        {/if}
+            {/if}
+        {/snippet}
 
-        {#if showIntro}
-            <CramIntro {timer} onDone={completeIntro} />
-        {/if}
+        {#snippet overlays()}
+            {#if showIntro}
+                <CramIntro {timer} onDone={completeIntro} />
+            {/if}
 
-        {#if timer.finishedAt !== null}
-            <CramBreak {timer} />
-        {/if}
+            {#if timer.finishedAt !== null}
+                <CramBreak {timer} />
+            {/if}
 
-        {#if session.box2Celebration}
-            <Confetti onDone={session.dismissBox2Celebration} />
-        {/if}
+            {#if session.box2Celebration}
+                <Confetti onDone={session.dismissBox2Celebration} />
+            {/if}
 
-        <StudyClock {timer} intro={showIntro} breakMode={timer.finishedAt !== null} />
-    </div>
+            <StudyClock
+                {timer}
+                intro={showIntro}
+                breakMode={timer.finishedAt !== null}
+            />
+        {/snippet}
+    </StudyLayout>
 {/if}
-
-<style>
-    .cram-page {
-        display: flex;
-        flex-direction: column;
-
-        width: min(100%, var(--content-width));
-        min-height: calc(100vh - 3.5rem - var(--footer-h));
-        margin-inline: auto;
-        padding: 1.5rem 1.5rem 2rem;
-    }
-
-    .cram-top {
-        flex: 0 0 auto;
-    }
-
-    .cram-center {
-        position: relative;
-
-        display: flex;
-        flex: 1 1 auto;
-        flex-direction: column;
-        justify-content: center;
-        min-height: 0;
-    }
-
-    .cram-bottom {
-        flex: 0 0 auto;
-        margin-top: 1rem;
-    }
-
-    .cram-empty {
-        display: flex;
-        flex: 1 1 auto;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* While the timer is paused or the break dialog is shown, the
-       interface blurs — except the header (outside this page) and the
-       timer itself (.clock-zone). */
-    .cram-page > .cram-top,
-    .cram-page > .cram-center,
-    .cram-page > .cram-bottom,
-    .cram-page > .cram-empty {
-        transition: filter var(--transition-normal);
-    }
-
-    .cram-page.interface-blurred > .cram-top,
-    .cram-page.interface-blurred > .cram-center,
-    .cram-page.interface-blurred > .cram-bottom,
-    .cram-page.interface-blurred > .cram-empty {
-        filter: blur(5px);
-    }
-
-    @media (max-width: 540px) {
-        .cram-page {
-            padding: 1rem 1rem 4.75rem;
-        }
-    }
-</style>

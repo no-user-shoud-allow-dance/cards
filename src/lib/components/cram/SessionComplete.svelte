@@ -1,9 +1,10 @@
 <script lang="ts">
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import ResetProgress from "../shared/ResetProgress.svelte";
     import { studyTimeStore } from "#lib/store/studyTimeStore.svelte";
     import { formatStudyTime } from "#lib/utils/time";
+    import Button from "../shared/Button.svelte";
+    import ResetProgress from "../shared/ResetProgress.svelte";
 
     let {
         slug,
@@ -29,7 +30,9 @@
     {/if}
 
     <div class="done-actions">
-        <a class="secondary" href={resolve("/deck/[slug]", { slug })}>Zurück zum Stapel</a>
+        <Button variant="secondary" href={resolve("/(deck)/deck/[slug]", { slug })}>
+            Zurück zum Stapel
+        </Button>
         <ResetProgress {cardIds} slug={slug} />
     </div>
 </div>
@@ -79,50 +82,13 @@
         gap: 0.75rem;
     }
 
-    .done-actions :global(.reset-progress) {
-        margin-top: 0;
-    }
-
-    .done .secondary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-
-        min-height: 2.8rem;
-        padding: 0.7rem 1.15rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface);
-        color: var(--text);
-
-        font-size: 0.875rem;
-        font-weight: 600;
-
-        text-decoration: none;
-
-        transition:
-            border-color var(--transition-fast),
-            background var(--transition-fast);
-    }
-
-    .done .secondary:hover:not(:disabled) {
-        border-color: var(--border-strong);
-        background: var(--surface-hover);
-    }
-
-    .done .secondary:disabled {
-        opacity: 0.4;
-    }
-
     @media (max-width: 540px) {
         .done-actions {
             flex-direction: column;
         }
 
-        .done-actions :global(.reset-progress),
-        .done-actions .secondary {
+        .done-actions :global(.btn),
+        .done-actions :global(.reset-button) {
             width: 100%;
         }
     }

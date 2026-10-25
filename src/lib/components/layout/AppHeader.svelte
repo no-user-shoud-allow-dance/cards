@@ -1,8 +1,9 @@
 <script lang="ts">
     import { cardStore } from "#lib/store/store.svelte";
-    import { getDeck } from "#lib/decks/loader";
+    import { userDecks } from "#lib/store/userDecks.svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
+    import Toggle from "../shared/Toggle.svelte";
 
     const formatSlug = (slug: string) =>
         slug
@@ -16,7 +17,7 @@
     let isCramPage = $derived(routePath.startsWith("/cram/"));
     let isOverviewPage = $derived(routePath.startsWith("/overview/"));
     let slug = $derived(page.params.slug ?? "");
-    let deck = $derived(slug ? getDeck(slug) : null);
+    let deck = $derived(slug ? userDecks.load(slug) : null);
 
     let deckName = $derived(
         deck?.name || formatSlug(slug) || "Stapel",
@@ -31,7 +32,7 @@
 </script>
 
 <header class="app-header">
-    <a class="brand" href={resolve("/")}>
+    <a class="brand" href={resolve("/")} aria-label="NSC – zur Startseite">
         <span class="brand-mark" aria-hidden="true">
             <svg
                 width="18"
@@ -63,7 +64,6 @@
                 />
             </svg>
         </span>
-        <!-- <span class="brand-name">NSC</span> -->
     </a>
 
     <nav class="breadcrumbs" aria-label="Brotkrumennavigation">
@@ -91,7 +91,7 @@
             {:else if isCramPage}
                 <li>
                     <span class="separator" aria-hidden="true">/</span>
-                    <a href={resolve("/deck/[slug]", { slug })}>{deckName}</a>
+                    <a href={resolve("/(deck)/deck/[slug]", { slug })}>{deckName}</a>
                 </li>
                 <li>
                     <span class="separator" aria-hidden="true">/</span>
@@ -100,7 +100,7 @@
             {:else if isOverviewPage}
                 <li>
                     <span class="separator" aria-hidden="true">/</span>
-                    <a href={resolve("/deck/[slug]", { slug })}>{deckName}</a>
+                    <a href={resolve("/(deck)/deck/[slug]", { slug })}>{deckName}</a>
                 </li>
                 <li>
                     <span class="separator" aria-hidden="true">/</span>
@@ -111,14 +111,11 @@
     </nav>
 
     {#if pureModeAvailable}
-        <label class="pure-toggle">
-            <input
-                type="checkbox"
-                checked={cardStore.pureMode}
-                onchange={(e) => cardStore.setPureMode(e.currentTarget.checked)}
-            />
-            <span>Pur-Modus</span>
-        </label>
+        <Toggle
+            label="Pur-Modus"
+            checked={cardStore.pureMode}
+            onchange={(value) => cardStore.setPureMode(value)}
+        />
     {/if}
 </header>
 
@@ -145,30 +142,6 @@
         background: var(--surface);
 
         color: var(--primary);
-    }
-
-    .brand-name {
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        
-        font-size: 0.95rem;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-
-        width: 0px;
-        overflow: hidden;
-        transition: 0.3s width ease;
-    }
-
-    .brand:hover .brand-name, .brand-name:hover {
-        width: 2.3rem;
-    }
-
-    @media (max-width: 640px) {
-        .brand-name {
-            display: none;
-        }
     }
 
     .breadcrumbs {
@@ -250,72 +223,5 @@
 
         background: var(--surface);
         border-bottom: 1px solid var(--border);
-    }
-
-    .pure-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.65rem;
-
-        color: var(--text-muted);
-        font-size: 0.875rem;
-        font-weight: 500;
-
-        cursor: pointer;
-        user-select: none;
-    }
-
-    /* Custom switch, while preserving the native checkbox interaction. */
-
-    .pure-toggle input {
-        position: relative;
-        appearance: none;
-        flex: 0 0 auto;
-
-        width: 2.1rem;
-        height: 1.2rem;
-        margin: 0;
-
-        border: 1px solid var(--border-strong);
-        border-radius: var(--radius-pill);
-        background: var(--surface-soft);
-
-        cursor: pointer;
-        transition:
-            background var(--transition-fast),
-            border-color var(--transition-fast);
-    }
-
-    .pure-toggle input::after {
-        position: absolute;
-        top: 2px;
-        left: 2px;
-
-        width: 0.78rem;
-        height: 0.78rem;
-
-        border-radius: 50%;
-        transform: translateY(1px);
-
-        background: var(--text-muted);
-        content: "";
-        transition:
-            transform var(--transition-fast),
-            background var(--transition-fast);
-    }
-
-    .pure-toggle input:checked {
-        border-color: var(--primary);
-        background: var(--primary);
-    }
-
-    .pure-toggle input:checked::after {
-        transform: translateX(0.9rem) translateY(1px);
-        background: var(--primary-text);
-    }
-
-    .pure-toggle input:focus-visible {
-        outline: 3px solid var(--focus-ring);
-        outline-offset: 3px;
     }
 </style>

@@ -3,17 +3,13 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { slide } from "svelte/transition";
-    import { DECK_TYPES } from "#lib/decks/deckTypes";
+    import { DECK_TYPE_OPTIONS } from "#lib/decks/deckTypes";
     import { parseDeck } from "#lib/decks/parser";
     import { userDecks } from "#lib/store/userDecks.svelte";
     import { countCards } from "#lib/utils/pure";
     import { decodeDeckShare, SHARE_PREFIX } from "#lib/utils/share";
     import type { DeckType } from "#lib/utils/types";
-
-    const typeOptions = Object.entries(DECK_TYPES) as [
-        DeckType,
-        (typeof DECK_TYPES)[DeckType],
-    ][];
+    import Button from "../shared/Button.svelte";
 
     interface PendingShare {
         raw: string;
@@ -66,7 +62,7 @@
             );
             clearHash();
             pending = null;
-            goto(resolve("/deck/[slug]", { slug: deck.slug }));
+            goto(resolve("/(deck)/deck/[slug]", { slug: deck.slug }));
         } finally {
             busy = false;
         }
@@ -89,9 +85,7 @@
             <span>Der Link ist ungültig oder beschädigt.</span>
         </div>
         <div class="share-actions">
-            <button type="button" class="secondary" onclick={dismiss}>
-                Schließen
-            </button>
+            <Button onclick={dismiss}>Schließen</Button>
         </div>
     </section>
 {:else if pending}
@@ -115,18 +109,16 @@
                     (deckType = (event.currentTarget as HTMLSelectElement)
                         .value as DeckType)}
             >
-                {#each typeOptions as [value, config]}
+                {#each DECK_TYPE_OPTIONS as [value, config]}
                     <option value={value}>{config.label}</option>
                 {/each}
             </select>
         </label>
         <div class="share-actions">
-            <button type="button" class="primary" onclick={importDeck} disabled={busy}>
+            <Button variant="primary" onclick={importDeck} disabled={busy}>
                 {busy ? "Wird importiert …" : "Importieren"}
-            </button>
-            <button type="button" class="secondary" onclick={dismiss}>
-                Ignorieren
-            </button>
+            </Button>
+            <Button onclick={dismiss}>Ignorieren</Button>
         </div>
     </section>
 {/if}
@@ -190,54 +182,5 @@
     .share-actions {
         display: flex;
         gap: 0.6rem;
-    }
-
-    .share-actions .primary {
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-
-        padding: 0.6rem 1.1rem;
-
-        border: 0;
-        border-radius: var(--radius-md);
-
-        background: var(--primary);
-        color: var(--primary-text);
-
-        cursor: pointer;
-
-        transition: background var(--transition-fast);
-    }
-
-    .share-actions .primary:hover:not(:disabled) {
-        background: var(--primary-hover);
-    }
-
-    .share-actions .primary:disabled {
-        opacity: 0.6;
-        cursor: default;
-    }
-
-    .share-actions .secondary {
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-
-        padding: 0.6rem 1.1rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface);
-        color: var(--text);
-
-        cursor: pointer;
-
-        transition: background var(--transition-fast);
-    }
-
-    .share-actions .secondary:hover {
-        background: var(--surface-hover);
     }
 </style>
