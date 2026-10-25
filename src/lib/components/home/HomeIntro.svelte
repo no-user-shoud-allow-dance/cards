@@ -46,32 +46,40 @@
         {#if showIntro}
             <div class="intro-body" transition:slide={{ duration: 200 }}>
                 <p>
-                    Lerne mit Karteikarten in Ordnern und Stapeln. Dabei
-                    durchläufst du drei Phasen:
-                    <br />
+                    Lerne mit Karteikarten in Ordnern und Stapeln – jeder Stapel
+                    durchläuft dabei drei Phasen:
                     <Term variant="overview">Übersicht</Term>,
                     <Term variant="primary">Lernen</Term> und
                     <Term variant="success">Gelernt</Term>.
                 </p>
                 <hr />
                 <p>
-                    In der <Term variant="overview">Übersicht</Term> siehst du
-                    alle Karten mit direkt eingeblendeter Antwort.
+                    In der <Term variant="overview">Übersicht</Term> siehst du alle
+                    Karten eines Stapels zum ersten Mal – die Antwort ist direkt
+                    eingeblendet, ganz ohne Bewertung.
                 </p>
                 <p>
-                    Beim <Term variant="primary">Lernen</Term> bewertest du
-                    jede Karte nach dem Leitner-System – von
-                    <Term variant="primary">I</Term> bis
-                    <Term variant="primary">V</Term> und dann in
-                    <Term variant="success">Gelernt</Term>. Falsch
-                    beantwortete Karten rutschen zurück in
-                    <Term variant="primary">I</Term>. Ein optionaler Timer
-                    erinnert dich an Pausen.
+                    Beim <Term variant="primary">Lernen</Term> bewertest du jede
+                    Karte: Richtige Antworten schieben die Karte eine Box weiter,
+                    von
+                    <Term variant="primary">I</Term> bis <Term variant="primary"
+                        >V</Term
+                    > – dann gilt sie als <Term variant="success">Gelernt</Term
+                    >. Falsche Antworten wandern zurück in <Term
+                        variant="primary">I</Term
+                    > und werden so automatisch häufiger wiederholt.
+                </p>
+                <hr />
+                <p>
+                    Der optionale <Term variant="primary">Timer</Term> zählt nur
+                    aktive Lernzeit. Nach jeder Session folgt eine Pause von einem
+                    Sechstel der Session-Dauer – per Doppelklick auf die Schaltfläche
+                    überspringst du sie und lernst sofort weiter.
                 </p>
                 <p>
-                    Sind alle Karten <Term variant="success">Gelernt</Term>,
-                    kannst du den Fortschritt jederzeit zurücksetzen und von
-                    vorne beginnen.
+                    Ist ein Stapel <Term variant="success">Gelernt</Term>, lässt
+                    sich der Fortschritt zurücksetzen – und das Lernen beginnt
+                    von vorne.
                 </p>
             </div>
         {/if}
