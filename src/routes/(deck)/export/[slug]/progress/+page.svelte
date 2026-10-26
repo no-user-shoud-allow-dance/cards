@@ -14,13 +14,14 @@
     import { formatStudyTime } from "#lib/utils/time";
     import Page from "#lib/app/components/shared/Page.svelte";
     import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
-    import DeckNotFound from "#lib/decks/components/DeckNotFound.svelte";
+    import type { UserDeck } from "#lib/utils/types";
     import ShareLinkCard from "#lib/sharing/components/ShareLinkCard.svelte";
     import Button from "#lib/app/components/shared/Button.svelte";
 
     let { data } = $props();
 
-    const deck = $derived(userDecks.get(data.slug));
+    // The (deck) layout renders this page only when the deck exists.
+    const deck = $derived(userDecks.get(data.slug) as UserDeck);
 
     let progressUrl = $state("");
     let shareLength = $state(0);
@@ -40,16 +41,7 @@
 
     // (Re)build the progress link whenever the deck changes.
     $effect(() => {
-        const current = deck;
-        if (!current) {
-            progressUrl = "";
-            shareLength = 0;
-            learnedCount = 0;
-            overviewDone = false;
-            studyTimeMs = 0;
-            return;
-        }
-        const slug = current.slug;
+        const slug = deck.slug;
         const loaded = userDecks.load(slug);
         // One box per card index; 0 = untouched (keeps the link short).
         const boxes = loaded
@@ -57,7 +49,7 @@
             : [];
         const overview = cardStore.isOverviewDone(slug);
         const studyTime = studyTimeStore.get(slug);
-        encodeProgressShare(current.contentHash, boxes, {
+        encodeProgressShare(deck.contentHash, boxes, {
             overviewDone: overview,
             studyTimeMs: studyTime,
         }).then((payload) => {
@@ -73,7 +65,7 @@
     });
 
     async function share(): Promise<void> {
-        if (!progressUrl || !deck) return;
+        if (!progressUrl) return;
         nativeShareFailed = false;
         const ok = await nativeShare({
             title: `${deck.name} – Fortschritt`,
@@ -88,65 +80,61 @@
     <title>Fortschritt exportieren – NSC</title>
 </svelte:head>
 
-{#if !deck}
-    <DeckNotFound />
-{:else}
-    <Page>
-        <PageHeader
-            title="Fortschritt exportieren"
-            subtitle="{deck.folder} / {deck.name} — Erstelle einen Link mit dem Lernfortschritt dieses Stapels — als QR-Code, zum Kopieren oder über das Teilen-Menü deines Geräts."
-        />
-        {#if progressUrl}
-            <p class="summary">
-                Enthalten: {learnedCount}
-                {learnedCount === 1 ? "Karte" : "Karten"} mit Fortschritt
-                {#if overviewDone}
-                    · Übersicht abgeschlossen
-                {/if}
-                {#if studyTimeMs > 0}
-                    · Lernzeit {formatStudyTime(studyTimeMs)}
-                {/if}
+<Page>
+    <PageHeader
+        title="Fortschritt exportieren"
+        subtitle="{deck.folder} / {deck.name} — Erstelle einen Link mit dem Lernfortschritt dieses Stapels — als QR-Code, zum Kopieren oder über das Teilen-Menü deines Geräts."
+    />
+    {#if progressUrl}
+        <p class="summary">
+            Enthalten: {learnedCount}
+            {learnedCount === 1 ? "Karte" : "Karten"} mit Fortschritt
+            {#if overviewDone}
+                · Übersicht abgeschlossen
+            {/if}
+            {#if studyTimeMs > 0}
+                · Lernzeit {formatStudyTime(studyTimeMs)}
+            {/if}
+        </p>
+        {#if learnedCount === 0 && !overviewDone && studyTimeMs === 0}
+            <p class="note note-info">
+                Dieser Stapel hat noch keinen Fortschritt — der Link
+                enthält keine Änderungen.
             </p>
-            {#if learnedCount === 0 && !overviewDone && studyTimeMs === 0}
-                <p class="note note-info">
-                    Dieser Stapel hat noch keinen Fortschritt — der Link
-                    enthält keine Änderungen.
-                </p>
-            {:else}
-                <p class="note note-info">
-                    Der Link wird auf dem anderen Gerät angewendet, sobald der
-                    Stapel dort vorhanden ist — exportiere ihn gegebenenfalls
-                    über
-                    <a
-                        href={resolve("/(deck)/deck/[slug]/export/cards", {
-                            slug: deck.slug,
-                        })}>Stapel exportieren</a
-                    >.
-                </p>
-            {/if}
-
-            <ShareLinkCard
-                title="Fortschritt-Link"
-                url={progressUrl}
-                copyLabel="Fortschritt-Link kopieren"
-                warning={shareLength > SHARE_HASH_LIMIT}
-                warningText="Der Link ist etwa {formatShareLength(
-                    shareLength,
-                )} lang — Links über ~1 MB funktionieren nicht zuverlässig."
-            />
-            <div class="actions">
-                {#if canShare}
-                    <Button variant="primary" onclick={share}>Teilen …</Button>
-                {/if}
-            </div>
-            {#if nativeShareFailed}
-                <p class="note">
-                    Teilen wird von diesem Gerät nicht unterstützt.
-                </p>
-            {/if}
+        {:else}
+            <p class="note note-info">
+                Der Link wird auf dem anderen Gerät angewendet, sobald der
+                Stapel dort vorhanden ist — exportiere ihn gegebenenfalls
+                über
+                <a
+                    href={resolve("/(deck)/export/[slug]/cards", {
+                        slug: deck.slug,
+                    })}>Stapel exportieren</a
+                >.
+            </p>
         {/if}
-    </Page>
-{/if}
+
+        <ShareLinkCard
+            title="Fortschritt-Link"
+            url={progressUrl}
+            copyLabel="Fortschritt-Link kopieren"
+            warning={shareLength > SHARE_HASH_LIMIT}
+            warningText="Der Link ist etwa {formatShareLength(
+                shareLength,
+            )} lang — Links über ~1 MB funktionieren nicht zuverlässig."
+        />
+        <div class="actions">
+            {#if canShare}
+                <Button variant="primary" onclick={share}>Teilen …</Button>
+            {/if}
+        </div>
+        {#if nativeShareFailed}
+            <p class="note">
+                Teilen wird von diesem Gerät nicht unterstützt.
+            </p>
+        {/if}
+    {/if}
+</Page>
 
 <style>
     .summary {

@@ -16,9 +16,13 @@
     let isDeckPage = $derived(routePath.startsWith("/deck/"));
     let isCramPage = $derived(routePath.startsWith("/cram/"));
     let isOverviewPage = $derived(routePath.startsWith("/overview/"));
-    // /deck/[slug]/export… — a deck sub-page, like cram/overview.
+    // /export/[slug]… — a deck sub-page, like cram/overview.
     let isDeckExportPage = $derived(
-        /^\/deck\/[^/]+\/export(\/|$)/.test(routePath),
+        /^\/export\/[^/]+(\/|$)/.test(routePath),
+    );
+    // Deck pages and their sub-pages show the home link and folder crumb.
+    let isDeckSubPage = $derived(
+        isDeckPage || isCramPage || isOverviewPage || isDeckExportPage,
     );
     let slug = $derived(page.params.slug ?? "");
     let deck = $derived(slug ? userDecks.load(slug) : null);
@@ -118,14 +122,14 @@
     <nav class="breadcrumbs" aria-label="Brotkrumennavigation">
         <ol>
             <li>
-                {#if isDeckPage || isCramPage || isOverviewPage}
+                {#if isDeckSubPage}
                     <a href={resolve("/")}>~</a>
                 {:else}
                     <span aria-current="page">~</span>
                 {/if}
             </li>
 
-            {#if (isDeckPage || isCramPage || isOverviewPage) && deckFolder}
+            {#if isDeckSubPage && deckFolder}
                 <li>
                     <span class="separator" aria-hidden="true">/</span>
                     <span class="breadcrumb-folder">{deckFolder}</span>

@@ -17,7 +17,7 @@
     } from "#lib/sharing/utils/share";
     import Page from "#lib/app/components/shared/Page.svelte";
     import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
-    import DeckNotFound from "#lib/decks/components/DeckNotFound.svelte";
+    import type { UserDeck } from "#lib/utils/types";
     import ShareLinkCard from "#lib/sharing/components/ShareLinkCard.svelte";
     import Button from "#lib/app/components/shared/Button.svelte";
 
@@ -25,8 +25,9 @@
 
     type ShareMode = "progress" | "cards" | "together";
 
-    const deck = $derived(userDecks.get(data.slug));
-    const loaded = $derived(deck ? userDecks.load(deck.slug) : null);
+    // The (deck) layout renders this page only when the deck exists.
+    const deck = $derived(userDecks.get(data.slug) as UserDeck);
+    const loaded = $derived(userDecks.load(deck.slug));
 
     let mode = $state<ShareMode>("together");
     let shareUrl = $state("");
@@ -81,13 +82,8 @@
     // (Re)build the link whenever the mode or the deck changes.
     $effect(() => {
         const slug = data.slug;
-        const current = userDecks.get(slug);
+        const current = userDecks.get(slug) as UserDeck;
         const active = mode;
-        if (!current) {
-            shareUrl = "";
-            shareLength = 0;
-            return;
-        }
         const origin = window.location.origin;
         void (async () => {
             let payload: string;
@@ -134,7 +130,7 @@
     });
 
     async function share(): Promise<void> {
-        if (!shareUrl || !deck) return;
+        if (!shareUrl) return;
         nativeShareFailed = false;
         const ok = await nativeShare({
             title: deck.name,
@@ -149,64 +145,60 @@
     <title>Stapel exportieren – NSC</title>
 </svelte:head>
 
-{#if !deck}
-    <DeckNotFound />
-{:else}
-    <Page>
-        <PageHeader
-            title="Stapel exportieren"
-            subtitle="{deck.folder} / {deck.name} — Erstelle einen Link mit den Karten, nur dem Fortschritt oder beides zusammen — als QR-Code, zum Kopieren oder über das Teilen-Menü deines Geräts."
+<Page>
+    <PageHeader
+        title="Stapel exportieren"
+        subtitle="{deck.folder} / {deck.name} — Erstelle einen Link mit den Karten, nur dem Fortschritt oder beides zusammen — als QR-Code, zum Kopieren oder über das Teilen-Menü deines Geräts."
+    />
+
+    <div class="mode-switch" role="group" aria-label="Export-Umfang">
+        {#each modes as m (m.id)}
+            <button
+                type="button"
+                class="mode-button"
+                class:active={mode === m.id}
+                aria-pressed={mode === m.id}
+                onclick={() => {
+                    mode = m.id;
+                    nativeShareFailed = false;
+                }}
+            >
+                {m.label}
+            </button>
+        {/each}
+    </div>
+
+    <p class="deck-meta">
+        {countCards(loaded?.cards.length ?? 0)}
+        · {DECK_TYPES[deck.deckType].label}
+    </p>
+
+    <p class="mode-hint">{activeMode.hint}</p>
+
+    {#if shareUrl}
+        <ShareLinkCard
+            title={activeMode.title}
+            url={shareUrl}
+            copyLabel={activeMode.copyLabel}
+            warning={shareLength > SHARE_HASH_LIMIT}
+            warningText="Der Link ist etwa {formatShareLength(
+                shareLength,
+            )} lang — Links über ~1 MB funktionieren nicht zuverlässig."
         />
-
-        <div class="mode-switch" role="group" aria-label="Export-Umfang">
-            {#each modes as m (m.id)}
-                <button
-                    type="button"
-                    class="mode-button"
-                    class:active={mode === m.id}
-                    aria-pressed={mode === m.id}
-                    onclick={() => {
-                        mode = m.id;
-                        nativeShareFailed = false;
-                    }}
-                >
-                    {m.label}
-                </button>
-            {/each}
-        </div>
-
-        <p class="deck-meta">
-            {countCards(loaded?.cards.length ?? 0)}
-            · {DECK_TYPES[deck.deckType].label}
-        </p>
-
-        <p class="mode-hint">{activeMode.hint}</p>
-
-        {#if shareUrl}
-            <ShareLinkCard
-                title={activeMode.title}
-                url={shareUrl}
-                copyLabel={activeMode.copyLabel}
-                warning={shareLength > SHARE_HASH_LIMIT}
-                warningText="Der Link ist etwa {formatShareLength(
-                    shareLength,
-                )} lang — Links über ~1 MB funktionieren nicht zuverlässig."
-            />
-            <div class="actions">
-                {#if canShare}
-                    <Button variant="primary" onclick={share}>
-                        Teilen …
-                    </Button>
-                {/if}
-            </div>
-            {#if nativeShareFailed}
-                <p class="note">
-                    Teilen wird von diesem Gerät nicht unterstützt.
-                </p>
+        <div class="actions">
+            {#if canShare}
+                <Button variant="primary" onclick={share}>
+                    Teilen …
+                </Button>
             {/if}
+        </div>
+        {#if nativeShareFailed}
+            <p class="note">
+                Teilen wird von diesem Gerät nicht unterstützt.
+            </p>
         {/if}
-    </Page>
-{/if}
+    {/if}
+</Page>
 
 <style>
     /* Segmented mode switch in the NSC-Intro look: one bordered box

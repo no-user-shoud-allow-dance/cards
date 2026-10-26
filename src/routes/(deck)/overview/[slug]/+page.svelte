@@ -7,12 +7,13 @@
     import StudyControls from "#lib/learning/components/StudyControls.svelte";
     import ProgressBar from "#lib/app/components/shared/ProgressBar.svelte";
     import StudyLayout from "#lib/learning/components/StudyLayout.svelte";
-    import DeckNotFound from "#lib/decks/components/DeckNotFound.svelte";
+    import type { LoadedDeck } from "#lib/utils/types";
     import DeckEmpty from "#lib/decks/components/DeckEmpty.svelte";
 
     let { data } = $props();
 
-    let deck = $derived(userDecks.load(data.slug));
+    // The (deck) layout renders this page only when the deck exists.
+    let deck = $derived(userDecks.load(data.slug) as LoadedDeck);
 
     const session = useOverviewSession(
         () => userDecks.load(data.slug),
@@ -32,62 +33,58 @@
 
 <svelte:window onkeydown={session.handleKeydown} />
 
-{#if !deck}
-    <DeckNotFound />
-{:else}
-    <StudyLayout fullHeight>
-        {#snippet top()}
-            {#if session.currentCard}
-                <div class="overview-banner">
-                    Übersichtsmodus — Karten werden nicht bewertet
-                </div>
-                <div class="overview-progress">
-                    <span class="overview-progress-label">
-                        {session.seenCount} / {session.totalCards} Karten
-                        angesehen
-                    </span>
-                    <span class="overview-progress-bar">
-                        <ProgressBar ratio={session.progressRatio} />
-                    </span>
-                </div>
-            {/if}
-        {/snippet}
+<StudyLayout fullHeight>
+    {#snippet top()}
+        {#if session.currentCard}
+            <div class="overview-banner">
+                Übersichtsmodus — Karten werden nicht bewertet
+            </div>
+            <div class="overview-progress">
+                <span class="overview-progress-label">
+                    {session.seenCount} / {session.totalCards} Karten
+                    angesehen
+                </span>
+                <span class="overview-progress-bar">
+                    <ProgressBar ratio={session.progressRatio} />
+                </span>
+            </div>
+        {/if}
+    {/snippet}
 
-        {#snippet center()}
-            {#if deck.cards.length === 0}
-                <DeckEmpty />
-            {:else if session.currentCard}
-                {#key session.currentCardId}
-                    <OverviewCard
-                        frontText={session.frontText}
-                        backText={session.backText}
-                    />
-                {/key}
-            {:else if session.finished}
-                <OverviewComplete
-                    slug={data.slug}
-                    totalCards={session.totalCards}
+    {#snippet center()}
+        {#if deck.cards.length === 0}
+            <DeckEmpty />
+        {:else if session.currentCard}
+            {#key session.currentCardId}
+                <OverviewCard
+                    frontText={session.frontText}
+                    backText={session.backText}
                 />
-            {:else}
-                <DeckEmpty text="Keine Karten verfügbar." />
-            {/if}
-        {/snippet}
+            {/key}
+        {:else if session.finished}
+            <OverviewComplete
+                slug={data.slug}
+                totalCards={session.totalCards}
+            />
+        {:else}
+            <DeckEmpty text="Keine Karten verfügbar." />
+        {/if}
+    {/snippet}
 
-        {#snippet bottom()}
-            {#if session.currentCard}
-                <StudyControls
-                    revealed={true}
-                    isOverview={true}
-                    canGoBack={session.canGoBack}
-                    onGoBack={session.goBack}
-                    onNext={session.next}
-                    onHelp={session.openHelpSearch}
-                    onMnemonic={session.openMnemonicSearch}
-                />
-            {/if}
-        {/snippet}
-    </StudyLayout>
-{/if}
+    {#snippet bottom()}
+        {#if session.currentCard}
+            <StudyControls
+                revealed={true}
+                isOverview={true}
+                canGoBack={session.canGoBack}
+                onGoBack={session.goBack}
+                onNext={session.next}
+                onHelp={session.openHelpSearch}
+                onMnemonic={session.openMnemonicSearch}
+            />
+        {/if}
+    {/snippet}
+</StudyLayout>
 
 <style>
     .overview-banner {

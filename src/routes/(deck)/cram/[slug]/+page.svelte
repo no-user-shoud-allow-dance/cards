@@ -13,12 +13,13 @@
     import CramBreak from "#lib/learning/components/cram/CramBreak.svelte";
     import Confetti from "#lib/learning/components/cram/Confetti.svelte";
     import StudyLayout from "#lib/learning/components/StudyLayout.svelte";
-    import DeckNotFound from "#lib/decks/components/DeckNotFound.svelte";
+    import type { LoadedDeck } from "#lib/utils/types";
     import DeckEmpty from "#lib/decks/components/DeckEmpty.svelte";
 
     let { data } = $props();
 
-    let deck = $derived(userDecks.load(data.slug));
+    // The (deck) layout renders this page only when the deck exists.
+    let deck = $derived(userDecks.load(data.slug) as LoadedDeck);
 
     const session = useCramSession(() => userDecks.load(data.slug));
 
@@ -33,7 +34,6 @@
 
     const showIntro = $derived(
         !introCompleted &&
-            deck !== null &&
             deck.cards.length > 0 &&
             !session.finished &&
             timer.durationMs === null &&
@@ -107,91 +107,87 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-{#if !deck}
-    <DeckNotFound />
-{:else}
-    <StudyLayout
-        blurred={timer.interfaceBlurred && !showIntro}
-        onBlurredInteract={liftBlur}
-        fullHeight
-    >
-        {#snippet top()}
-            {#if session.currentCard}
-                {#if !isMobile}
-                    <BoxOverview
-                        boxCounts={session.boxCounts}
-                        currentBox={session.currentBox}
-                    />
-                {/if}
-                <StatusBar
-                    learnedCount={session.learnedCount}
-                    totalCards={deck.cards.length}
-                    progressRatio={session.progressRatio}
+<StudyLayout
+    blurred={timer.interfaceBlurred && !showIntro}
+    onBlurredInteract={liftBlur}
+    fullHeight
+>
+    {#snippet top()}
+        {#if session.currentCard}
+            {#if !isMobile}
+                <BoxOverview
+                    boxCounts={session.boxCounts}
+                    currentBox={session.currentBox}
                 />
             {/if}
-        {/snippet}
-
-        {#snippet center()}
-            {#if deck.cards.length === 0}
-                <DeckEmpty />
-            {:else if session.currentCard}
-                {#key session.currentCardId}
-                    <FlashCard
-                        frontText={session.frontText}
-                        backText={session.backText}
-                        flipped={session.revealed}
-                        onFlip={session.toggleFlip}
-                    />
-                {/key}
-            {:else if session.finished}
-                <SessionComplete
-                    slug={data.slug}
-                    cardIds={deck.cards.map((c) => c.id)}
-                />
-            {:else}
-                <DeckEmpty text="Keine Karten verfügbar." />
-            {/if}
-        {/snippet}
-
-        {#snippet bottom()}
-            {#if session.currentCard}
-                <StudyControls
-                    revealed={session.revealed}
-                    canGoBack={session.undoStack.length > 0}
-                    onGoBack={session.undo}
-                    onFlip={session.toggleFlip}
-                    onWrong={() => session.answer(false)}
-                    onRight={() => session.answer(true)}
-                    onHelp={session.openHelpSearch}
-                    onMnemonic={session.openMnemonicSearch}
-                />
-                {#if isMobile}
-                    <BoxOverview
-                        boxCounts={session.boxCounts}
-                        currentBox={session.currentBox}
-                    />
-                {/if}
-            {/if}
-        {/snippet}
-
-        {#snippet overlays()}
-            {#if showIntro}
-                <CramIntro {timer} onDone={completeIntro} />
-            {/if}
-
-            {#if timer.finishedAt !== null}
-                <CramBreak {timer} />
-            {/if}
-
-            {#if session.box2Celebration}
-                <Confetti onDone={session.dismissBox2Celebration} />
-            {/if}
-
-            <StudyClock
-                {timer}
-                intro={showIntro}
-                breakMode={timer.finishedAt !== null}
+            <StatusBar
+                learnedCount={session.learnedCount}
+                totalCards={deck.cards.length}
+                progressRatio={session.progressRatio}
             />
-        {/snippet}
-    </StudyLayout>
-{/if}
+        {/if}
+    {/snippet}
+
+    {#snippet center()}
+        {#if deck.cards.length === 0}
+            <DeckEmpty />
+        {:else if session.currentCard}
+            {#key session.currentCardId}
+                <FlashCard
+                    frontText={session.frontText}
+                    backText={session.backText}
+                    flipped={session.revealed}
+                    onFlip={session.toggleFlip}
+                />
+            {/key}
+        {:else if session.finished}
+            <SessionComplete
+                slug={data.slug}
+                cardIds={deck.cards.map((c) => c.id)}
+            />
+        {:else}
+            <DeckEmpty text="Keine Karten verfügbar." />
+        {/if}
+    {/snippet}
+
+    {#snippet bottom()}
+        {#if session.currentCard}
+            <StudyControls
+                revealed={session.revealed}
+                canGoBack={session.undoStack.length > 0}
+                onGoBack={session.undo}
+                onFlip={session.toggleFlip}
+                onWrong={() => session.answer(false)}
+                onRight={() => session.answer(true)}
+                onHelp={session.openHelpSearch}
+                onMnemonic={session.openMnemonicSearch}
+            />
+            {#if isMobile}
+                <BoxOverview
+                    boxCounts={session.boxCounts}
+                    currentBox={session.currentBox}
+                />
+            {/if}
+        {/if}
+    {/snippet}
+
+    {#snippet overlays()}
+        {#if showIntro}
+            <CramIntro {timer} onDone={completeIntro} />
+        {/if}
+
+        {#if timer.finishedAt !== null}
+            <CramBreak {timer} />
+        {/if}
+
+        {#if session.box2Celebration}
+            <Confetti onDone={session.dismissBox2Celebration} />
+        {/if}
+
+        <StudyClock
+            {timer}
+            intro={showIntro}
+            breakMode={timer.finishedAt !== null}
+        />
+    {/snippet}
+</StudyLayout>

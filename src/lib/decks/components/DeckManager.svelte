@@ -121,7 +121,7 @@
     {:else}
         <div class="deck-actions-row" transition:fly={{ y: -6, duration: 160 }}>
             <Button
-                href={resolve("/(deck)/deck/[slug]/export", { slug: deck.slug })}
+                href={resolve("/(deck)/export/[slug]", { slug: deck.slug })}
             >
                 Teilen
             </Button>

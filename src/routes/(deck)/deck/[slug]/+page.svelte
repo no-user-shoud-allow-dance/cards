@@ -3,7 +3,7 @@
     import { userDecks } from "#lib/decks/store/userDecks.svelte";
     import { cardStore } from "#lib/learning/store/cardStore.svelte";
     import { DECK_TYPES } from "#lib/decks/utils/deckTypes";
-    import { BOX_COUNT, BOX_LABELS } from "#lib/utils/types";
+    import { BOX_COUNT, BOX_LABELS, type LoadedDeck } from "#lib/utils/types";
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
@@ -14,7 +14,6 @@
     import ResetButton from "#lib/app/components/shared/ResetButton.svelte";
     import ResetProgress from "#lib/app/components/shared/ResetProgress.svelte";
     import Button from "#lib/app/components/shared/Button.svelte";
-    import DeckNotFound from "#lib/decks/components/DeckNotFound.svelte";
     import DeckManager from "#lib/decks/components/DeckManager.svelte";
     import BoxTabs, {
         type BoxGroup,
@@ -26,51 +25,38 @@
     import { timerStateStore } from "#lib/learning/store/timerStateStore.svelte";
 
     let { data } = $props();
-    let deck = $derived(userDecks.load(data.slug));
+    // The (deck) layout renders this page only when the deck exists.
+    let deck = $derived(userDecks.load(data.slug) as LoadedDeck);
 
     onMount(() => {
         studyTimeStore.init();
         timerStateStore.init();
     });
 
-    const studyTimeMs = $derived(deck ? studyTimeStore.get(deck.slug) : 0);
+    const studyTimeMs = $derived(studyTimeStore.get(deck.slug));
 
-    const hasTimerState = $derived(
-        deck ? timerStateStore.has(deck.slug) : false,
-    );
+    const hasTimerState = $derived(timerStateStore.has(deck.slug));
 
     // Effective pure mode: the deck must define one and the user must
     // have enabled it.
-    const pureMode = $derived(
-        deck ? deck.pureMode && cardStore.pureMode : false,
-    );
+    const pureMode = $derived(deck.pureMode && cardStore.pureMode);
 
     const learnedCount = $derived(
-        deck
-            ? deck.cards.filter((c) => cardStore.boxOf(c.id) === BOX_COUNT)
-                  .length
-            : 0,
+        deck.cards.filter((c) => cardStore.boxOf(c.id) === BOX_COUNT).length,
     );
 
     const hasProgress = $derived(
-        deck
-            ? deck.cards.some((c) => cardStore.states[c.id] !== undefined)
-            : false,
+        deck.cards.some((c) => cardStore.states[c.id] !== undefined),
     );
 
     const allLearned = $derived(
-        deck
-            ? deck.cards.length > 0 && learnedCount === deck.cards.length
-            : false,
+        deck.cards.length > 0 && learnedCount === deck.cards.length,
     );
 
-    const overviewDone = $derived(
-        deck ? cardStore.isOverviewDone(deck.slug) : false,
-    );
+    const overviewDone = $derived(cardStore.isOverviewDone(deck.slug));
 
     // CTA target and label depend on progress and overview state.
     const ctaHref = $derived.by(() => {
-        if (!deck) return resolve("/");
         if (!hasProgress && !overviewDone) {
             return resolve("/(deck)/overview/[slug]", { slug: deck.slug });
         }
@@ -86,13 +72,12 @@
     const isOverviewCta = $derived(!hasProgress && !overviewDone);
 
     const learningRatio = $derived(
-        deck ? computeProgressRatio(deck.cards, cardStore.states) : 0,
+        computeProgressRatio(deck.cards, cardStore.states),
     );
 
     let activeBox = $state<number>(1);
 
     const boxGroups = $derived.by((): BoxGroup[] => {
-        if (!deck) return [];
         const groups: BoxGroup[] = [];
         for (let b = 1; b <= BOX_COUNT; b++) {
             groups.push({
@@ -108,119 +93,115 @@
         boxGroups.find((g) => g.box === activeBox) ?? null,
     );
 
-    const cardIds = $derived(deck ? deck.cards.map((c) => c.id) : []);
+    const cardIds = $derived(deck.cards.map((c) => c.id));
 </script>
 
 <svelte:head>
-    <title>{deck?.name ?? "Stapel nicht gefunden"} – NSC</title>
+    <title>{deck.name} – NSC</title>
 </svelte:head>
 
-{#if !deck}
-    <DeckNotFound />
-{:else}
-    <Page>
-        <DeckManager
-            {deck}
-            subtitle="{DECK_TYPES[deck.deckType].label} · {countCards(
-                deck.cards.length,
-            )}"
-        />
+<Page>
+    <DeckManager
+        {deck}
+        subtitle="{DECK_TYPES[deck.deckType].label} · {countCards(
+            deck.cards.length,
+        )}"
+    />
 
-        {#if deck.errors.length > 0}
-            <DeckErrors errors={deck.errors} />
-        {/if}
+    {#if deck.errors.length > 0}
+        <DeckErrors errors={deck.errors} />
+    {/if}
 
-        {#if deck.cards.length === 0}
-            <EmptyNote>Dieser Stapel enthält keine Karten.</EmptyNote>
-        {:else}
-            <!-- Hero CTA: the primary action is the most prominent element -->
-            <section class="hero-cta">
-                <div class="hero-cta-info">
-                    <span class="hero-cta-label">Lernfortschritt</span>
-                    <span class="hero-cta-count"
-                        >{learnedCount} / {deck.cards.length} gelernt</span
-                    >
-                    <ProgressBar ratio={learningRatio} height="5px" />
-                    {#if overviewDone || !hasProgress}
-                        <span class="hero-cta-overview">
-                            Übersicht: {overviewDone
-                                ? "abgeschlossen"
-                                : "nicht begonnen"}
-                        </span>
-                    {/if}
-                    {#if studyTimeMs > 0}
-                        <span class="hero-cta-overview">
-                            Lernzeit gesamt: {formatStudyTime(studyTimeMs)}
-                        </span>
-                    {/if}
-                </div>
-                {#if allLearned}
-                    <ResetProgress {cardIds} slug={deck.slug} />
-                {:else}
-                    <Button
-                        variant={isOverviewCta ? "overview" : "primary"}
-                        href={ctaHref}
-                        class="hero-cta-button"
-                    >
-                        {ctaLabel}
-                        <span aria-hidden="true">→</span>
-                    </Button>
+    {#if deck.cards.length === 0}
+        <EmptyNote>Dieser Stapel enthält keine Karten.</EmptyNote>
+    {:else}
+        <!-- Hero CTA: the primary action is the most prominent element -->
+        <section class="hero-cta">
+            <div class="hero-cta-info">
+                <span class="hero-cta-label">Lernfortschritt</span>
+                <span class="hero-cta-count"
+                    >{learnedCount} / {deck.cards.length} gelernt</span
+                >
+                <ProgressBar ratio={learningRatio} height="5px" />
+                {#if overviewDone || !hasProgress}
+                    <span class="hero-cta-overview">
+                        Übersicht: {overviewDone
+                            ? "abgeschlossen"
+                            : "nicht begonnen"}
+                    </span>
                 {/if}
-            </section>
-
-            <!-- Box overview: browse cards by Leitner box -->
-            <section class="box-section" aria-label="Karten stöbern">
-                <SectionLabel>Karten stöbern</SectionLabel>
-                <BoxTabs
-                    groups={boxGroups}
-                    {activeBox}
-                    onSelect={(box) => (activeBox = box)}
-                />
-
-                <div class="box-panel" role="tabpanel">
-                    {#key activeBox}
-                        <div in:fade={{ duration: 200 }}>
-                            {#if !activeGroup || activeGroup.cards.length === 0}
-                                <EmptyNote>Keine Karten in dieser Box.</EmptyNote>
-                            {:else}
-                                <CardList
-                                    cards={activeGroup.cards}
-                                    {pureMode}
-                                />
-                            {/if}
-                        </div>
-                    {/key}
-                </div>
-            </section>
-
-            {#if hasProgress || overviewDone || studyTimeMs > 0 || hasTimerState}
-                <div class="reset-actions">
-                    {#if overviewDone}
-                        <ResetButton
-                            variant="neutral"
-                            label="Übersicht zurücksetzen"
-                            confirmText="Übersicht für diesen Stapel zurücksetzen?"
-                            onReset={() => cardStore.resetOverview(deck.slug)}
-                        />
-                    {/if}
-                    {#if hasProgress}
-                        <ResetProgress {cardIds} slug={deck.slug} />
-                    {/if}
-                    {#if studyTimeMs > 0 || hasTimerState}
-                        <ResetButton
-                            label="Timer und Lernzeit zurücksetzen"
-                            confirmText="Timer und Lernzeit für diesen Stapel zurücksetzen?"
-                            onReset={() => {
-                                studyTimeStore.reset(deck.slug);
-                                timerStateStore.reset(deck.slug);
-                            }}
-                        />
-                    {/if}
-                </div>
+                {#if studyTimeMs > 0}
+                    <span class="hero-cta-overview">
+                        Lernzeit gesamt: {formatStudyTime(studyTimeMs)}
+                    </span>
+                {/if}
+            </div>
+            {#if allLearned}
+                <ResetProgress {cardIds} slug={deck.slug} />
+            {:else}
+                <Button
+                    variant={isOverviewCta ? "overview" : "primary"}
+                    href={ctaHref}
+                    class="hero-cta-button"
+                >
+                    {ctaLabel}
+                    <span aria-hidden="true">→</span>
+                </Button>
             {/if}
+        </section>
+
+        <!-- Box overview: browse cards by Leitner box -->
+        <section class="box-section" aria-label="Karten stöbern">
+            <SectionLabel>Karten stöbern</SectionLabel>
+            <BoxTabs
+                groups={boxGroups}
+                {activeBox}
+                onSelect={(box) => (activeBox = box)}
+            />
+
+            <div class="box-panel" role="tabpanel">
+                {#key activeBox}
+                    <div in:fade={{ duration: 200 }}>
+                        {#if !activeGroup || activeGroup.cards.length === 0}
+                            <EmptyNote>Keine Karten in dieser Box.</EmptyNote>
+                        {:else}
+                            <CardList
+                                cards={activeGroup.cards}
+                                {pureMode}
+                            />
+                        {/if}
+                    </div>
+                {/key}
+            </div>
+        </section>
+
+        {#if hasProgress || overviewDone || studyTimeMs > 0 || hasTimerState}
+            <div class="reset-actions">
+                {#if overviewDone}
+                    <ResetButton
+                        variant="neutral"
+                        label="Übersicht zurücksetzen"
+                        confirmText="Übersicht für diesen Stapel zurücksetzen?"
+                        onReset={() => cardStore.resetOverview(deck.slug)}
+                    />
+                {/if}
+                {#if hasProgress}
+                    <ResetProgress {cardIds} slug={deck.slug} />
+                {/if}
+                {#if studyTimeMs > 0 || hasTimerState}
+                    <ResetButton
+                        label="Timer und Lernzeit zurücksetzen"
+                        confirmText="Timer und Lernzeit für diesen Stapel zurücksetzen?"
+                        onReset={() => {
+                            studyTimeStore.reset(deck.slug);
+                            timerStateStore.reset(deck.slug);
+                        }}
+                    />
+                {/if}
+            </div>
         {/if}
-    </Page>
-{/if}
+    {/if}
+</Page>
 
 <style>
     .hero-cta {
