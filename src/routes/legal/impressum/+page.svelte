@@ -26,8 +26,9 @@
 </p>
 <p>
     Eingebundene Bibliotheken von Drittanbietern — derzeit
-    <strong>Svelte</strong>, <strong>SvelteKit</strong> und
-    <strong>detectIncognito.js</strong> (jeweils MIT License) — sind auf
+    <strong>Svelte</strong>, <strong>SvelteKit</strong>,
+    <strong>detectIncognito.js</strong>, <strong>qr-code-styling</strong>
+    und <strong>qrcode-generator</strong> (jeweils MIT License) — sind auf
     der Seite
     <a href={resolve("/legal/lizenzen")}>Lizenzen</a> mit vollständigem
     Lizenztext aufgeführt.
