@@ -38,7 +38,6 @@
     }
 
     function scannerSupported(): boolean {
-        console.log(navigator.mediaCapabilities)
         return (
             typeof navigator !== "undefined" &&
             typeof navigator.mediaDevices?.getUserMedia === "function" &&
