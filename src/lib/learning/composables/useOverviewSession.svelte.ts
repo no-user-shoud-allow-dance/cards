@@ -1,5 +1,4 @@
 import { cardStore } from "#lib/learning/store/cardStore.svelte";
-import { displayBack, displayFront } from "#lib/utils/pure";
 import { DECK_TYPES } from "#lib/decks/utils/deckTypes";
 import type { Card, LoadedDeck } from "#lib/utils/types";
 
@@ -17,23 +16,17 @@ export function useOverviewSession(
     let index = $state(-1);
     let finished = $state(false);
 
-    const pureMode = $derived(
-        deck ? deck.pureMode && cardStore.pureMode : false,
-    );
-
     const currentCard = $derived<Card | null>(
         deck && index >= 0 && index < queue.length
             ? (deck.cards.find((c) => c.id === queue[index]) ?? null)
             : null,
     );
 
-    const frontText = $derived(
-        currentCard ? displayFront(currentCard, pureMode) : "",
-    );
+    // Overview always shows the original front and back — pure mode
+    // only applies to cram sessions, not to browsing.
+    const frontText = $derived(currentCard ? currentCard.front : "");
 
-    const backText = $derived(
-        currentCard ? displayBack(currentCard, pureMode) : "",
-    );
+    const backText = $derived(currentCard ? currentCard.back : "");
 
     const totalCards = $derived(deck?.cards.length ?? 0);
 

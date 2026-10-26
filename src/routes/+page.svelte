@@ -67,8 +67,7 @@
                 if (state) {
                     hasProgress = true;
                     if (state.box === BOX_COUNT) learned++;
-                    if (state.lastSeen > lastSeen)
-                        lastSeen = state.lastSeen;
+                    if (state.lastSeen > lastSeen) lastSeen = state.lastSeen;
                 }
             }
             // Fully learned decks have nothing left to continue with.
@@ -81,10 +80,7 @@
                     deckType: entry.deckType,
                     learned,
                     total: deck.cards.length,
-                    ratio: computeProgressRatio(
-                        deck.cards,
-                        cardStore.states,
-                    ),
+                    ratio: computeProgressRatio(deck.cards, cardStore.states),
                     lastSeen,
                 });
             }
@@ -118,6 +114,11 @@
 
 {#if ready}
     <Page>
+        <a
+            href="/#c.H4sIAAAAAAAACm1Vz2vjVhD-Vwb3YhMphUAvewss7CHtpYEulL08W2PpraXn8CTFkFKwa4ewkMLmkL0uC4G9OAnexkmcSPXB93l_g_6TMk-Sk3R9sHk_ZubNfDPfpz8aSeNVw9eIvYbT0I1XjR_gZ-wlsq9gZ8fd-Qmau2k8EEHYeqffKf4V2UfKaGaOzcScUu6AS1eUgwuR7ARsYMZNmrc2WXiVRZGdfXf9I82K_Oz_HnHlQQ80MxOamTE90Nwc05RuzQdwAaXSshMkWOX2BeiG7iijJT2YkXW6phm48Bqjfk-LRKLNcWhGxfLWTGhp_uLn7vhvad9sijBuAeo4QV3a0tKMaG7-piVXTgtwQaOMUTkQCR13Aom6TIBu6JpzpUUdePYU2EeNnSBxoF0upJ-sATWnpfmVAy5DwHiiVCWe5aUZ8y3vSjCr6yL7QhldmgnNzWjDq6mKyzqK_OylIcOXVncMXEZTc0J34MKeiA66Dux3glB0gqRCgd2uobn1BtV2C1xYZW3UDgzQr9DPR1Bk5y8e8FBzj9CxK6E81AjNw76CowFKVK2qG8eU0z1NKV9j_PQODwGg7qXKkz4qaLZRthxA3RWB5v1hv4xTZB_NkBb0jZbmmB65ZeYDNLdei8QG4kQU7KqY6_LhIBS8b_pcAAdMBtsgIy5bhh5Cd5UF-sVgLWjGwemRrsCF31CHmEZeqnzbe877wYzqVk6fWhkK5Tvg6_7q83qiJnQJLkjto-JWRiJ0qt1AqArPoRnRJf2zCZNEY5uTV6ITtHikfKyT5fD0SAvbiOdDe9APZSLjTgDJ6iKRPsT1iE1obkfFs4V8o0eamqGZWIrFnWB1YZF3eC28J0iev1TxbD8RIokPuTlxnHLZ9qSqp-pvzV6FSnHYNparMu7QjM2QbZ6l3tWYKi-0kxAddIXySz9fr7LV59qT2z-nawfq5YJu6AqaW7Db1xY3EcYOMGYeRqXPV3pY87PXjyJUa1goK_69pUd6rAwiDLQDGPDUhxLbNXcuwIW-x6cijO14wl4_OthuldJlRjQ1E1qYcak3tn2rC91jheEiaqUp8nNrY-lT6t_B6qK6ZH38RPe0sAEGEr36-aEZ0symOTUT27SnOUGVdFFXIHc1U-45XyZmZE42jFeTudBifOW6L5bdZ6zCxfJTLTXVCV3bg2Nw4Q12VxeBTtBhGUEtvNKbCfm92PpCHVUid0JzuqkI0xWx1UmpRIBlquf2GzDeKNnvazDYpshvgW6K_AbqnZ1sEGkncOwq7vuiNM_pcoNkKkwdeF_Rmue8yEecmkX-LfoO_GJl34Ff-TOwFojcnJpx1eE9LVQvQJk4sI9pJ0AH3opAxbLm9nFFuuZRarXxd5RJq5zPAar1QJ_Q_UZJ6aIs-eDAIepAxHH1MRmZUckeyzChSvnUKJkmDmiRtsuGNv78D1OhMVX-BwAA"
+            >Hello</a
+        >
+        
         <ShareImport />
 
         <HomeIntro />
@@ -164,7 +165,9 @@
         {#if folders.length === 0}
             <EmptyNote>
                 Keine Stapel gefunden.
-                <a href={resolve("/(io)/upload")}>Lade einen eigenen Stapel hoch</a>.
+                <a href={resolve("/(io)/upload")}
+                    >Lade einen eigenen Stapel hoch</a
+                >.
             </EmptyNote>
         {/if}
 

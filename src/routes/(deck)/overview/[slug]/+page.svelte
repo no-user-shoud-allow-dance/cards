@@ -59,6 +59,7 @@
                 <OverviewCard
                     frontText={session.frontText}
                     backText={session.backText}
+                    onclick={session.next}
                 />
             {/key}
         {:else if session.finished}
