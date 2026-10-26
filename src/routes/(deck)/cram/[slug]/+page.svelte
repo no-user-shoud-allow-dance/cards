@@ -1,20 +1,20 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { userDecks } from "#lib/store/userDecks.svelte";
-    import { useCramSession } from "#lib/composables/useCramSession.svelte";
-    import FlashCard from "#lib/components/cram/FlashCard.svelte";
-    import StudyControls from "#lib/components/shared/StudyControls.svelte";
-    import StatusBar from "#lib/components/cram/StatusBar.svelte";
-    import BoxOverview from "#lib/components/cram/BoxOverview.svelte";
-    import SessionComplete from "#lib/components/cram/SessionComplete.svelte";
-    import { useStudyTimer } from "#lib/composables/useStudyTimer.svelte";
-    import StudyClock from "#lib/components/cram/StudyClock.svelte";
-    import CramIntro from "#lib/components/cram/CramIntro.svelte";
-    import CramBreak from "#lib/components/cram/CramBreak.svelte";
-    import Confetti from "#lib/components/cram/Confetti.svelte";
-    import StudyLayout from "#lib/components/shared/StudyLayout.svelte";
-    import DeckNotFound from "#lib/components/deck/DeckNotFound.svelte";
-    import DeckEmpty from "#lib/components/deck/DeckEmpty.svelte";
+    import { userDecks } from "#lib/decks/store/userDecks.svelte";
+    import { useCramSession } from "#lib/learning/composables/useCramSession.svelte";
+    import FlashCard from "#lib/learning/components/cram/FlashCard.svelte";
+    import StudyControls from "#lib/learning/components/StudyControls.svelte";
+    import StatusBar from "#lib/learning/components/cram/StatusBar.svelte";
+    import BoxOverview from "#lib/learning/components/cram/BoxOverview.svelte";
+    import SessionComplete from "#lib/learning/components/cram/SessionComplete.svelte";
+    import { useStudyTimer } from "#lib/learning/composables/useStudyTimer.svelte";
+    import StudyClock from "#lib/learning/components/cram/StudyClock.svelte";
+    import CramIntro from "#lib/learning/components/cram/CramIntro.svelte";
+    import CramBreak from "#lib/learning/components/cram/CramBreak.svelte";
+    import Confetti from "#lib/learning/components/cram/Confetti.svelte";
+    import StudyLayout from "#lib/learning/components/StudyLayout.svelte";
+    import DeckNotFound from "#lib/decks/components/DeckNotFound.svelte";
+    import DeckEmpty from "#lib/decks/components/DeckEmpty.svelte";
 
     let { data } = $props();
 

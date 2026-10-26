@@ -1,14 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { userDecks } from "#lib/store/userDecks.svelte";
-    import { useOverviewSession } from "#lib/composables/useOverviewSession.svelte";
-    import OverviewCard from "#lib/components/overview/OverviewCard.svelte";
-    import OverviewComplete from "#lib/components/overview/OverviewComplete.svelte";
-    import StudyControls from "#lib/components/shared/StudyControls.svelte";
-    import ProgressBar from "#lib/components/shared/ProgressBar.svelte";
-    import StudyLayout from "#lib/components/shared/StudyLayout.svelte";
-    import DeckNotFound from "#lib/components/deck/DeckNotFound.svelte";
-    import DeckEmpty from "#lib/components/deck/DeckEmpty.svelte";
+    import { userDecks } from "#lib/decks/store/userDecks.svelte";
+    import { useOverviewSession } from "#lib/learning/composables/useOverviewSession.svelte";
+    import OverviewCard from "#lib/learning/components/overview/OverviewCard.svelte";
+    import OverviewComplete from "#lib/learning/components/overview/OverviewComplete.svelte";
+    import StudyControls from "#lib/learning/components/StudyControls.svelte";
+    import ProgressBar from "#lib/app/components/shared/ProgressBar.svelte";
+    import StudyLayout from "#lib/learning/components/StudyLayout.svelte";
+    import DeckNotFound from "#lib/decks/components/DeckNotFound.svelte";
+    import DeckEmpty from "#lib/decks/components/DeckEmpty.svelte";
 
     let { data } = $props();
 

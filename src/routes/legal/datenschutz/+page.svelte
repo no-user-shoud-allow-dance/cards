@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { cardStore } from "#lib/store/store.svelte";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
-    import Term from "#lib/components/shared/Term.svelte";
-    import Toggle from "#lib/components/shared/Toggle.svelte";
+    import { cardStore } from "#lib/learning/store/cardStore.svelte";
+    import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
+    import Term from "#lib/app/components/shared/Term.svelte";
+    import Toggle from "#lib/app/components/shared/Toggle.svelte";
 </script>
 
 <svelte:head>

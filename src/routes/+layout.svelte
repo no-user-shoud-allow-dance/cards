@@ -2,12 +2,12 @@
     import "../app.css";
     import { onMount } from "svelte";
     import { page } from "$app/state";
-    import { cardStore } from "#lib/store/store.svelte";
-    import { userDecks } from "#lib/store/userDecks.svelte";
-    import AppHeader from "#lib/components/layout/AppHeader.svelte";
-    import AppFooter from "#lib/components/layout/AppFooter.svelte";
-    import PrivacyToast from "#lib/components/layout/PrivacyToast.svelte";
-    import ImpersistentToast from "#lib/components/layout/ImpersistentToast.svelte";
+    import { cardStore } from "#lib/learning/store/cardStore.svelte";
+    import { userDecks } from "#lib/decks/store/userDecks.svelte";
+    import AppHeader from "#lib/app/components/layout/AppHeader.svelte";
+    import AppFooter from "#lib/app/components/layout/AppFooter.svelte";
+    import PrivacyToast from "#lib/app/components/layout/PrivacyToast.svelte";
+    import ImpersistentToast from "#lib/app/components/layout/ImpersistentToast.svelte";
 
     let { children } = $props();
 
@@ -128,7 +128,7 @@
         display: flex;
         flex-direction: column;
 
-        min-height: 100vh;
+        min-height: 100dvh;
     }
 
     .layout > main {
@@ -182,7 +182,7 @@
         }
 
         .layout.study-mode :global(.study-page.full-height) {
-            min-height: calc(100vh - var(--header-h));
+            min-height: calc(100dvh - var(--header-h));
         }
     }
 
@@ -197,7 +197,7 @@
         align-items: flex-end;
         gap: 0.6rem;
 
-        max-width: min(22rem, calc(100vw - 2rem));
+        max-width: min(22rem, calc(100dvw - 2rem));
     }
 
     @media (max-width: 540px) {
