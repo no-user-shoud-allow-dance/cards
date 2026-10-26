@@ -119,9 +119,15 @@
         <section class="hero-cta">
             <div class="hero-cta-info">
                 <span class="hero-cta-label">Lernfortschritt</span>
-                <span class="hero-cta-count"
-                    >{learnedCount} / {deck.cards.length} gelernt</span
-                >
+                {#if overviewDone || hasProgress}
+                    <span class="hero-cta-count"
+                        >{learnedCount} / {deck.cards.length} gelernt</span
+                    >
+                {:else}
+                    <span class="hero-cta-count"
+                        >{countCards(deck.cards.length)} im Stapel</span
+                    >
+                {/if}
                 <ProgressBar ratio={learningRatio} height="5px" />
                 {#if overviewDone || !hasProgress}
                     <span class="hero-cta-overview">
@@ -139,14 +145,25 @@
             {#if allLearned}
                 <ResetProgress {cardIds} slug={deck.slug} />
             {:else}
-                <Button
-                    variant={isOverviewCta ? "overview" : "primary"}
-                    href={ctaHref}
-                    class="hero-cta-button"
-                >
-                    {ctaLabel}
-                    <span aria-hidden="true">→</span>
-                </Button>
+                <div class="hero-cta-actions">
+                    <Button
+                        variant={isOverviewCta ? "overview" : "primary"}
+                        href={ctaHref}
+                        class="hero-cta-button"
+                    >
+                        {ctaLabel}
+                        <span aria-hidden="true">→</span>
+                    </Button>
+                    {#if isOverviewCta}
+                        <Button
+                            variant="secondary"
+                            class="hero-cta-skip"
+                            onclick={() => cardStore.markOverviewDone(deck.slug)}
+                        >
+                            Übersicht überspringen
+                        </Button>
+                    {/if}
+                </div>
             {/if}
         </section>
 
@@ -250,13 +267,26 @@
         font-weight: 500;
     }
 
-    /* The CTA and the reset action match the hero's visual weight. */
-    .hero-cta :global(.btn),
-    .hero-cta :global(.reset-button) {
+    .hero-cta-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
         flex: 0 0 auto;
+    }
+
+    /* The main CTA matches the hero's visual weight. */
+    .hero-cta :global(.hero-cta-button) {
         min-height: 3rem;
         padding: 0.8rem 1.6rem;
         font-size: 1rem;
+    }
+
+    /* The skip button is deliberately smaller. */
+    .hero-cta :global(.hero-cta-skip) {
+        min-height: 2.2rem;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.8rem;
     }
 
     .box-section {
@@ -292,8 +322,7 @@
             align-items: stretch;
         }
 
-        .hero-cta :global(.btn),
-        .hero-cta :global(.reset-button) {
+        .hero-cta-actions {
             width: 100%;
         }
 
