@@ -262,6 +262,29 @@
         }
     }
 
+    // Imports the deck from a combined link as a brand-new deck (even if
+    // the same content already exists) and applies the linked progress
+    // to that new deck.
+    async function applyAsNew(): Promise<void> {
+        const p = progressPreview;
+        if (!p || !p.included) return;
+        busy = true;
+        try {
+            const { deck: added } = await userDecks.add(
+                p.included.raw,
+                p.included.title ?? "Geteilter Stapel",
+                "Geteilt",
+                p.included.deckType,
+            );
+            const slug = added.slug;
+            const loaded = userDecks.load(slug);
+            applyProgress(slug, loaded?.cards.length ?? 0, p.payload);
+            goto(resolve("/(deck)/deck/[slug]", { slug }));
+        } finally {
+            busy = false;
+        }
+    }
+
     function stash(): void {
         const p = progressPreview;
         if (!p || p.deck || p.included) return;
@@ -316,33 +339,33 @@
             {/if}
         </p>
         {#if deckPreview.existing}
-            <p class="note">
+            <p class="note note-warning">
                 Dieser Stapel existiert bereits als „{deckPreview.existing
-                    .name}“.
+                    .name}“. Du kannst ihn trotzdem als neuen Stapel
+                importieren.
             </p>
-            <div class="actions">
+        {/if}
+        <label class="field-label" for="import-deck-type">Typ</label>
+        <select id="import-deck-type" bind:value={deckType}>
+            {#each DECK_TYPE_OPTIONS as [value, config]}
+                <option value={value}>{config.label}</option>
+            {/each}
+        </select>
+        <div class="actions">
+            <Button variant="primary" onclick={importDeck} disabled={busy}>
+                {busy ? "Wird importiert …" : "Importieren"}
+            </Button>
+            {#if deckPreview.existing}
                 <Button
-                    variant="warning"
+                    variant="secondary"
                     href={resolve("/(deck)/deck/[slug]", {
                         slug: deckPreview.existing.slug,
                     })}
                 >
                     Stapel öffnen
                 </Button>
-            </div>
-        {:else}
-            <label class="field-label" for="import-deck-type">Typ</label>
-            <select id="import-deck-type" bind:value={deckType}>
-                {#each DECK_TYPE_OPTIONS as [value, config]}
-                    <option value={value}>{config.label}</option>
-                {/each}
-            </select>
-            <div class="actions">
-                <Button variant="primary" onclick={importDeck} disabled={busy}>
-                    {busy ? "Wird importiert …" : "Importieren"}
-                </Button>
-            </div>
-        {/if}
+            {/if}
+        </div>
     </section>
 {:else if progressPreview}
     {#if progressPreview.deck}
@@ -350,12 +373,16 @@
             <h2 class="panel-title">
                 Fortschritt für „{progressPreview.deck.name}“
             </h2>
+            {#if progressPreview.kind === "combined"}
+                <p class="note note-warning">
+                    Dieser Stapel existiert bereits. Du kannst den Fortschritt
+                    auf den bestehenden Stapel anwenden oder den Stapel als
+                    neuen importieren.
+                </p>
+            {/if}
             <ul class="preview-lines">
                 {#if progressPreview.kind === "combined"}
-                    <li>
-                        Kombinierter Link — der Stapel existiert bereits, nur
-                        der Fortschritt wird übernommen
-                    </li>
+                    <li>Kombinierter Link (Stapel + Fortschritt)</li>
                 {/if}
                 <li>
                     {progressPreview.diff.length}
@@ -387,6 +414,17 @@
                 <Button variant="primary" onclick={apply} disabled={busy}>
                     {busy ? "Wird übernommen …" : "Fortschritt übernehmen"}
                 </Button>
+                {#if progressPreview.kind === "combined"}
+                    <Button
+                        variant="secondary"
+                        onclick={applyAsNew}
+                        disabled={busy}
+                    >
+                        {busy
+                            ? "Wird importiert …"
+                            : "Als neuen Stapel importieren"}
+                    </Button>
+                {/if}
             </div>
         </section>
     {:else if progressPreview.included}
@@ -574,5 +612,15 @@
 
     .note-error {
         color: var(--danger-text);
+    }
+
+    .note-warning {
+        padding: 0.6rem 0.85rem;
+
+        border: 1px solid var(--warning-border);
+        border-radius: var(--radius-md);
+
+        background: var(--warning-bg);
+        color: var(--warning-text);
     }
 </style>
