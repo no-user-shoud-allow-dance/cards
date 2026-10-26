@@ -2,8 +2,8 @@
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import Page from "#lib/components/shared/Page.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Page from "#lib/app/components/shared/Page.svelte";
+    import Button from "#lib/app/components/shared/Button.svelte";
 
     const title = $derived(
         page.status === 404
@@ -41,12 +41,12 @@
         align-items: center;
         justify-content: center;
 
-        min-height: calc(100vh - 3.5rem - var(--footer-h));
+        min-height: calc(100dvh - 3.5rem - var(--footer-h));
     }
 
     .error-card {
         width: min(100%, 32rem);
-        padding: clamp(2rem, 7vw, 3.5rem) 1.5rem;
+        padding: clamp(2rem, 7dvw, 3.5rem) 1.5rem;
 
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
@@ -61,7 +61,7 @@
         margin: 0 0 0.5rem;
 
         font-family: var(--font-serif);
-        font-size: clamp(2.5rem, 7vw, 3.5rem);
+        font-size: clamp(2.5rem, 7dvw, 3.5rem);
         font-weight: 600;
         line-height: 1;
         color: var(--primary);

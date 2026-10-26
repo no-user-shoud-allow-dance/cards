@@ -1,18 +1,18 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { cardStore } from "#lib/store/store.svelte";
-    import { userDecks } from "#lib/store/userDecks.svelte";
+    import { cardStore } from "#lib/learning/store/cardStore.svelte";
+    import { userDecks } from "#lib/decks/store/userDecks.svelte";
     import { BOX_COUNT, type DeckType } from "#lib/utils/types";
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
     import { resolve } from "$app/paths";
-    import Page from "#lib/components/shared/Page.svelte";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
-    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
-    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
-    import FolderSection from "#lib/components/home/FolderSection.svelte";
-    import ContinueCard from "#lib/components/home/ContinueCard.svelte";
-    import ShareImport from "#lib/components/home/ShareImport.svelte";
-    import HomeIntro from "#lib/components/home/HomeIntro.svelte";
+    import Page from "#lib/app/components/shared/Page.svelte";
+    import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
+    import SectionLabel from "#lib/app/components/shared/SectionLabel.svelte";
+    import EmptyNote from "#lib/app/components/shared/EmptyNote.svelte";
+    import FolderSection from "#lib/home/components/FolderSection.svelte";
+    import ContinueCard from "#lib/home/components/ContinueCard.svelte";
+    import ShareImport from "#lib/sharing/components/ShareImport.svelte";
+    import HomeIntro from "#lib/home/components/HomeIntro.svelte";
 
     // Decks live only in this browser (IndexedDB); wait for them before
     // rendering so the server render and the first client render agree.
@@ -132,14 +132,11 @@
                     <p class="hero-stats">
                         {totals.decks} Stapel · {countCards(totals.cards)}
                     </p>
-                    <a class="upload-link" href={resolve("/upload")}>
+                    <a class="upload-link" href={resolve("/(io)/upload")}>
                         Eigenen Stapel hochladen
                     </a>
-                    <a class="upload-link" href={resolve("/(share)/import/deck")}>
-                        Stapel importieren
-                    </a>
-                    <a class="upload-link" href={resolve("/(share)/export/deck")}>
-                        Stapel exportieren
+                    <a class="upload-link" href={resolve("/(io)/import")}>
+                        Importieren
                     </a>
                 </div>
             {/snippet}
@@ -167,7 +164,7 @@
         {#if folders.length === 0}
             <EmptyNote>
                 Keine Stapel gefunden.
-                <a href={resolve("/upload")}>Lade einen eigenen Stapel hoch</a>.
+                <a href={resolve("/(io)/upload")}>Lade einen eigenen Stapel hoch</a>.
             </EmptyNote>
         {/if}
 

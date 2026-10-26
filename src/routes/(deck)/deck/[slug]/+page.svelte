@@ -1,29 +1,29 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { userDecks } from "#lib/store/userDecks.svelte";
-    import { cardStore } from "#lib/store/store.svelte";
-    import { DECK_TYPES } from "#lib/decks/deckTypes";
+    import { userDecks } from "#lib/decks/store/userDecks.svelte";
+    import { cardStore } from "#lib/learning/store/cardStore.svelte";
+    import { DECK_TYPES } from "#lib/decks/utils/deckTypes";
     import { BOX_COUNT, BOX_LABELS } from "#lib/utils/types";
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import Page from "#lib/components/shared/Page.svelte";
-    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
-    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
-    import ProgressBar from "#lib/components/shared/ProgressBar.svelte";
-    import ResetButton from "#lib/components/shared/ResetButton.svelte";
-    import ResetProgress from "#lib/components/shared/ResetProgress.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
-    import DeckNotFound from "#lib/components/deck/DeckNotFound.svelte";
-    import DeckManager from "#lib/components/deck/DeckManager.svelte";
+    import Page from "#lib/app/components/shared/Page.svelte";
+    import SectionLabel from "#lib/app/components/shared/SectionLabel.svelte";
+    import EmptyNote from "#lib/app/components/shared/EmptyNote.svelte";
+    import ProgressBar from "#lib/app/components/shared/ProgressBar.svelte";
+    import ResetButton from "#lib/app/components/shared/ResetButton.svelte";
+    import ResetProgress from "#lib/app/components/shared/ResetProgress.svelte";
+    import Button from "#lib/app/components/shared/Button.svelte";
+    import DeckNotFound from "#lib/decks/components/DeckNotFound.svelte";
+    import DeckManager from "#lib/decks/components/DeckManager.svelte";
     import BoxTabs, {
         type BoxGroup,
-    } from "#lib/components/deck/BoxTabs.svelte";
-    import CardList from "#lib/components/deck/CardList.svelte";
-    import DeckErrors from "#lib/components/deck/DeckErrors.svelte";
-    import { studyTimeStore } from "#lib/store/studyTimeStore.svelte";
+    } from "#lib/decks/components/BoxTabs.svelte";
+    import CardList from "#lib/decks/components/CardList.svelte";
+    import DeckErrors from "#lib/decks/components/DeckErrors.svelte";
+    import { studyTimeStore } from "#lib/learning/store/studyTimeStore.svelte";
     import { formatStudyTime } from "#lib/utils/time";
-    import { timerStateStore } from "#lib/store/timerStateStore.svelte";
+    import { timerStateStore } from "#lib/learning/store/timerStateStore.svelte";
 
     let { data } = $props();
     let deck = $derived(userDecks.load(data.slug));

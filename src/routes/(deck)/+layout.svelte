@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { userDecks } from "#lib/store/userDecks.svelte";
+    import { userDecks } from "#lib/decks/store/userDecks.svelte";
 
     let { children } = $props();
 
