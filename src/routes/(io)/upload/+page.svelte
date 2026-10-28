@@ -4,10 +4,9 @@
     import { guessDeckType } from "#lib/utils/deckTypes";
     import { parseDeck } from "#lib/utils/parser";
     import { stashDraftDeck } from "#lib/utils/draftDeck";
+    import { toastStore } from "#lib/stores/session/toastStore.svelte";
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
     import Card from "#lib/components/shared/ui/Card.svelte";
-
-    let error = $state<string | null>(null);
 
     // Selecting a file reads it, stashes the content as a draft, and
     // redirects to the create page where the user can review and edit.
@@ -15,7 +14,6 @@
         const input = event.currentTarget as HTMLInputElement;
         const file = input.files?.[0];
         if (!file) return;
-        error = null;
         try {
             const raw = await file.text();
             const parsed = parseDeck(raw);
@@ -27,7 +25,7 @@
             });
             goto(resolve("/(io)/create"));
         } catch {
-            error = "Die Datei konnte nicht gelesen werden.";
+            toastStore.error("Die Datei konnte nicht gelesen werden.");
             // Reset the input so the same file can be selected again.
             input.value = "";
         }
@@ -52,9 +50,6 @@
         onchange={onFileChange}
         class="file-input"
     />
-    {#if error}
-        <p class="message-error">{error}</p>
-    {/if}
     <p class="hint">
         Format: eine Zeile <code># Titel</code> und pro Karte eine Zeile
         <code>Vorderseite - Rückseite</code>.
@@ -120,11 +115,5 @@
         color: var(--text-muted);
         font-size: 0.82rem;
         line-height: 1.6;
-    }
-
-    .message-error {
-        margin: 0;
-        color: var(--danger-text);
-        font-size: 0.85rem;
     }
 </style>

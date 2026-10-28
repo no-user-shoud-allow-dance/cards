@@ -33,6 +33,7 @@
     import Card from "#lib/components/shared/ui/Card.svelte";
     import Button from "#lib/components/shared/ui/Button.svelte";
     import QrScanner from "#lib/components/sharing/QrScanner.svelte";
+    import { toastStore } from "#lib/stores/session/toastStore.svelte";
 
     /** A progress link preview. */
     interface ProgressPreview {
@@ -44,7 +45,6 @@
 
     let linkInput = $state("");
     let preview = $state<ProgressPreview | null>(null);
-    let error = $state<string | null>(null);
     let busy = $state(false);
 
     const progressPreview = $derived(preview);
@@ -88,11 +88,10 @@
     });
 
     async function showPreview(): Promise<void> {
-        error = null;
         preview = null;
         const input = extractShareHash(linkInput);
         if (!input) {
-            error = "Bitte füge einen Link ein.";
+            toastStore.error("Bitte füge einen Link ein.");
             return;
         }
         const bare = input.replace(/^#/, "");
@@ -105,7 +104,7 @@
         ) {
             const payload = await decodeDeckShare(input);
             if (!payload) {
-                error = "Der Link ist ungültig oder beschädigt.";
+                toastStore.error("Der Link ist ungültig oder beschädigt.");
                 return;
             }
             const parsed = parseDeck(payload.raw, payload.deckType);
@@ -121,7 +120,7 @@
         if (bare.startsWith(COMBINED_PREFIX)) {
             const combined = await decodeCombinedShare(input);
             if (!combined) {
-                error = "Der Link ist ungültig oder beschädigt.";
+                toastStore.error("Der Link ist ungültig oder beschädigt.");
                 return;
             }
             const parsed = parseDeck(combined.deck.raw, combined.deck.deckType);
@@ -142,7 +141,7 @@
         if (bare.startsWith(PROGRESS_PREFIX)) {
             const progress = await decodeProgressShare(input);
             if (!progress) {
-                error = "Der Link ist ungültig oder beschädigt.";
+                toastStore.error("Der Link ist ungültig oder beschädigt.");
                 return;
             }
             const found = await decks.findByHash(progress.hash);
@@ -162,8 +161,9 @@
             return;
         }
 
-        error =
-            "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.) oder kombinierter Link (t.).";
+        toastStore.error(
+            "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.) oder kombinierter Link (t.).",
+        );
     }
 
     async function apply(): Promise<void> {
@@ -190,7 +190,6 @@
     function reset(): void {
         linkInput = "";
         preview = null;
-        error = null;
     }
 </script>
 
@@ -215,13 +214,10 @@
     <QrScanner onScan={(value) => (linkInput = value)} />
     <div class="actions">
         <Button variant="primary" onclick={showPreview}>Vorschau anzeigen</Button>
-        {#if preview || error}
+        {#if preview}
             <Button onclick={reset}>Zurücksetzen</Button>
         {/if}
     </div>
-    {#if error}
-        <p class="note note-error">{error}</p>
-    {/if}
 </Card>
 
 {#if progressPreview}
@@ -399,9 +395,5 @@
 
         font-size: 0.9rem;
         line-height: 1.6;
-    }
-
-    .note-error {
-        color: var(--danger-text);
     }
 </style>

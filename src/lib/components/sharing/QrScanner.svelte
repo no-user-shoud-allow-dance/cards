@@ -2,6 +2,7 @@
     import { untrack } from "svelte";
     import { fade } from "svelte/transition";
     import Button from "#lib/components/shared/ui/Button.svelte";
+    import { toastStore } from "#lib/stores/session/toastStore.svelte";
 
     let { onScan }: { onScan: (value: string) => void } = $props();
 
@@ -24,7 +25,6 @@
     let closeButton = $state<HTMLButtonElement | null>(null);
     let video = $state<HTMLVideoElement | null>(null);
     let scanning = $state(false);
-    let error = $state<string | null>(null);
 
     let stream: MediaStream | null = null;
     let detector: BarcodeDetectorLike | null = null;
@@ -46,10 +46,10 @@
     }
 
     function openScanner(): void {
-        error = null;
         if (!scannerSupported()) {
-            error =
-                "QR-Scanner wird von diesem Browser nicht unterstützt — füge den Link stattdessen manuell ein.";
+            toastStore.error(
+                "QR-Scanner wird von diesem Browser nicht unterstützt — füge den Link stattdessen manuell ein.",
+            );
             return;
         }
         scanning = true;
@@ -116,11 +116,12 @@
                 scanTimer = window.setInterval(() => void scan(), 300);
             } catch {
                 if (!cancelled) {
-                    // Close the overlay again — the inline error next to
-                    // the button explains what happened.
+                    // Close the overlay again — the toast explains what
+                    // happened.
                     scanning = false;
-                    error =
-                        "Kamera nicht verfügbar — bitte erlaube den Kamerazugriff oder füge den Link manuell ein.";
+                    toastStore.error(
+                        "Kamera nicht verfügbar — bitte erlaube den Kamerazugriff oder füge den Link manuell ein.",
+                    );
                 }
             }
         })();
@@ -155,9 +156,6 @@
 
 <div class="qr-scanner" bind:this={scanButton} tabindex="-1">
     <Button onclick={openScanner}>QR-Code scannen</Button>
-    {#if error}
-        <p class="scanner-error">{error}</p>
-    {/if}
 </div>
 
 {#if scanning}
@@ -204,14 +202,6 @@
 <style>
     .qr-scanner {
         margin-top: 0.6rem;
-    }
-
-    .scanner-error {
-        margin: 0.5rem 0 0;
-
-        color: var(--danger-text);
-        font-size: 0.82rem;
-        line-height: 1.5;
     }
 
     .scanner-overlay {

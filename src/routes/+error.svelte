@@ -16,7 +16,7 @@
         page.status === 404
             ? "Die angeforderte Seite existiert nicht oder wurde verschoben."
             : (page.error?.message ??
-              "Ein unerwarteter Fehler ist aufgetreten."),
+                  "Ein unerwarteter Fehler ist aufgetreten."),
     );
 </script>
 
@@ -31,14 +31,16 @@
             <h1 class="error-title">{title}</h1>
             <p class="error-message">{message}</p>
             <div class="error-actions">
-                <Button variant="primary" href={resolve("/")}>Zur Startseite</Button>
+                <Button variant="primary" href={resolve("/")}
+                    >Zur Startseite</Button
+                >
             </div>
         </Card>
     </div>
 </Page>
 
 <style>
-    .error-page {
+    :global(.error-page) {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -47,7 +49,7 @@
     }
 
     /* Card provides border, radius, bg, shadow; only size + text-align remain. */
-    .error-card {
+    :global(.error-card) {
         width: min(100%, 32rem);
         text-align: center;
     }
