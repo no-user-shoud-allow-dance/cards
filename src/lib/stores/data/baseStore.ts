@@ -38,7 +38,9 @@ export abstract class BaseStore {
     protected async getAll<T>(): Promise<T[]> {
         const db = await this.db();
         const tx = db.transaction(this.storeName, "readonly");
-        return toPromise(tx.objectStore(this.storeName).getAll()) as Promise<T[]>;
+        return toPromise(tx.objectStore(this.storeName).getAll()) as Promise<
+            T[]
+        >;
     }
 
     protected async put<T>(value: T): Promise<void> {
