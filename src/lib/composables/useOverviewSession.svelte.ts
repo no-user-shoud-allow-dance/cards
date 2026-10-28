@@ -43,7 +43,7 @@ export function useOverviewSession(
 
     function start(): void {
         cardStore.init();
-        if (!deck || deck.cards.length === 0) {
+        if (!deck || deck.cards.length === 0 || cardStore.isOverviewDone(slug)) {
             finished = true;
             return;
         }

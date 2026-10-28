@@ -4,8 +4,8 @@ import type { DeckType } from "../types";
  * Content identity of a deck: a short, stable hash over the raw markdown
  * AND the deck type, so the same text under a different type counts as a
  * different deck. The hash is a deck's identity across devices — share
- * links and progress links reference it, and the deck slug is derived
- * from it (see decks.add).
+ * links and progress links reference it, and the deck slug carries it
+ * plus a random suffix (see decks.add).
  *
  * SHA-256 via WebCrypto, truncated to 16 hex chars (64 bit): collision-
  * resistant for any realistic number of personal decks. Falls back to a

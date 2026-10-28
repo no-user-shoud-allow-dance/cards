@@ -1,4 +1,5 @@
-import { BOX_COUNT, type CardStates, type FlashCard } from "../types";
+import { BOX_COUNT, type CardStates, type DeckType, type FlashCard } from "../types";
+import { applyReplacements } from "./replacements";
 
 // Weighted learning progress: each card contributes (box - 1) / (BOX_COUNT - 1),
 // so box 1 = 0 % and box BOX_COUNT = 100 %. Averaged across all cards.
@@ -58,41 +59,67 @@ export function progressDiff(
     return diff;
 }
 
-// Combining diacritics (deliberately without U+0308 - umlaut is retained)
-const DIACRITICS = /[\u0300\u0301\u0304\u0306\u0313\u0314\u0342\u0345]/g;
+// ── Bracket helpers ──────────────────────────────────────────────
 
-/** The full prompt side: article + question (without forms). */
+/**
+ * Normal mode: brackets are hidden, content inside is shown.
+ *   ἀγάπη [Liebe]  →  ἀγάπη Liebe
+ */
+function stripBrackets(text: string): string {
+    return text.replace(/\[([^\]]*)\]/g, "$1").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Pure mode: both brackets and their content are removed.
+ *   ἀγάπη [Liebe]  →  ἀγάπη
+ */
+function removeBrackets(text: string): string {
+    return text.replace(/\s*\[[^\]]*\]/g, "").replace(/\s+/g, " ").trim();
+}
+
+// ── Card display helpers ─────────────────────────────────────────
+
+/**
+ * The front side as shown in normal mode (brackets hidden, content
+ * visible). Used for search queries and overview display.
+ */
 export function cardPrompt(card: FlashCard): string {
-    return [card.article, card.question].filter(Boolean).join(" ");
+    return stripBrackets(card.front);
 }
 
-/** The full answer side: answer + additional in parens. */
+/** The back side (answer / translation). */
 export function cardAnswer(card: FlashCard): string {
-    return card.additional
-        ? `${card.answer} (${card.additional})`
-        : card.answer;
+    return card.back;
 }
 
-export function purePrompt(card: FlashCard): string {
-    let s = cardPrompt(card);
-
-    s = s.replace(/\s*\([^)]*\)/g, "");
-    s = s.replace(/\s*\bmit\s+\S+/gi, "");
-    s = s.replace(/\s*\bm\.\s*\S+/gi, "");
-    s = s.replace(/\s*\+\s*\S+/g, "");
-    s = s.replace(/,.*$/s, "");
-
-    s = s.normalize("NFD").replace(DIACRITICS, "").normalize("NFC");
-    return s.trim().replace(/\s+/g, " ");
+/**
+ * The front side in pure mode: bracketed content removed and
+ * language-specific diacritic replacements applied (e.g. Greek
+ * without breathing marks / tonos, Latin without macrons).
+ */
+export function purePrompt(card: FlashCard, deckType: DeckType): string {
+    let s = removeBrackets(card.front);
+    s = applyReplacements(s, deckType);
+    return s;
 }
 
-export function displayFront(card: FlashCard, pureMode: boolean): string {
+/** Front text for display: normal or pure mode. */
+export function displayFront(
+    card: FlashCard,
+    pureMode: boolean,
+    deckType: DeckType,
+): string {
     if (!pureMode) return cardPrompt(card);
-    const p = purePrompt(card);
+    const p = purePrompt(card, deckType);
     return p || cardPrompt(card);
 }
 
-export function displayBack(card: FlashCard, pureMode: boolean): string {
+/** Back text for display: normal shows just the answer; pure shows prompt + answer. */
+export function displayBack(
+    card: FlashCard,
+    pureMode: boolean,
+    _deckType: DeckType,
+): string {
     if (!pureMode) return cardAnswer(card);
     return `${cardPrompt(card)}: ${cardAnswer(card)}`;
 }

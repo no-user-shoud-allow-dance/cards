@@ -1,22 +1,24 @@
 <script lang="ts">
     import { displayFront, displayBack } from "#lib/utils/pure";
-    import type { FlashCard } from "#lib/types";
+    import type { DeckType, FlashCard } from "#lib/types";
 
     let {
         cards,
         pureMode,
+        deckType,
     }: {
         cards: FlashCard[];
         pureMode: boolean;
+        deckType: DeckType;
     } = $props();
 </script>
 
 <ul class="card-list">
     {#each cards as card (card.id)}
         <li>
-            <span class="front">{displayFront(card, pureMode)}</span>
+            <span class="front">{displayFront(card, pureMode, deckType)}</span>
             <span class="sep">→</span>
-            <span class="back">{displayBack(card, pureMode)}</span>
+            <span class="back">{displayBack(card, pureMode, deckType)}</span>
         </li>
     {/each}
 </ul>

@@ -99,20 +99,18 @@ class DeckStore extends BaseStore {
 
     async add(
         raw: string,
-        name: string,
         folder: string,
+        name: string,
         deckType: DeckType,
     ): Promise<AddDeckResult> {
         await this.init();
         const contentHash = await hashDeckContent(raw, deckType);
-        // The slug is derived from the content hash: the same deck (same
-        // content + type) gets the same slug — and thus the same card
-        // IDs — on every device. A deliberate duplicate upload collides
-        // and gets a short random suffix.
-        let slug = `${contentHash}`;
-        if (this.decks[slug]) {
-            slug = `${contentHash}-${Math.random().toString(36).slice(2, 6)}`;
-        }
+        // The slug is the content hash plus a random suffix. The hash
+        // keeps the deck identifiable across devices (import dedup,
+        // progress links), while the suffix makes every deck instance
+        // unique: editing changes the content — and thus the hash —
+        // but never the slug, so progress (keyed by slug) survives.
+        const slug = `${contentHash}-${Math.random().toString(36).slice(2, 6)}`;
         const deck: Deck = {
             slug,
             name: name.trim() || "Unbenannter Stapel",
@@ -136,7 +134,7 @@ class DeckStore extends BaseStore {
      */
     async update(
         slug: string,
-        changes: { name?: string; folder?: string },
+        changes: { folder?: string; name?: string },
     ): Promise<void> {
         await this.init();
         const deck = this.decks[slug];
@@ -145,6 +143,27 @@ class DeckStore extends BaseStore {
             ...deck,
             name: changes.name?.trim() || deck.name,
             folder: changes.folder?.trim() || deck.folder,
+        };
+        if (typeof window !== "undefined") {
+            await this.put(updated);
+        }
+        this.decks = { ...this.decks, [slug]: updated };
+    }
+
+    /**
+     * Replaces a deck's raw markdown (card editing). The slug stays the
+     * same so card progress (keyed by `${slug}/${index}`) survives for
+     * cards that keep their position; the content hash is recomputed so
+     * import dedup and progress links track the new content.
+     */
+    async updateRaw(slug: string, raw: string): Promise<void> {
+        await this.init();
+        const deck = this.decks[slug];
+        if (!deck) return;
+        const updated: Deck = {
+            ...deck,
+            raw,
+            contentHash: await hashDeckContent(raw, deck.deckType),
         };
         if (typeof window !== "undefined") {
             await this.put(updated);

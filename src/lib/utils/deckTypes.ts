@@ -59,9 +59,10 @@ export function guessDeckType(raw: string): DeckType {
     const { cards } = parseDeck(raw, "latin");
     if (cards.length === 0) return "english";
 
-    // Reconstruct the full prompt (article + question) for analysis.
+    // Strip bracketed hints from the front for analysis — the bracket
+    // content is in the target language, not the source language.
     const prompts = cards.map((card) =>
-        [card.article, card.question].filter(Boolean).join(" "),
+        card.front.replace(/\s*\[[^\]]*\]/g, "").trim(),
     );
 
     const greek = prompts.filter((p) => GREEK_CHAR.test(p)).length;

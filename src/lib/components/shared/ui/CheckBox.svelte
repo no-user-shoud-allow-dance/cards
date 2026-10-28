@@ -7,15 +7,17 @@
         size = "md",
         name,
         id,
+        ariaLabel,
         onchange,
     }: {
-        label: string;
+        label?: string;
         checked?: boolean;
         disabled?: boolean;
         variant?: "primary" | "success" | "danger" | "warning" | "info" | "overview";
         size?: "sm" | "md" | "lg";
         name?: string;
         id?: string;
+        ariaLabel?: string;
         onchange?: (checked: boolean) => void;
     } = $props();
 </script>
@@ -26,6 +28,7 @@
         {id}
         {name}
         {disabled}
+        aria-label={ariaLabel}
         bind:checked
         onchange={(e) => onchange?.(e.currentTarget.checked)}
     />
@@ -34,7 +37,9 @@
             <path d="M1 5.5 4.5 9 11 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
     </span>
-    <span class="label">{label}</span>
+    {#if label}
+        <span class="label">{label}</span>
+    {/if}
 </label>
 
 <style>

@@ -133,11 +133,8 @@
                     <p class="hero-stats">
                         {totals.decks} Stapel · {countCards(totals.cards)}
                     </p>
-                    <Button href={resolve("/(io)/upload")}>
-                        Eigenen Stapel hochladen
-                    </Button>
-                    <Button href={resolve("/(io)/import")}>
-                        Importieren
+                    <Button href={resolve("/(io)/create")}>
+                        Stapel erstellen
                     </Button>
                 </div>
             {/snippet}

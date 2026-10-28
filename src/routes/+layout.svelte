@@ -26,6 +26,7 @@
             .join(" ");
 
     let routePath = $derived(page.url.pathname);
+    let isHomePage = $derived(routePath === "/");
     let isDeckPage = $derived(routePath.startsWith("/deck/"));
     let isCramPage = $derived(routePath.startsWith("/cram/"));
     let isOverviewPage = $derived(routePath.startsWith("/overview/"));
@@ -238,6 +239,16 @@
             </ol>
         </nav>
 
+        {#if isHomePage}
+            <a
+                class="add-link"
+                href={resolve("/(io)/create")}
+                aria-label="Stapel erstellen"
+            >
+                <span aria-hidden="true">+</span>
+            </a>
+        {/if}
+
         {#if mobileTitle}
             <span class="mobile-title">{mobileTitle}</span>
         {/if}
@@ -388,6 +399,44 @@
         font-weight: 600;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    /* ── "+" add-link (home page only) ── */
+
+    .add-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+
+        width: 1.8rem;
+        height: 1.8rem;
+        padding: 0;
+
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md);
+
+        background: var(--primary);
+        color: var(--primary-text);
+
+        font-size: 1.1rem;
+        font-weight: 600;
+        line-height: 1;
+        text-decoration: none;
+
+        transition:
+            background var(--transition-fast),
+            border-color var(--transition-fast);
+    }
+
+    .add-link:hover {
+        background: var(--primary-hover);
+        border-color: var(--primary-hover);
+    }
+
+    .add-link:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
     }
 
     /* Mobile app bar: back button + current position instead of the

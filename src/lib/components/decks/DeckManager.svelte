@@ -125,6 +125,11 @@
             >
                 Teilen
             </Button>
+            <Button
+                href={resolve("/(deck)/edit/[slug]", { slug: deck.slug })}
+            >
+                Bearbeiten
+            </Button>
             {#key confirmDelete}
                 <div class="delete-action" in:fade={{ duration: 120 }}>
                     <Button

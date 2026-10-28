@@ -17,9 +17,15 @@
         });
     });
 
-    // Route ids include the (io) group; the URLs do not. Import tabs
-    // carry the "receiving" color (green); upload stays neutral.
+    // Route ids include the (io) group; the URLs do not. Create tabs
+    // carry the "making" color (primary blue); import tabs carry the
+    // "receiving" color (green); upload stays neutral.
     const tabs = [
+        {
+            href: resolve("/(io)/create"),
+            label: "Erstellen",
+            kind: "create",
+        },
         {
             href: resolve("/(io)/upload"),
             label: "Hochladen",
@@ -35,10 +41,11 @@
 
 {#if ready}
     <Page>
-        <nav class="io-tabs" aria-label="Hochladen und importieren">
+        <nav class="io-tabs" aria-label="Stapel erstellen, hochladen und importieren">
             {#each tabs as tab (tab.href)}
                 <a
                     class="io-tab"
+                    class:create={tab.kind === "create"}
                     class:import={tab.kind === "import"}
                     class:active={page.url.pathname === tab.href}
                     href={tab.href}
@@ -106,6 +113,21 @@
     .io-tab.active {
         background: var(--surface-soft);
         color: var(--text);
+    }
+
+    /* Create tabs carry the "making" color: primary blue. */
+    .io-tab.create {
+        color: var(--primary);
+    }
+
+    .io-tab.create:hover {
+        background: var(--primary-soft);
+        color: var(--primary);
+    }
+
+    .io-tab.create.active {
+        background: var(--primary-soft);
+        color: var(--primary);
     }
 
     /* Import tabs carry the "receiving" color: green. */

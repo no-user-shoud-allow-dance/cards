@@ -56,6 +56,11 @@
     {#snippet center()}
         {#if deck.cards.length === 0}
             <DeckEmpty />
+        {:else if session.finished}
+            <OverviewComplete
+                slug={data.slug}
+                totalCards={session.totalCards}
+            />
         {:else if session.currentCard}
             {#key session.currentCardId}
                 <OverviewCard
@@ -64,11 +69,6 @@
                     onclick={session.next}
                 />
             {/key}
-        {:else if session.finished}
-            <OverviewComplete
-                slug={data.slug}
-                totalCards={session.totalCards}
-            />
         {:else}
             <DeckEmpty text="Keine Karten verfügbar." />
         {/if}

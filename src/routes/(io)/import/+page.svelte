@@ -2,19 +2,16 @@
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { DECK_TYPE_OPTIONS } from "#lib/utils/deckTypes";
     import { parseDeck } from "#lib/utils/parser";
-    import { hashDeckContent } from "#lib/utils/hash";
     import { decks } from "#lib/stores/data/deckStore.svelte";
     import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
     import { studyTimeStore } from "#lib/stores/persistent/studyTimeStore.svelte";
     import {
-        applyPendingProgressFor,
         applyProgress,
         stashPendingProgress,
     } from "#lib/utils/pendingProgress";
+    import { stashDraftDeck } from "#lib/utils/draftDeck";
     import {
-        countCards,
         progressDiff,
         type ProgressDiffEntry,
     } from "#lib/utils/pure";
@@ -31,63 +28,26 @@
         type ProgressSharePayload,
     } from "#lib/utils/share";
     import { formatStudyTime } from "#lib/utils/time";
-    import { BOX_LABELS, type DeckType, type Deck } from "#lib/types";
+    import { BOX_LABELS, type Deck } from "#lib/types";
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
     import Card from "#lib/components/shared/ui/Card.svelte";
-    import Badge from "#lib/components/shared/ui/Badge.svelte";
     import Button from "#lib/components/shared/ui/Button.svelte";
     import QrScanner from "#lib/components/sharing/QrScanner.svelte";
 
-    /** A deck ("cards") link preview. */
-    interface DeckPreview {
-        kind: "deck";
-        raw: string;
-        title: string | null;
-        cardCount: number;
-        errorCount: number;
-        contentHash: string;
-        existing: Deck | null;
-    }
-
-    /** The deck part of a combined link, when it is not stored locally. */
-    interface IncludedDeck {
-        raw: string;
-        deckType: DeckType;
-        title: string | null;
-        cardCount: number;
-    }
-
-    /** A progress or combined link preview. */
+    /** A progress link preview. */
     interface ProgressPreview {
-        kind: "progress" | "combined";
         payload: ProgressSharePayload;
         deck: Deck | null;
-        included: IncludedDeck | null;
         diff: ProgressDiffEntry[];
         stashed: boolean;
     }
 
-    type ImportPreview = DeckPreview | ProgressPreview;
-
     let linkInput = $state("");
-    let preview = $state<ImportPreview | null>(null);
+    let preview = $state<ProgressPreview | null>(null);
     let error = $state<string | null>(null);
     let busy = $state(false);
-    // Selected deck type for a deck link; kept separate from the preview
-    // so the <select> can bind to it.
-    let deckType = $state<DeckType>("latin");
 
-    const deckPreview = $derived(preview?.kind === "deck" ? preview : null);
-
-    const progressPreview = $derived(
-        preview && preview.kind !== "deck" ? preview : null,
-    );
-
-    const learnedCount = $derived(
-        progressPreview
-            ? progressPreview.payload.boxes.filter((box) => box > 0).length
-            : 0,
-    );
+    const progressPreview = $derived(preview);
 
     const overviewLine = $derived(
         !progressPreview
@@ -127,18 +87,6 @@
         }
     });
 
-    // The content hash covers raw + deck type, so it follows the type
-    // selection; the "already stored" check follows it as well.
-    $effect(() => {
-        const p = preview;
-        if (!p || p.kind !== "deck") return;
-        const type = deckType;
-        void (async () => {
-            p.contentHash = await hashDeckContent(p.raw, type);
-            p.existing = (await decks.findByHash(p.contentHash)) ?? null;
-        })();
-    });
-
     async function showPreview(): Promise<void> {
         error = null;
         preview = null;
@@ -148,6 +96,9 @@
             return;
         }
         const bare = input.replace(/^#/, "");
+
+        // Deck and combined links carry the full deck content: stash it
+        // as a draft and redirect to the create page for review/editing.
         if (
             bare.startsWith(DECK_PREFIX) ||
             bare.startsWith(LEGACY_DECK_PREFIX)
@@ -158,127 +109,69 @@
                 return;
             }
             const parsed = parseDeck(payload.raw, payload.deckType);
-            deckType = payload.deckType;
-            preview = {
-                kind: "deck",
+            stashDraftDeck({
                 raw: payload.raw,
+                deckType: payload.deckType,
+                name: parsed.title ?? "Geteilter Stapel",
                 title: parsed.title,
-                cardCount: parsed.cards.length,
-                errorCount: parsed.errors.length,
-                contentHash: "",
-                existing: null,
-            };
+            });
+            goto(resolve("/(io)/create"));
             return;
         }
-        let payload: ProgressSharePayload;
-        let kind: "progress" | "combined";
-        let included: IncludedDeck | null = null;
+        if (bare.startsWith(COMBINED_PREFIX)) {
+            const combined = await decodeCombinedShare(input);
+            if (!combined) {
+                error = "Der Link ist ungültig oder beschädigt.";
+                return;
+            }
+            const parsed = parseDeck(combined.deck.raw, combined.deck.deckType);
+            // Stash the progress so it is applied after the deck is created
+            // on the create page (matched by content hash).
+            stashPendingProgress(combined.progress);
+            stashDraftDeck({
+                raw: combined.deck.raw,
+                deckType: combined.deck.deckType,
+                name: parsed.title ?? "Geteilter Stapel",
+                title: parsed.title,
+            });
+            goto(resolve("/(io)/create"));
+            return;
+        }
+
+        // Progress-only links apply to an existing deck.
         if (bare.startsWith(PROGRESS_PREFIX)) {
             const progress = await decodeProgressShare(input);
             if (!progress) {
                 error = "Der Link ist ungültig oder beschädigt.";
                 return;
             }
-            payload = progress;
-            kind = "progress";
-        } else if (bare.startsWith(COMBINED_PREFIX)) {
-            const combined = await decodeCombinedShare(input);
-            if (!combined) {
-                error = "Der Link ist ungültig oder beschädigt.";
-                return;
-            }
-            payload = combined.progress;
-            kind = "combined";
-            const parsed = parseDeck(combined.deck.raw, combined.deck.deckType);
-            included = {
-                raw: combined.deck.raw,
-                deckType: combined.deck.deckType,
-                title: parsed.title,
-                cardCount: parsed.cards.length,
+            const found = await decks.findByHash(progress.hash);
+            const p: ProgressPreview = {
+                payload: progress,
+                deck: found ?? null,
+                diff: [],
+                stashed: false,
             };
-        } else {
-            error =
-                "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.) oder kombinierter Link (t.).";
+            if (found) {
+                const loaded = decks.load(found.slug);
+                p.diff = loaded
+                    ? progressDiff(loaded.cards, cardStore.states, progress.boxes)
+                    : [];
+            }
+            preview = p;
             return;
         }
-        const found = await decks.findByHash(payload.hash);
-        const p: ProgressPreview = {
-            kind,
-            payload,
-            deck: found ?? null,
-            included,
-            diff: [],
-            stashed: false,
-        };
-        if (found) {
-            const loaded = decks.load(found.slug);
-            p.diff = loaded
-                ? progressDiff(loaded.cards, cardStore.states, payload.boxes)
-                : [];
-        }
-        preview = p;
-    }
 
-    async function importDeck(): Promise<void> {
-        const p = deckPreview;
-        if (!p) return;
-        busy = true;
-        try {
-            const { deck } = await decks.add(
-                p.raw,
-                p.title ?? "Geteilter Stapel",
-                "Geteilt",
-                deckType,
-            );
-            // A progress link shared before this deck: apply it now.
-            await applyPendingProgressFor(deck.contentHash);
-            goto(resolve("/(deck)/deck/[slug]", { slug: deck.slug }));
-        } finally {
-            busy = false;
-        }
+        error =
+            "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.) oder kombinierter Link (t.).";
     }
 
     async function apply(): Promise<void> {
         const p = progressPreview;
-        if (!p) return;
+        if (!p || !p.deck) return;
         busy = true;
         try {
-            let target = p.deck;
-            if (!target && p.included) {
-                // The deck travels inside the combined link.
-                const { deck: added } = await decks.add(
-                    p.included.raw,
-                    p.included.title ?? "Geteilter Stapel",
-                    "Geteilt",
-                    p.included.deckType,
-                );
-                target = added;
-            }
-            if (!target) return;
-            const slug = target.slug;
-            const loaded = decks.load(slug);
-            applyProgress(slug, loaded?.cards.length ?? 0, p.payload);
-            goto(resolve("/(deck)/deck/[slug]", { slug }));
-        } finally {
-            busy = false;
-        }
-    }
-
-    // Imports the deck from a combined link as a brand-new deck (even if
-    // the same content already exists) and applies the linked progress
-    // to that new deck.
-    async function applyAsNew(): Promise<void> {
-        const p = progressPreview;
-        if (!p || !p.included) return;
-        busy = true;
-        try {
-            const { deck: added } = await decks.add(
-                p.included.raw,
-                p.included.title ?? "Geteilter Stapel",
-                "Geteilt",
-                p.included.deckType,
-            );
-            const slug = added.slug;
+            const slug = p.deck.slug;
             const loaded = decks.load(slug);
             applyProgress(slug, loaded?.cards.length ?? 0, p.payload);
             goto(resolve("/(deck)/deck/[slug]", { slug }));
@@ -289,7 +182,7 @@
 
     function stash(): void {
         const p = progressPreview;
-        if (!p || p.deck || p.included) return;
+        if (!p || p.deck) return;
         stashPendingProgress(p.payload);
         p.stashed = true;
     }
@@ -307,7 +200,7 @@
 
 <PageHeader
     title="Importieren"
-    subtitle="Füge einen geteilten Stapel-, Fortschritt- oder kombinierten Link ein, prüfe die Vorschau und importiere."
+    subtitle="Füge einen geteilten Link ein. Stapel-Links (c., t.) öffnen sich im Editor; Fortschritt-Links (p.) gelten für einen bestehenden Stapel."
 />
 
 <Card class="panel" padding="lg">
@@ -331,61 +224,13 @@
     {/if}
 </Card>
 
-{#if deckPreview}
-    <Card class="panel" padding="lg">
-        <h2 class="panel-title">{deckPreview.title ?? "Geteilter Stapel"}</h2>
-        <p class="preview-meta">
-            <Badge>{countCards(deckPreview.cardCount)}</Badge>
-            {#if deckPreview.errorCount > 0}
-                <Badge variant="danger">{deckPreview.errorCount} Fehler</Badge>
-            {/if}
-        </p>
-        {#if deckPreview.existing}
-            <p class="note note-warning">
-                Dieser Stapel existiert bereits als „{deckPreview.existing
-                    .name}“. Du kannst ihn trotzdem als neuen Stapel
-                importieren.
-            </p>
-        {/if}
-        <label class="field-label" for="import-deck-type">Typ</label>
-        <select id="import-deck-type" bind:value={deckType}>
-            {#each DECK_TYPE_OPTIONS as [value, config]}
-                <option value={value}>{config.label}</option>
-            {/each}
-        </select>
-        <div class="actions">
-            <Button variant="primary" onclick={importDeck} disabled={busy}>
-                {busy ? "Wird importiert …" : "Importieren"}
-            </Button>
-            {#if deckPreview.existing}
-                <Button
-                    variant="secondary"
-                    href={resolve("/(deck)/deck/[slug]", {
-                        slug: deckPreview.existing.slug,
-                    })}
-                >
-                    Stapel öffnen
-                </Button>
-            {/if}
-        </div>
-    </Card>
-{:else if progressPreview}
+{#if progressPreview}
     {#if progressPreview.deck}
         <Card class="panel" padding="lg">
             <h2 class="panel-title">
                 Fortschritt für „{progressPreview.deck.name}“
             </h2>
-            {#if progressPreview.kind === "combined"}
-                <p class="note note-warning">
-                    Dieser Stapel existiert bereits. Du kannst den Fortschritt
-                    auf den bestehenden Stapel anwenden oder den Stapel als
-                    neuen importieren.
-                </p>
-            {/if}
             <ul class="preview-lines">
-                {#if progressPreview.kind === "combined"}
-                    <li>Kombinierter Link (Stapel + Fortschritt)</li>
-                {/if}
                 <li>
                     {progressPreview.diff.length}
                     {progressPreview.diff.length === 1
@@ -416,50 +261,13 @@
                 <Button variant="primary" onclick={apply} disabled={busy}>
                     {busy ? "Wird übernommen …" : "Fortschritt übernehmen"}
                 </Button>
-                {#if progressPreview.kind === "combined"}
-                    <Button
-                        variant="secondary"
-                        onclick={applyAsNew}
-                        disabled={busy}
-                    >
-                        {busy
-                            ? "Wird importiert …"
-                            : "Als neuen Stapel importieren"}
-                    </Button>
-                {/if}
-            </div>
-        </Card>
-    {:else if progressPreview.included}
-        <Card class="panel" padding="lg">
-            <h2 class="panel-title">
-                Kombinierter Link{progressPreview.included.title
-                    ? `: „${progressPreview.included.title}“`
-                    : ""}
-            </h2>
-            <ul class="preview-lines">
-                <li>
-                    Stapel wird importiert ({countCards(
-                        progressPreview.included.cardCount,
-                    )})
-                </li>
-                <li>
-                    {learnedCount}
-                    {learnedCount === 1 ? "Karte hat" : "Karten haben"} Fortschritt
-                </li>
-                <li>{overviewLine}</li>
-                <li>{studyLine}</li>
-            </ul>
-            <div class="actions">
-                <Button variant="primary" onclick={apply} disabled={busy}>
-                    {busy ? "Wird importiert …" : "Stapel + Fortschritt importieren"}
-                </Button>
             </div>
         </Card>
     {:else if progressPreview.stashed}
         <Card class="panel" padding="lg">
             <p class="note">
                 Der Fortschritt ist gespeichert und wird angewendet, sobald der
-                passende Stapel importiert wird.
+                passende Stapel erstellt oder importiert wird.
             </p>
         </Card>
     {:else}
@@ -467,8 +275,8 @@
             <p class="note">
                 Der zugehörige Stapel ist auf diesem Gerät nicht vorhanden. Du
                 kannst den Fortschritt speichern — er wird angewendet, sobald
-                der Stapel importiert wird. Importiere den Stapel dazu über
-                einen Stapel-Link oben.
+                der Stapel erstellt wird. Erstelle den Stapel dazu über einen
+                Stapel-Link (c. oder t.) oben.
             </p>
             <div class="actions">
                 <Button variant="primary" onclick={stash}>
@@ -497,8 +305,7 @@
         text-transform: uppercase;
     }
 
-    textarea,
-    select {
+    textarea {
         font: inherit;
         width: 100%;
 
@@ -516,8 +323,7 @@
         font-size: 0.8rem;
     }
 
-    textarea:focus,
-    select:focus {
+    textarea:focus {
         border-color: var(--primary);
         outline: 2px solid var(--focus-ring);
     }
@@ -527,18 +333,6 @@
 
         font-size: 1.15rem;
         font-weight: 600;
-    }
-
-    .preview-meta {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-
-        margin: 0 0 1rem;
-    }
-
-    select {
-        max-width: 26rem;
     }
 
     .preview-lines {
@@ -609,15 +403,5 @@
 
     .note-error {
         color: var(--danger-text);
-    }
-
-    .note-warning {
-        padding: 0.6rem 0.85rem;
-
-        border: 1px solid var(--warning-border);
-        border-radius: var(--radius-md);
-
-        background: var(--warning-bg);
-        color: var(--warning-text);
     }
 </style>

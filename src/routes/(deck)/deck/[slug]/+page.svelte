@@ -189,6 +189,7 @@
                                 <CardList
                                     cards={activeGroup.cards}
                                     {pureMode}
+                                    deckType={deck.deckType}
                                 />
                             {/if}
                         </div>

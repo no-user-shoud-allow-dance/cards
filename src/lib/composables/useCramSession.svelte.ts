@@ -55,12 +55,14 @@ export function useCramSession(resolveDeck: () => LoadedDeck | null) {
         currentCard ? cardStore.boxOf(currentCard.id) : 1,
     );
 
+    const deckType = $derived(deck?.deckType ?? "english");
+
     const frontText = $derived(
-        currentCard ? displayFront(currentCard, pureMode) : "",
+        currentCard ? displayFront(currentCard, pureMode, deckType) : "",
     );
 
     const backText = $derived(
-        currentCard ? displayBack(currentCard, pureMode) : "",
+        currentCard ? displayBack(currentCard, pureMode, deckType) : "",
     );
 
     const learnedCount = $derived(
@@ -132,7 +134,7 @@ export function useCramSession(resolveDeck: () => LoadedDeck | null) {
 
     function start(): void {
         cardStore.init();
-        if (!deck) return;
+        if (!deck || deck.cards.length === 0) return;
 
         const first = pickNext(new Set());
 

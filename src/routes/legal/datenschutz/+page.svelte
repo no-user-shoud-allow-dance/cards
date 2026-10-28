@@ -48,7 +48,7 @@
     </li>
     <li>
         <Badge variant="primary">IndexedDB</Badge>: Stapel, die Sie selbst
-        hochladen (Name, Ordner und Kartentext).
+        hochladen (Ordner, Name und Kartentext).
     </li>
 </ul>
 <p>
