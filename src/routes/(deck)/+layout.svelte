@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import Page from "#lib/app/components/shared/Page.svelte";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import Page from "#lib/components/shared/Page.svelte";
 
     let { data, children } = $props();
 
@@ -11,14 +11,14 @@
     let ready = $state(false);
 
     onMount(() => {
-        userDecks.init().then(() => {
+        decks.init().then(() => {
             ready = true;
         });
     });
 
     // Guard once for the whole group: every page here (/deck, /overview,
     // /cram, /export) needs an existing deck.
-    const deckMissing = $derived(ready && userDecks.load(data.slug) === null);
+    const deckMissing = $derived(ready && decks.load(data.slug) === null);
 </script>
 
 {#if ready}

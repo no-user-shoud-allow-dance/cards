@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { DECK_TYPES } from "#lib/decks/utils/deckTypes";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
+    import { DECK_TYPES } from "#lib/utils/deckTypes";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
     import { countCards } from "#lib/utils/pure";
     import {
         canNativeShare,
@@ -9,18 +9,18 @@
         formatShareLength,
         nativeShare,
         SHARE_HASH_LIMIT,
-    } from "#lib/sharing/utils/share";
-    import Page from "#lib/app/components/shared/Page.svelte";
-    import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
-    import type { UserDeck } from "#lib/utils/types";
-    import ShareLinkCard from "#lib/sharing/components/ShareLinkCard.svelte";
-    import Button from "#lib/app/components/shared/Button.svelte";
+    } from "#lib/utils/share";
+    import Page from "#lib/components/shared/Page.svelte";
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import type { Deck } from "#lib/types";
+    import ShareLinkCard from "#lib/components/sharing/ShareLinkCard.svelte";
+    import Button from "#lib/components/shared/Button.svelte";
 
     let { data } = $props();
 
     // The (deck) layout renders this page only when the deck exists.
-    const deck = $derived(userDecks.get(data.slug) as UserDeck);
-    const loaded = $derived(userDecks.load(deck.slug));
+    const deck = $derived(decks.get(data.slug) as Deck);
+    const loaded = $derived(decks.load(deck.slug));
 
     let deckUrl = $state("");
     let shareLength = $state(0);

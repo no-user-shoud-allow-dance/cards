@@ -1,27 +1,26 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import { useCramSession } from "#lib/learning/composables/useCramSession.svelte";
-    import FlashCard from "#lib/learning/components/cram/FlashCard.svelte";
-    import StudyControls from "#lib/learning/components/StudyControls.svelte";
-    import StatusBar from "#lib/learning/components/cram/StatusBar.svelte";
-    import BoxOverview from "#lib/learning/components/cram/BoxOverview.svelte";
-    import SessionComplete from "#lib/learning/components/cram/SessionComplete.svelte";
-    import { useStudyTimer } from "#lib/learning/composables/useStudyTimer.svelte";
-    import StudyClock from "#lib/learning/components/cram/StudyClock.svelte";
-    import CramIntro from "#lib/learning/components/cram/CramIntro.svelte";
-    import CramBreak from "#lib/learning/components/cram/CramBreak.svelte";
-    import Confetti from "#lib/learning/components/cram/Confetti.svelte";
-    import StudyLayout from "#lib/learning/components/StudyLayout.svelte";
-    import type { LoadedDeck } from "#lib/utils/types";
-    import DeckEmpty from "#lib/decks/components/DeckEmpty.svelte";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import { useCramSession } from "#lib/composables/useCramSession.svelte";
+    import FlashCard from "#lib/components/learning/cram/FlashCard.svelte";
+    import StudyControls from "#lib/components/learning/StudyControls.svelte";
+    import StatusBar from "#lib/components/learning/cram/StatusBar.svelte";
+    import BoxOverview from "#lib/components/learning/cram/BoxOverview.svelte";
+    import SessionComplete from "#lib/components/learning/cram/SessionComplete.svelte";
+    import { useStudyTimer } from "#lib/composables/useStudyTimer.svelte";
+    import StudyClock from "#lib/components/learning/cram/StudyClock.svelte";
+    import CramIntro from "#lib/components/learning/cram/CramIntro.svelte";
+    import CramBreak from "#lib/components/learning/cram/CramBreak.svelte";
+    import StudyLayout from "#lib/components/learning/StudyLayout.svelte";
+    import type { LoadedDeck } from "#lib/types";
+    import DeckEmpty from "#lib/components/decks/DeckEmpty.svelte";
 
     let { data } = $props();
 
     // The (deck) layout renders this page only when the deck exists.
-    let deck = $derived(userDecks.load(data.slug) as LoadedDeck);
+    let deck = $derived(decks.load(data.slug) as LoadedDeck);
 
-    const session = useCramSession(() => userDecks.load(data.slug));
+    const session = useCramSession(() => decks.load(data.slug));
 
     const timer = useStudyTimer(() => data.slug);
     timer.observe(session);
@@ -178,10 +177,6 @@
 
         {#if timer.finishedAt !== null}
             <CramBreak {timer} />
-        {/if}
-
-        {#if session.box2Celebration}
-            <Confetti onDone={session.dismissBox2Celebration} />
         {/if}
 
         <StudyClock

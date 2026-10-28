@@ -2,17 +2,17 @@
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { DECK_TYPE_OPTIONS } from "#lib/decks/utils/deckTypes";
-    import { parseDeck } from "#lib/decks/utils/parser";
-    import { hashDeckContent } from "#lib/decks/utils/hash";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import { cardStore } from "#lib/learning/store/cardStore.svelte";
-    import { studyTimeStore } from "#lib/learning/store/studyTimeStore.svelte";
+    import { DECK_TYPE_OPTIONS } from "#lib/utils/deckTypes";
+    import { parseDeck } from "#lib/utils/parser";
+    import { hashDeckContent } from "#lib/utils/hash";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
+    import { studyTimeStore } from "#lib/stores/persistent/studyTimeStore.svelte";
     import {
         applyPendingProgressFor,
         applyProgress,
         stashPendingProgress,
-    } from "#lib/sharing/utils/pendingProgress";
+    } from "#lib/utils/pendingProgress";
     import {
         countCards,
         progressDiff,
@@ -29,12 +29,12 @@
         LEGACY_DECK_PREFIX,
         PROGRESS_PREFIX,
         type ProgressSharePayload,
-    } from "#lib/sharing/utils/share";
+    } from "#lib/utils/share";
     import { formatStudyTime } from "#lib/utils/time";
-    import { BOX_LABELS, type DeckType, type UserDeck } from "#lib/utils/types";
-    import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
-    import Button from "#lib/app/components/shared/Button.svelte";
-    import QrScanner from "#lib/sharing/components/QrScanner.svelte";
+    import { BOX_LABELS, type DeckType, type Deck } from "#lib/types";
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import Button from "#lib/components/shared/Button.svelte";
+    import QrScanner from "#lib/components/sharing/QrScanner.svelte";
 
     /** A deck ("cards") link preview. */
     interface DeckPreview {
@@ -44,7 +44,7 @@
         cardCount: number;
         errorCount: number;
         contentHash: string;
-        existing: UserDeck | null;
+        existing: Deck | null;
     }
 
     /** The deck part of a combined link, when it is not stored locally. */
@@ -59,7 +59,7 @@
     interface ProgressPreview {
         kind: "progress" | "combined";
         payload: ProgressSharePayload;
-        deck: UserDeck | null;
+        deck: Deck | null;
         included: IncludedDeck | null;
         diff: ProgressDiffEntry[];
         stashed: boolean;
@@ -133,7 +133,7 @@
         const type = deckType;
         void (async () => {
             p.contentHash = await hashDeckContent(p.raw, type);
-            p.existing = (await userDecks.findByHash(p.contentHash)) ?? null;
+            p.existing = (await decks.findByHash(p.contentHash)) ?? null;
         })();
     });
 
@@ -155,7 +155,7 @@
                 error = "Der Link ist ungültig oder beschädigt.";
                 return;
             }
-            const parsed = parseDeck(payload.raw);
+            const parsed = parseDeck(payload.raw, payload.deckType);
             deckType = payload.deckType;
             preview = {
                 kind: "deck",
@@ -187,7 +187,7 @@
             }
             payload = combined.progress;
             kind = "combined";
-            const parsed = parseDeck(combined.deck.raw);
+            const parsed = parseDeck(combined.deck.raw, combined.deck.deckType);
             included = {
                 raw: combined.deck.raw,
                 deckType: combined.deck.deckType,
@@ -199,7 +199,7 @@
                 "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.) oder kombinierter Link (t.).";
             return;
         }
-        const found = await userDecks.findByHash(payload.hash);
+        const found = await decks.findByHash(payload.hash);
         const p: ProgressPreview = {
             kind,
             payload,
@@ -209,7 +209,7 @@
             stashed: false,
         };
         if (found) {
-            const loaded = userDecks.load(found.slug);
+            const loaded = decks.load(found.slug);
             p.diff = loaded
                 ? progressDiff(loaded.cards, cardStore.states, payload.boxes)
                 : [];
@@ -222,7 +222,7 @@
         if (!p) return;
         busy = true;
         try {
-            const { deck } = await userDecks.add(
+            const { deck } = await decks.add(
                 p.raw,
                 p.title ?? "Geteilter Stapel",
                 "Geteilt",
@@ -244,7 +244,7 @@
             let target = p.deck;
             if (!target && p.included) {
                 // The deck travels inside the combined link.
-                const { deck: added } = await userDecks.add(
+                const { deck: added } = await decks.add(
                     p.included.raw,
                     p.included.title ?? "Geteilter Stapel",
                     "Geteilt",
@@ -254,7 +254,7 @@
             }
             if (!target) return;
             const slug = target.slug;
-            const loaded = userDecks.load(slug);
+            const loaded = decks.load(slug);
             applyProgress(slug, loaded?.cards.length ?? 0, p.payload);
             goto(resolve("/(deck)/deck/[slug]", { slug }));
         } finally {
@@ -270,14 +270,14 @@
         if (!p || !p.included) return;
         busy = true;
         try {
-            const { deck: added } = await userDecks.add(
+            const { deck: added } = await decks.add(
                 p.included.raw,
                 p.included.title ?? "Geteilter Stapel",
                 "Geteilt",
                 p.included.deckType,
             );
             const slug = added.slug;
-            const loaded = userDecks.load(slug);
+            const loaded = decks.load(slug);
             applyProgress(slug, loaded?.cards.length ?? 0, p.payload);
             goto(resolve("/(deck)/deck/[slug]", { slug }));
         } finally {
@@ -398,7 +398,7 @@
                 <ul class="diff-list">
                     {#each progressPreview.diff as entry (entry.index)}
                         <li>
-                            <span class="diff-front">{entry.front}</span>
+                            <span class="diff-front">{entry.prompt}</span>
                             <span class="diff-boxes">
                                 {entry.from === null
                                     ? "—"

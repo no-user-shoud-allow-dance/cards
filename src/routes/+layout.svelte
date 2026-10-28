@@ -2,12 +2,13 @@
     import "../app.css";
     import { onMount } from "svelte";
     import { page } from "$app/state";
-    import { cardStore } from "#lib/learning/store/cardStore.svelte";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import AppHeader from "#lib/app/components/layout/AppHeader.svelte";
-    import AppFooter from "#lib/app/components/layout/AppFooter.svelte";
-    import PrivacyToast from "#lib/app/components/layout/PrivacyToast.svelte";
-    import ImpersistentToast from "#lib/app/components/layout/ImpersistentToast.svelte";
+    import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
+    import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import AppHeader from "#lib/components/layout/AppHeader.svelte";
+    import AppFooter from "#lib/components/layout/AppFooter.svelte";
+    import PrivacyToast from "#lib/components/layout/PrivacyToast.svelte";
+    import ImpersistentToast from "#lib/components/layout/ImpersistentToast.svelte";
 
     let { children } = $props();
 
@@ -58,7 +59,8 @@
 
     onMount(() => {
         cardStore.init();
-        userDecks.init();
+        settingStore.init();
+        decks.init();
         viewportH = window.innerHeight;
         window.addEventListener("resize", () => {
             viewportH = window.innerHeight;
@@ -87,7 +89,7 @@
 </script>
 
 <svelte:head>
-    {#if !cardStore.googleDisabled}
+    {#if !settingStore.googleDisabled}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
             rel="preconnect"

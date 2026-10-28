@@ -1,32 +1,33 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import { cardStore } from "#lib/learning/store/cardStore.svelte";
-    import { DECK_TYPES } from "#lib/decks/utils/deckTypes";
-    import { BOX_COUNT, BOX_LABELS, type LoadedDeck } from "#lib/utils/types";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
+    import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
+    import { DECK_TYPES } from "#lib/utils/deckTypes";
+    import { BOX_COUNT, BOX_LABELS, type LoadedDeck } from "#lib/types";
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import Page from "#lib/app/components/shared/Page.svelte";
-    import SectionLabel from "#lib/app/components/shared/SectionLabel.svelte";
-    import EmptyNote from "#lib/app/components/shared/EmptyNote.svelte";
-    import ProgressBar from "#lib/app/components/shared/ProgressBar.svelte";
-    import ResetButton from "#lib/app/components/shared/ResetButton.svelte";
-    import ResetProgress from "#lib/app/components/shared/ResetProgress.svelte";
-    import Button from "#lib/app/components/shared/Button.svelte";
-    import DeckManager from "#lib/decks/components/DeckManager.svelte";
+    import Page from "#lib/components/shared/Page.svelte";
+    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
+    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
+    import ProgressBar from "#lib/components/shared/ProgressBar.svelte";
+    import ResetButton from "#lib/components/shared/ResetButton.svelte";
+    import ResetProgress from "#lib/components/shared/ResetProgress.svelte";
+    import Button from "#lib/components/shared/Button.svelte";
+    import DeckManager from "#lib/components/decks/DeckManager.svelte";
     import BoxTabs, {
         type BoxGroup,
-    } from "#lib/decks/components/BoxTabs.svelte";
-    import CardList from "#lib/decks/components/CardList.svelte";
-    import DeckErrors from "#lib/decks/components/DeckErrors.svelte";
-    import { studyTimeStore } from "#lib/learning/store/studyTimeStore.svelte";
+    } from "#lib/components/decks/BoxTabs.svelte";
+    import CardList from "#lib/components/decks/CardList.svelte";
+    import DeckErrors from "#lib/components/decks/DeckErrors.svelte";
+    import { studyTimeStore } from "#lib/stores/persistent/studyTimeStore.svelte";
     import { formatStudyTime } from "#lib/utils/time";
-    import { timerStateStore } from "#lib/learning/store/timerStateStore.svelte";
+    import { timerStateStore } from "#lib/stores/persistent/timerStateStore.svelte";
 
     let { data } = $props();
     // The (deck) layout renders this page only when the deck exists.
-    let deck = $derived(userDecks.load(data.slug) as LoadedDeck);
+    let deck = $derived(decks.load(data.slug) as LoadedDeck);
 
     onMount(() => {
         studyTimeStore.init();
@@ -39,7 +40,7 @@
 
     // Effective pure mode: the deck must define one and the user must
     // have enabled it.
-    const pureMode = $derived(deck.pureMode && cardStore.pureMode);
+    const pureMode = $derived(deck.pureMode && settingStore.pureMode);
 
     const learnedCount = $derived(
         deck.cards.filter((c) => cardStore.boxOf(c.id) === BOX_COUNT).length,
@@ -203,7 +204,7 @@
                     />
                 {/if}
                 {#if hasProgress}
-                    <ResetProgress {cardIds} slug={deck.slug} />
+                    <ResetProgress {cardIds} />
                 {/if}
                 {#if studyTimeMs > 0 || hasTimerState}
                     <ResetButton

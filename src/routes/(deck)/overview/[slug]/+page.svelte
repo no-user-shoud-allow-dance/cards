@@ -1,22 +1,22 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import { useOverviewSession } from "#lib/learning/composables/useOverviewSession.svelte";
-    import OverviewCard from "#lib/learning/components/overview/OverviewCard.svelte";
-    import OverviewComplete from "#lib/learning/components/overview/OverviewComplete.svelte";
-    import StudyControls from "#lib/learning/components/StudyControls.svelte";
-    import ProgressBar from "#lib/app/components/shared/ProgressBar.svelte";
-    import StudyLayout from "#lib/learning/components/StudyLayout.svelte";
-    import type { LoadedDeck } from "#lib/utils/types";
-    import DeckEmpty from "#lib/decks/components/DeckEmpty.svelte";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import { useOverviewSession } from "#lib/composables/useOverviewSession.svelte";
+    import OverviewCard from "#lib/components/learning/overview/OverviewCard.svelte";
+    import OverviewComplete from "#lib/components/learning/overview/OverviewComplete.svelte";
+    import StudyControls from "#lib/components/learning/StudyControls.svelte";
+    import ProgressBar from "#lib/components/shared/ProgressBar.svelte";
+    import StudyLayout from "#lib/components/learning/StudyLayout.svelte";
+    import type { LoadedDeck } from "#lib/types";
+    import DeckEmpty from "#lib/components/decks/DeckEmpty.svelte";
 
     let { data } = $props();
 
     // The (deck) layout renders this page only when the deck exists.
-    let deck = $derived(userDecks.load(data.slug) as LoadedDeck);
+    let deck = $derived(decks.load(data.slug) as LoadedDeck);
 
     const session = useOverviewSession(
-        () => userDecks.load(data.slug),
+        () => decks.load(data.slug),
         () => data.slug,
     );
 

@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { DECK_TYPES } from "#lib/decks/utils/deckTypes";
-    import { cardStore } from "#lib/learning/store/cardStore.svelte";
-    import { studyTimeStore } from "#lib/learning/store/studyTimeStore.svelte";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
+    import { DECK_TYPES } from "#lib/utils/deckTypes";
+    import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
+    import { studyTimeStore } from "#lib/stores/persistent/studyTimeStore.svelte";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
     import { countCards } from "#lib/utils/pure";
     import {
         canNativeShare,
@@ -14,20 +14,20 @@
         nativeShare,
         SHARE_HASH_LIMIT,
         type ProgressSharePayload,
-    } from "#lib/sharing/utils/share";
-    import Page from "#lib/app/components/shared/Page.svelte";
-    import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
-    import type { UserDeck } from "#lib/utils/types";
-    import ShareLinkCard from "#lib/sharing/components/ShareLinkCard.svelte";
-    import Button from "#lib/app/components/shared/Button.svelte";
+    } from "#lib/utils/share";
+    import Page from "#lib/components/shared/Page.svelte";
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import type { Deck } from "#lib/types";
+    import ShareLinkCard from "#lib/components/sharing/ShareLinkCard.svelte";
+    import Button from "#lib/components/shared/Button.svelte";
 
     let { data } = $props();
 
     type ShareMode = "progress" | "cards" | "together";
 
     // The (deck) layout renders this page only when the deck exists.
-    const deck = $derived(userDecks.get(data.slug) as UserDeck);
-    const loaded = $derived(userDecks.load(deck.slug));
+    const deck = $derived(decks.get(data.slug) as Deck);
+    const loaded = $derived(decks.load(deck.slug));
 
     let mode = $state<ShareMode>("together");
     let shareUrl = $state("");
@@ -82,7 +82,7 @@
     // (Re)build the link whenever the mode or the deck changes.
     $effect(() => {
         const slug = data.slug;
-        const current = userDecks.get(slug) as UserDeck;
+        const current = decks.get(slug) as Deck;
         const active = mode;
         const origin = window.location.origin;
         void (async () => {
@@ -93,7 +93,7 @@
                     current.deckType,
                 );
             } else {
-                const loadedDeck = userDecks.load(slug);
+                const loadedDeck = decks.load(slug);
                 // One box per card index; 0 = untouched (keeps the link short).
                 const boxes = loadedDeck
                     ? loadedDeck.cards.map(

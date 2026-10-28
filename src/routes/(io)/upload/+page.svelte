@@ -1,18 +1,18 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { DECK_TYPES, DECK_TYPE_OPTIONS, guessDeckType } from "#lib/decks/utils/deckTypes";
-    import { parseDeck } from "#lib/decks/utils/parser";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import { applyPendingProgressFor } from "#lib/sharing/utils/pendingProgress";
+    import { DECK_TYPES, DECK_TYPE_OPTIONS, guessDeckType } from "#lib/utils/deckTypes";
+    import { parseDeck } from "#lib/utils/parser";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import { applyPendingProgressFor } from "#lib/utils/pendingProgress";
     import { countCards } from "#lib/utils/pure";
-    import type { DeckType } from "#lib/utils/types";
-    import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
-    import SectionLabel from "#lib/app/components/shared/SectionLabel.svelte";
-    import EmptyNote from "#lib/app/components/shared/EmptyNote.svelte";
-    import Button from "#lib/app/components/shared/Button.svelte";
-    import Toggle from "#lib/app/components/shared/Toggle.svelte";
-    import CardList from "#lib/decks/components/CardList.svelte";
+    import type { DeckType } from "#lib/types";
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
+    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
+    import Button from "#lib/components/shared/Button.svelte";
+    import Toggle from "#lib/components/shared/Toggle.svelte";
+    import CardList from "#lib/components/decks/CardList.svelte";
 
     let fileName = $state<string | null>(null);
     let raw = $state<string | null>(null);
@@ -26,7 +26,7 @@
     // Draft preview: the selected file parsed on every change, before saving.
     const preview = $derived.by(() => {
         if (raw === null) return null;
-        const parsed = parseDeck(raw);
+        const parsed = parseDeck(raw, deckType);
         return {
             title: parsed.title,
             cards: parsed.cards.map((card, index) => ({
@@ -87,7 +87,7 @@
 
         busy = true;
         try {
-            const { deck } = await userDecks.add(raw, name, folder, deckType);
+            const { deck } = await decks.add(raw, name, folder, deckType);
             // A progress link shared before this upload may target this deck.
             await applyPendingProgressFor(deck.contentHash);
             goto(resolve("/(deck)/deck/[slug]", { slug: deck.slug }));

@@ -1,6 +1,6 @@
-export * from "./utils/types";
-export * from "./decks/utils/deckTypes";
-export * from "./decks/utils/parser";
+export * from "./types";
+export * from "./utils/deckTypes";
+export * from "./utils/parser";
 export * from "./utils/pure";
-export { cardStore } from "./learning/store/cardStore.svelte";
-export { userDecks } from "./decks/store/userDecks.svelte";
+export { cardStore } from "./stores/persistent/cardStore.svelte";
+export { decks } from "./stores/data/deckStore.svelte";

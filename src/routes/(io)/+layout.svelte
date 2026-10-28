@@ -2,8 +2,8 @@
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import Page from "#lib/app/components/shared/Page.svelte";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import Page from "#lib/components/shared/Page.svelte";
 
     let { children } = $props();
 
@@ -12,7 +12,7 @@
     let ready = $state(false);
 
     onMount(() => {
-        userDecks.init().then(() => {
+        decks.init().then(() => {
             ready = true;
         });
     });

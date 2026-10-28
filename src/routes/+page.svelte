@@ -1,32 +1,32 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { cardStore } from "#lib/learning/store/cardStore.svelte";
-    import { userDecks } from "#lib/decks/store/userDecks.svelte";
-    import { BOX_COUNT, type DeckType } from "#lib/utils/types";
+    import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
+    import { decks } from "#lib/stores/data/deckStore.svelte";
+    import { BOX_COUNT, type DeckType } from "#lib/types";
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
     import { resolve } from "$app/paths";
-    import Page from "#lib/app/components/shared/Page.svelte";
-    import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
-    import SectionLabel from "#lib/app/components/shared/SectionLabel.svelte";
-    import EmptyNote from "#lib/app/components/shared/EmptyNote.svelte";
-    import FolderSection from "#lib/home/components/FolderSection.svelte";
-    import ContinueCard from "#lib/home/components/ContinueCard.svelte";
-    import ShareImport from "#lib/sharing/components/ShareImport.svelte";
-    import HomeIntro from "#lib/home/components/HomeIntro.svelte";
+    import Page from "#lib/components/shared/Page.svelte";
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
+    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
+    import FolderSection from "#lib/components/home/FolderSection.svelte";
+    import ContinueCard from "#lib/components/home/ContinueCard.svelte";
+    import ShareImport from "#lib/components/sharing/ShareImport.svelte";
+    import HomeIntro from "#lib/components/home/HomeIntro.svelte";
 
     // Decks live only in this browser (IndexedDB); wait for them before
     // rendering so the server render and the first client render agree.
     let ready = $state(false);
 
     onMount(() => {
-        userDecks.init().then(() => {
+        decks.init().then(() => {
             ready = true;
         });
     });
 
     // All decks are user-uploaded, for totals and "Weiterlernen".
     const allEntries = $derived(
-        Object.values(userDecks.decks).map((deck) => ({
+        Object.values(decks.decks).map((deck) => ({
             folder: deck.folder,
             slug: deck.slug,
             name: deck.name,
@@ -38,7 +38,7 @@
     const totals = $derived.by(() => {
         let cards = 0;
         for (const entry of allEntries) {
-            cards += userDecks.load(entry.slug)?.cards.length ?? 0;
+            cards += decks.load(entry.slug)?.cards.length ?? 0;
         }
         return { decks: allEntries.length, cards };
     });
@@ -57,7 +57,7 @@
             lastSeen: number;
         }[] = [];
         for (const entry of allEntries) {
-            const deck = userDecks.load(entry.slug);
+            const deck = decks.load(entry.slug);
             if (!deck || deck.cards.length === 0) continue;
             let learned = 0;
             let lastSeen = 0;
@@ -90,7 +90,7 @@
 
     // User-uploaded decks grouped by their folder, newest first within a folder.
     const folders = $derived.by(() => {
-        const sorted = Object.values(userDecks.decks).sort(
+        const sorted = Object.values(decks.decks).sort(
             (a, b) => b.createdAt - a.createdAt,
         );
         const groups = new Map<
@@ -102,7 +102,7 @@
             list.push({
                 slug: deck.slug,
                 name: deck.name,
-                count: userDecks.load(deck.slug)?.cards.length ?? 0,
+                count: decks.load(deck.slug)?.cards.length ?? 0,
             });
             groups.set(deck.folder, list);
         }

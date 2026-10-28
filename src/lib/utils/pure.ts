@@ -1,8 +1,11 @@
-import { BOX_COUNT, type Card, type CardStates, type RawCard } from "./types";
+import { BOX_COUNT, type CardStates, type FlashCard } from "../types";
 
 // Weighted learning progress: each card contributes (box - 1) / (BOX_COUNT - 1),
 // so box 1 = 0 % and box BOX_COUNT = 100 %. Averaged across all cards.
-export function computeProgressRatio(cards: Card[], states: CardStates): number {
+export function computeProgressRatio(
+    cards: FlashCard[],
+    states: CardStates,
+): number {
     if (cards.length === 0) return 0;
     let sum = 0;
     for (const card of cards) {
@@ -20,7 +23,7 @@ export function countCards(n: number): string {
 /** A single card's box change when synced progress is applied. */
 export interface ProgressDiffEntry {
     index: number;
-    front: string;
+    prompt: string;
     /** Box before the sync; null when the card was untouched. */
     from: number | null;
     /** Box after the sync (always higher than the effective current box). */
@@ -33,7 +36,7 @@ export interface ProgressDiffEntry {
  * synced box of 1 on an untouched card is skipped (box 1 is the default).
  */
 export function progressDiff(
-    cards: Card[],
+    cards: FlashCard[],
     states: CardStates,
     boxes: number[],
 ): ProgressDiffEntry[] {
@@ -47,7 +50,7 @@ export function progressDiff(
         if (incoming <= current) continue;
         diff.push({
             index: i,
-            front: cards[i].front,
+            prompt: cardPrompt(cards[i]),
             from: prev ? prev.box : null,
             to: incoming,
         });
@@ -58,8 +61,20 @@ export function progressDiff(
 // Combining diacritics (deliberately without U+0308 - umlaut is retained)
 const DIACRITICS = /[\u0300\u0301\u0304\u0306\u0313\u0314\u0342\u0345]/g;
 
-export function pureFront(front: string): string {
-    let s = front;
+/** The full prompt side: article + question (without forms). */
+export function cardPrompt(card: FlashCard): string {
+    return [card.article, card.question].filter(Boolean).join(" ");
+}
+
+/** The full answer side: answer + additional in parens. */
+export function cardAnswer(card: FlashCard): string {
+    return card.additional
+        ? `${card.answer} (${card.additional})`
+        : card.answer;
+}
+
+export function purePrompt(card: FlashCard): string {
+    let s = cardPrompt(card);
 
     s = s.replace(/\s*\([^)]*\)/g, "");
     s = s.replace(/\s*\bmit\s+\S+/gi, "");
@@ -71,13 +86,13 @@ export function pureFront(front: string): string {
     return s.trim().replace(/\s+/g, " ");
 }
 
-export function displayFront(card: RawCard, pureMode: boolean): string {
-    if (!pureMode) return card.front;
-    const p = pureFront(card.front);
-    return p || card.front;
+export function displayFront(card: FlashCard, pureMode: boolean): string {
+    if (!pureMode) return cardPrompt(card);
+    const p = purePrompt(card);
+    return p || cardPrompt(card);
 }
 
-export function displayBack(card: RawCard, pureMode: boolean): string {
-    if (!pureMode) return card.back;
-    return `${card.front}: ${card.back}`;
+export function displayBack(card: FlashCard, pureMode: boolean): string {
+    if (!pureMode) return cardAnswer(card);
+    return `${cardPrompt(card)}: ${cardAnswer(card)}`;
 }

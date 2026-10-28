@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { cardStore } from "#lib/learning/store/cardStore.svelte";
-    import PageHeader from "#lib/app/components/shared/PageHeader.svelte";
-    import Term from "#lib/app/components/shared/Term.svelte";
-    import Toggle from "#lib/app/components/shared/Toggle.svelte";
+    import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
+    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import Term from "#lib/components/shared/Term.svelte";
+    import Toggle from "#lib/components/shared/Toggle.svelte";
 </script>
 
 <svelte:head>
@@ -93,7 +93,7 @@
     <li>
         <strong>Schriftarten:</strong>
         <br />
-        {#if cardStore.googleDisabled}
+        {#if settingStore.googleDisabled}
             <i
                 >Ausgeschaltet — über den Schalter unten können Sie Google
                 wieder aktivieren.</i
@@ -114,7 +114,7 @@
     <li>
         <strong>Hilfe- und Mnemotechnik-Suche:</strong>
         <br />
-        {#if cardStore.googleDisabled}
+        {#if settingStore.googleDisabled}
             <i
                 >Ausgeschaltet — über den Schalter unten können Sie Google
                 wieder aktivieren.</i
@@ -136,8 +136,8 @@
 <div class="google-toggle">
     <Toggle
         label="Google erlauben"
-        checked={!cardStore.googleDisabled}
-        onchange={(value) => cardStore.setGoogleDisabled(!value)}
+        checked={!settingStore.googleDisabled}
+        onchange={(value) => settingStore.setGoogleDisabled(!value)}
     />
     <p>
         Lädt Schriftarten von Google Fonts nach und blendet die Hilfe- und

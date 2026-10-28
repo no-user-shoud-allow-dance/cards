@@ -2,8 +2,8 @@
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import Page from "#lib/app/components/shared/Page.svelte";
-    import Button from "#lib/app/components/shared/Button.svelte";
+    import Page from "#lib/components/shared/Page.svelte";
+    import Button from "#lib/components/shared/Button.svelte";
 
     const title = $derived(
         page.status === 404
