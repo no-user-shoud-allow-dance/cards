@@ -3,7 +3,7 @@
     import { fade } from "svelte/transition";
     import { studyTimeStore } from "#lib/stores/persistent/studyTimeStore.svelte";
     import { formatStudyTime } from "#lib/utils/time";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
     import ResetProgress from "#lib/components/shared/ResetProgress.svelte";
 
     let {

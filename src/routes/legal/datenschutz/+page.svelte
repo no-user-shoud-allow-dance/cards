@@ -1,8 +1,9 @@
 <script lang="ts">
     import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
-    import Term from "#lib/components/shared/Term.svelte";
-    import Toggle from "#lib/components/shared/Toggle.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
+    import Card from "#lib/components/shared/ui/Card.svelte";
+    import Badge from "#lib/components/shared/ui/Badge.svelte";
+    import Toggle from "#lib/components/shared/ui/Toggle.svelte";
 </script>
 
 <svelte:head>
@@ -14,16 +15,15 @@
     subtitle="Kurz und verständlich erklärt."
 />
 
-<div class="legal-notice">
-    <p>
-        <strong>Hinweis:</strong>
-        <br />
-        Diese App speichert <Term>alle Daten</Term> – Ordner, Stapel, Karten und
-        Lernfortschritt – ausschließlich <Term variant="overview">lokal</Term> auf deinem Gerät. Es findet keine
-        Übertragung an einen Server statt; es gibt keine Konten, kein Tracking und
-        keine Analyse-Tools.
-    </p>
-</div>
+<Card bg="primary" padding="md" class="legal-notice">
+    <strong>Hinweis:</strong>
+    <br />
+    Diese App speichert <Badge variant="primary">alle Daten</Badge> – Ordner, Stapel,
+    Karten und Lernfortschritt – ausschließlich <Badge variant="overview"
+        >lokal</Badge
+    > auf deinem Gerät. Es findet keine Übertragung an einen Server statt; es gibt
+    keine Konten, kein Tracking und keine Analyse-Tools.
+</Card>
 
 <p>
     Haben Sie Fragen? Schreiben Sie an <a href="mailto:nousad@web.de"
@@ -42,12 +42,13 @@
 </p>
 <ul>
     <li>
-        <Term>Local Storage</Term>: Lernfortschritt, Einstellungen (z. B.
-        <Term>Pur-Modus</Term>), Lernzeit und Timer.
+        <Badge variant="primary">Local Storage</Badge>: Lernfortschritt,
+        Einstellungen (z. B.
+        <Badge variant="primary">Pur-Modus</Badge>), Lernzeit und Timer.
     </li>
     <li>
-        <Term>IndexedDB</Term>: Stapel, die Sie selbst hochladen (Name, Ordner
-        und Kartentext).
+        <Badge variant="primary">IndexedDB</Badge>: Stapel, die Sie selbst
+        hochladen (Name, Ordner und Kartentext).
     </li>
 </ul>
 <p>
@@ -57,7 +58,7 @@
         <strong>keine</strong> Werbung angezeigt.
     </span>
     Die Übertragung der Seite erfolgt verschlüsselt über
-    <Term>HTTPS</Term>.
+    <Badge variant="primary">HTTPS</Badge>.
 </p>
 <p>
     Um vor nicht dauerhaft gespeicherten Daten zu warnen, prüft die App beim
@@ -82,8 +83,9 @@
             >Vercel</a
         >
         ausgeliefert. Dabei verarbeitet der Anbieter technisch notwendige
-        <Term>Verbindungsdaten</Term> (z. B. Ihre
-        <Term>IP-Adresse</Term>), um die Seite zu laden. Datenschutzerklärung:
+        <Badge variant="primary">Verbindungsdaten</Badge> (z. B. Ihre
+        <Badge variant="primary">IP-Adresse</Badge>), um die Seite zu laden.
+        Datenschutzerklärung:
         <a
             href="https://vercel.com/legal/privacy"
             target="_blank"
@@ -100,9 +102,9 @@
             >
         {:else}
             Beim Laden der App werden Schriftarten von
-            <Term>Google Fonts</Term>
+            <Badge variant="primary">Google Fonts</Badge>
             nachgeladen; dabei wird Ihre
-            <Term>IP-Adresse</Term>
+            <Badge variant="primary">IP-Adresse</Badge>
             an Google übertragen. Datenschutzerklärung:
             <a
                 href="https://policies.google.com/privacy"
@@ -121,9 +123,9 @@
             >
         {:else}
             Diese Schaltflächen öffnen eine
-            <Term>Google-Suche</Term> in einem neuen Tab. Dabei wird eine Suchanfrage
-            mit dem jeweiligen Wort an Google übertragen — erst auf Ihren Klick hin.
-            Datenschutzerklärung:
+            <Badge variant="primary">Google-Suche</Badge> in einem neuen Tab. Dabei
+            wird eine Suchanfrage mit dem jeweiligen Wort an Google übertragen —
+            erst auf Ihren Klick hin. Datenschutzerklärung:
             <a
                 href="https://policies.google.com/privacy"
                 target="_blank"
@@ -165,8 +167,8 @@
 <p>
     Da alles lokal in Ihrem Browser gespeichert ist, können Sie Ihre Daten
     jederzeit löschen, indem Sie die
-    <Term>Website-Daten</Term> dieser Seite in den Einstellungen Ihres Browsers entfernen.
-    Bei Fragen schreiben Sie an
+    <Badge variant="primary">Website-Daten</Badge> dieser Seite in den Einstellungen
+    Ihres Browsers entfernen. Bei Fragen schreiben Sie an
     <a href="mailto:nousad@web.de">nousad@web.de</a>.
 </p>
 
@@ -182,16 +184,13 @@
         text-underline-offset: 3px;
     }
 
+    /* Card provides bg-primary; only the left accent border + spacing remain. */
     .legal-notice {
         margin: 1.5rem 0;
-        padding: 1rem 1.25rem;
-        border: 1px solid var(--primary);
         border-left: 4px solid var(--primary);
-        border-radius: 6px;
-        background: color-mix(in srgb, var(--primary) 6%, transparent);
     }
 
-    .legal-notice p {
+    .legal-notice :global(.card-body p) {
         margin: 0;
         line-height: 1.7;
     }

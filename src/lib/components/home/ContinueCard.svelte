@@ -2,7 +2,8 @@
     import { resolve } from "$app/paths";
     import { DECK_TYPES } from "#lib/utils/deckTypes";
     import type { DeckType } from "#lib/types";
-    import ProgressBar from "#lib/components/shared/ProgressBar.svelte";
+    import Card from "#lib/components/shared/ui/Card.svelte";
+    import ProgressBar from "#lib/components/shared/ui/ProgressBar.svelte";
 
     let {
         slug,
@@ -23,7 +24,12 @@
     } = $props();
 </script>
 
-<a href={resolve("/(deck)/cram/[slug]", { slug })} class="continue-card">
+<Card
+    href={resolve("/(deck)/cram/[slug]", { slug })}
+    hover
+    padding="md"
+    class="continue-card"
+>
     <span class="continue-name">
         <span class="continue-folder">{folder}</span>
         {name}
@@ -34,35 +40,18 @@
         <span class="continue-count">{learned} / {total} gelernt</span>
         <span class="continue-arrow" aria-hidden="true">→</span>
     </span>
-</a>
+</Card>
 
 <style>
+    /* Card provides border, radius, bg, shadow, hover, padding. */
     .continue-card {
+        min-height: 7.5rem;
+    }
+
+    .continue-card :global(.card-body) {
         display: flex;
         flex-direction: column;
         gap: 0.55rem;
-
-        min-width: 0;
-        min-height: 7.5rem;
-        padding: 1.1rem 1.2rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface);
-        color: var(--text);
-        text-decoration: none;
-
-        transition:
-            border-color var(--transition-fast),
-            background var(--transition-fast),
-            box-shadow var(--transition-fast);
-    }
-
-    .continue-card:hover {
-        border-color: var(--border-strong);
-        background: var(--surface-hover);
-        box-shadow: var(--shadow-card);
     }
 
     .continue-name {
@@ -109,7 +98,7 @@
             transform var(--transition-fast);
     }
 
-    .continue-card:hover .continue-arrow {
+    :global(.continue-card:hover) .continue-arrow {
         color: var(--primary);
         transform: translateX(2px);
     }

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
 
     let { slug, totalCards }: { slug: string; totalCards: number } = $props();
 </script>

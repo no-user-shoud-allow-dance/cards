@@ -4,8 +4,8 @@
     import { fade, fly } from "svelte/transition";
     import { decks } from "#lib/stores/data/deckStore.svelte";
     import type { LoadedDeck } from "#lib/types";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
 
     let { deck, subtitle }: { deck: LoadedDeck; subtitle: string } = $props();
 

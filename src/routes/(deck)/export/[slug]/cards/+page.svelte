@@ -10,11 +10,12 @@
         nativeShare,
         SHARE_HASH_LIMIT,
     } from "#lib/utils/share";
-    import Page from "#lib/components/shared/Page.svelte";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
+    import Badge from "#lib/components/shared/ui/Badge.svelte";
     import type { Deck } from "#lib/types";
     import ShareLinkCard from "#lib/components/sharing/ShareLinkCard.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
 
     let { data } = $props();
 
@@ -65,8 +66,8 @@
         subtitle="{deck.folder} / {deck.name} — Erstelle einen Link mit den Karten dieses Stapels — als QR-Code, zum Kopieren oder über das Teilen-Menü deines Geräts."
     />
     <p class="deck-meta">
-        {countCards(loaded?.cards.length ?? 0)}
-        · {DECK_TYPES[deck.deckType].label}
+        <Badge>{countCards(loaded?.cards.length ?? 0)}</Badge>
+        <Badge variant="info">{DECK_TYPES[deck.deckType].label}</Badge>
     </p>
     {#if deckUrl}
         <ShareLinkCard
@@ -92,10 +93,11 @@
 
 <style>
     .deck-meta {
-        margin: 0 0 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
 
-        color: var(--text-muted);
-        font-size: 0.85rem;
+        margin: 0 0 1.25rem;
     }
 
     .actions {

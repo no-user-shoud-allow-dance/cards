@@ -86,6 +86,9 @@
     --shadow-sm: 0 1px 2px rgb(33 32 28 / 5%);
     --shadow-card: 0 1px 3px rgb(33 32 28 / 6%);
 
+    /* Dialog / modal backdrop */
+    --backdrop: rgb(33 32 28 / 40%);
+
     /* Motion: short, plain eases */
     --transition-fast: 150ms ease;
     --transition-normal: 200ms ease;
@@ -167,6 +170,8 @@
 
         --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
         --shadow-card: 0 1px 3px rgb(0 0 0 / 35%);
+
+        --backdrop: rgb(0 0 0 / 55%);
     }
 }
 

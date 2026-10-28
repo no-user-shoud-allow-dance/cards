@@ -3,7 +3,7 @@
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { decks } from "#lib/stores/data/deckStore.svelte";
-    import Page from "#lib/components/shared/Page.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
 
     let { children } = $props();
 

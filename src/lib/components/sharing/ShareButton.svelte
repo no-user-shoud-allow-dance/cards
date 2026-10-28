@@ -12,7 +12,7 @@
         nativeShare,
         SHARE_HASH_LIMIT,
     } from "#lib/utils/share";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
     import ShareLinkCard from "./ShareLinkCard.svelte";
 
     let {

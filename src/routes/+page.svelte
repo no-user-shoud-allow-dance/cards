@@ -5,14 +5,14 @@
     import { BOX_COUNT, type DeckType } from "#lib/types";
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
     import { resolve } from "$app/paths";
-    import Page from "#lib/components/shared/Page.svelte";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
-    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
-    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
+    import SectionLabel from "#lib/components/shared/ui/SectionLabel.svelte";
     import FolderSection from "#lib/components/home/FolderSection.svelte";
     import ContinueCard from "#lib/components/home/ContinueCard.svelte";
     import ShareImport from "#lib/components/sharing/ShareImport.svelte";
     import HomeIntro from "#lib/components/home/HomeIntro.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
 
     // Decks live only in this browser (IndexedDB); wait for them before
     // rendering so the server render and the first client render agree.
@@ -133,12 +133,12 @@
                     <p class="hero-stats">
                         {totals.decks} Stapel · {countCards(totals.cards)}
                     </p>
-                    <a class="upload-link" href={resolve("/(io)/upload")}>
+                    <Button href={resolve("/(io)/upload")}>
                         Eigenen Stapel hochladen
-                    </a>
-                    <a class="upload-link" href={resolve("/(io)/import")}>
+                    </Button>
+                    <Button href={resolve("/(io)/import")}>
                         Importieren
-                    </a>
+                    </Button>
                 </div>
             {/snippet}
         </PageHeader>
@@ -163,12 +163,12 @@
         {/if}
 
         {#if folders.length === 0}
-            <EmptyNote>
+            <p class="empty">
                 Keine Stapel gefunden.
                 <a href={resolve("/(io)/upload")}
                     >Lade einen eigenen Stapel hoch</a
                 >.
-            </EmptyNote>
+            </p>
         {/if}
 
         {#each folders as folder (folder.folder)}
@@ -178,6 +178,12 @@
 {/if}
 
 <style>
+    .empty {
+        margin: 1rem 0;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
     .hero-meta {
         display: flex;
         flex-wrap: wrap;
@@ -193,32 +199,6 @@
         font-size: 0.85rem;
         font-weight: 500;
         font-variant-numeric: tabular-nums;
-    }
-
-    .upload-link {
-        display: inline-flex;
-        align-items: center;
-
-        padding: 0.55rem 1.1rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface);
-        color: var(--text);
-
-        font-size: 0.875rem;
-        font-weight: 600;
-        text-decoration: none;
-
-        transition:
-            border-color var(--transition-fast),
-            background var(--transition-fast);
-    }
-
-    .upload-link:hover {
-        border-color: var(--border-strong);
-        background: var(--surface-hover);
     }
 
     .continue-section {

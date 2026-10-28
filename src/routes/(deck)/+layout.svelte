@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { decks } from "#lib/stores/data/deckStore.svelte";
-    import Page from "#lib/components/shared/Page.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
 
     let { data, children } = $props();
 

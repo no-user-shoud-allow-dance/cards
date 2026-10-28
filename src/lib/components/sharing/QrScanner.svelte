@@ -1,7 +1,7 @@
 <script lang="ts">
     import { untrack } from "svelte";
     import { fade } from "svelte/transition";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
 
     let { onScan }: { onScan: (value: string) => void } = $props();
 

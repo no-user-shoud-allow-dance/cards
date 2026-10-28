@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Page from "#lib/components/shared/Page.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
 
     let { children } = $props();
 </script>

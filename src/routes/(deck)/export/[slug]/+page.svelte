@@ -15,11 +15,12 @@
         SHARE_HASH_LIMIT,
         type ProgressSharePayload,
     } from "#lib/utils/share";
-    import Page from "#lib/components/shared/Page.svelte";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
+    import Badge from "#lib/components/shared/ui/Badge.svelte";
     import type { Deck } from "#lib/types";
     import ShareLinkCard from "#lib/components/sharing/ShareLinkCard.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
 
     let { data } = $props();
 
@@ -169,8 +170,8 @@
     </div>
 
     <p class="deck-meta">
-        {countCards(loaded?.cards.length ?? 0)}
-        · {DECK_TYPES[deck.deckType].label}
+        <Badge>{countCards(loaded?.cards.length ?? 0)}</Badge>
+        <Badge variant="info">{DECK_TYPES[deck.deckType].label}</Badge>
     </p>
 
     <p class="mode-hint">{activeMode.hint}</p>
@@ -256,10 +257,11 @@
     }
 
     .deck-meta {
-        margin: 0 0 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
 
-        color: var(--text-muted);
-        font-size: 0.85rem;
+        margin: 0 0 0.5rem;
     }
 
     .mode-hint {

@@ -8,13 +8,13 @@
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import Page from "#lib/components/shared/Page.svelte";
-    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
-    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
-    import ProgressBar from "#lib/components/shared/ProgressBar.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
+    import Card from "#lib/components/shared/ui/Card.svelte";
+    import SectionLabel from "#lib/components/shared/ui/SectionLabel.svelte";
+    import ProgressBar from "#lib/components/shared/ui/ProgressBar.svelte";
     import ResetButton from "#lib/components/shared/ResetButton.svelte";
     import ResetProgress from "#lib/components/shared/ResetProgress.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
     import DeckManager from "#lib/components/decks/DeckManager.svelte";
     import BoxTabs, {
         type BoxGroup,
@@ -114,59 +114,61 @@
     {/if}
 
     {#if deck.cards.length === 0}
-        <EmptyNote>Dieser Stapel enthält keine Karten.</EmptyNote>
+        <p class="empty">Dieser Stapel enthält keine Karten.</p>
     {:else}
         <!-- Hero CTA: the primary action is the most prominent element -->
-        <section class="hero-cta">
-            <div class="hero-cta-info">
-                <span class="hero-cta-label">Lernfortschritt</span>
-                {#if overviewDone || hasProgress}
-                    <span class="hero-cta-count"
-                        >{learnedCount} / {deck.cards.length} gelernt</span
-                    >
-                {:else}
-                    <span class="hero-cta-count"
-                        >{countCards(deck.cards.length)} im Stapel</span
-                    >
-                {/if}
-                <ProgressBar ratio={learningRatio} height="5px" />
-                {#if overviewDone || !hasProgress}
-                    <span class="hero-cta-overview">
-                        Übersicht: {overviewDone
-                            ? "abgeschlossen"
-                            : "nicht begonnen"}
-                    </span>
-                {/if}
-                {#if studyTimeMs > 0}
-                    <span class="hero-cta-overview">
-                        Lernzeit gesamt: {formatStudyTime(studyTimeMs)}
-                    </span>
-                {/if}
-            </div>
-            {#if allLearned}
-                <ResetProgress {cardIds} slug={deck.slug} />
-            {:else}
-                <div class="hero-cta-actions">
-                    <Button
-                        variant={isOverviewCta ? "overview" : "primary"}
-                        href={ctaHref}
-                        class="hero-cta-button"
-                    >
-                        {ctaLabel}
-                        <span aria-hidden="true">→</span>
-                    </Button>
-                    {#if isOverviewCta}
-                        <Button
-                            variant="secondary"
-                            class="hero-cta-skip"
-                            onclick={() => cardStore.markOverviewDone(deck.slug)}
+        <Card class="hero-cta" padding="lg">
+            <div class="hero-cta-inner">
+                <div class="hero-cta-info">
+                    <span class="hero-cta-label">Lernfortschritt</span>
+                    {#if overviewDone || hasProgress}
+                        <span class="hero-cta-count"
+                            >{learnedCount} / {deck.cards.length} gelernt</span
                         >
-                            Übersicht überspringen
-                        </Button>
+                    {:else}
+                        <span class="hero-cta-count"
+                            >{countCards(deck.cards.length)} im Stapel</span
+                        >
+                    {/if}
+                    <ProgressBar ratio={learningRatio} height="5px" />
+                    {#if overviewDone || !hasProgress}
+                        <span class="hero-cta-overview">
+                            Übersicht: {overviewDone
+                                ? "abgeschlossen"
+                                : "nicht begonnen"}
+                        </span>
+                    {/if}
+                    {#if studyTimeMs > 0}
+                        <span class="hero-cta-overview">
+                            Lernzeit gesamt: {formatStudyTime(studyTimeMs)}
+                        </span>
                     {/if}
                 </div>
-            {/if}
-        </section>
+                {#if allLearned}
+                    <ResetProgress {cardIds} slug={deck.slug} />
+                {:else}
+                    <div class="hero-cta-actions">
+                        <Button
+                            variant={isOverviewCta ? "overview" : "primary"}
+                            href={ctaHref}
+                            class="hero-cta-button"
+                        >
+                            {ctaLabel}
+                            <span aria-hidden="true">→</span>
+                        </Button>
+                        {#if isOverviewCta}
+                            <Button
+                                variant="secondary"
+                                class="hero-cta-skip"
+                                onclick={() => cardStore.markOverviewDone(deck.slug)}
+                            >
+                                Übersicht überspringen
+                            </Button>
+                        {/if}
+                    </div>
+                {/if}
+            </div>
+        </Card>
 
         <!-- Box overview: browse cards by Leitner box -->
         <section class="box-section" aria-label="Karten stöbern">
@@ -177,20 +179,22 @@
                 onSelect={(box) => (activeBox = box)}
             />
 
-            <div class="box-panel" role="tabpanel">
-                {#key activeBox}
-                    <div in:fade={{ duration: 200 }}>
-                        {#if !activeGroup || activeGroup.cards.length === 0}
-                            <EmptyNote>Keine Karten in dieser Box.</EmptyNote>
-                        {:else}
-                            <CardList
-                                cards={activeGroup.cards}
-                                {pureMode}
-                            />
-                        {/if}
-                    </div>
-                {/key}
-            </div>
+            <Card class="box-panel" padding="sm" bg="soft">
+                <div role="tabpanel">
+                    {#key activeBox}
+                        <div in:fade={{ duration: 200 }}>
+                            {#if !activeGroup || activeGroup.cards.length === 0}
+                                <p class="empty">Keine Karten in dieser Box.</p>
+                            {:else}
+                                <CardList
+                                    cards={activeGroup.cards}
+                                    {pureMode}
+                                />
+                            {/if}
+                        </div>
+                    {/key}
+                </div>
+            </Card>
         </section>
 
         {#if hasProgress || overviewDone || studyTimeMs > 0 || hasTimerState}
@@ -222,20 +226,16 @@
 </Page>
 
 <style>
+    /* Card provides border, radius, bg, shadow, padding. */
     .hero-cta {
+        margin-bottom: 2rem;
+    }
+
+    .hero-cta-inner {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: 1.25rem;
-
-        margin-bottom: 2rem;
-        padding: 1.25rem 1.4rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-
-        background: var(--surface);
-        box-shadow: var(--shadow-card);
     }
 
     .hero-cta-info {
@@ -290,18 +290,26 @@
         font-size: 0.8rem;
     }
 
+    @media (max-width: 540px) {
+        .hero-cta-inner {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+
+    .empty {
+        margin: 1rem 0;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
     .box-section {
         margin-bottom: 1rem;
     }
 
+    /* Card provides border, radius, bg-soft, padding. */
     .box-panel {
         min-width: 0;
-        padding: 0.75rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-
-        background: var(--surface-soft);
     }
 
     .box-panel :global(.card-list) {
@@ -318,17 +326,8 @@
     }
 
     @media (max-width: 540px) {
-        .hero-cta {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
         .hero-cta-actions {
             width: 100%;
-        }
-
-        .box-panel {
-            padding: 0.5rem;
         }
     }
 </style>

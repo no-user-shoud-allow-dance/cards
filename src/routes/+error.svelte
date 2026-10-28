@@ -2,8 +2,9 @@
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import Page from "#lib/components/shared/Page.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
+    import Card from "#lib/components/shared/ui/Card.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
 
     const title = $derived(
         page.status === 404
@@ -24,17 +25,18 @@
 </svelte:head>
 
 <Page class="error-page">
-    <div class="error-card" in:fade={{ duration: 250 }}>
-        <p class="error-status" aria-hidden="true">{page.status}</p>
-        <h1>{title}</h1>
-        <p class="error-message">{message}</p>
-        <div class="error-actions">
-            <Button variant="primary" href={resolve("/")}>Zur Startseite</Button>
-        </div>
+    <div in:fade={{ duration: 250 }}>
+        <Card class="error-card" padding="lg">
+            <p class="error-status" aria-hidden="true">{page.status}</p>
+            <h1 class="error-title">{title}</h1>
+            <p class="error-message">{message}</p>
+            <div class="error-actions">
+                <Button variant="primary" href={resolve("/")}>Zur Startseite</Button>
+            </div>
+        </Card>
     </div>
 </Page>
 
-<!-- svelte-ignore css_unused_selector -->
 <style>
     .error-page {
         display: flex;
@@ -44,16 +46,9 @@
         min-height: calc(100dvh - 3.5rem - var(--footer-h));
     }
 
+    /* Card provides border, radius, bg, shadow; only size + text-align remain. */
     .error-card {
         width: min(100%, 32rem);
-        padding: clamp(2rem, 7dvw, 3.5rem) 1.5rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-
-        background: var(--surface);
-        box-shadow: var(--shadow-card);
-
         text-align: center;
     }
 
@@ -68,7 +63,7 @@
         font-variant-numeric: tabular-nums;
     }
 
-    .error-card h1 {
+    .error-title {
         margin: 0 0 0.6rem;
 
         font-size: 1.6rem;

@@ -11,6 +11,7 @@ class DialogStore {
     open(options: DialogOptions): Promise<boolean> {
         // Close any existing dialog (resolves its promise with false).
         this.dialog?.resolve(false);
+        this.dialog?.onCancel?.();
         return new Promise((resolve) => {
             this.dialog = {
                 ...options,
@@ -20,13 +21,17 @@ class DialogStore {
         });
     }
 
+    /** Confirms the active dialog (resolves promise with true). */
     confirm(): void {
         this.dialog?.resolve(true);
+        this.dialog?.onConfirm?.();
         this.dialog = null;
     }
 
+    /** Cancels the active dialog (resolves promise with false). */
     cancel(): void {
         this.dialog?.resolve(false);
+        this.dialog?.onCancel?.();
         this.dialog = null;
     }
 }

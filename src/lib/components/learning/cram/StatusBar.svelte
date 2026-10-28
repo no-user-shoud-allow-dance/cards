@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ProgressBar from "#lib/components/shared/ProgressBar.svelte";
+    import ProgressBar from "#lib/components/shared/ui/ProgressBar.svelte";
 
     let {
         learnedCount,

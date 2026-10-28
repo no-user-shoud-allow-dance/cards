@@ -32,8 +32,10 @@
     } from "#lib/utils/share";
     import { formatStudyTime } from "#lib/utils/time";
     import { BOX_LABELS, type DeckType, type Deck } from "#lib/types";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
+    import Card from "#lib/components/shared/ui/Card.svelte";
+    import Badge from "#lib/components/shared/ui/Badge.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
     import QrScanner from "#lib/components/sharing/QrScanner.svelte";
 
     /** A deck ("cards") link preview. */
@@ -308,7 +310,7 @@
     subtitle="Füge einen geteilten Stapel-, Fortschritt- oder kombinierten Link ein, prüfe die Vorschau und importiere."
 />
 
-<section class="panel">
+<Card class="panel" padding="lg">
     <label class="field-label" for="import-link">Link</label>
     <textarea
         id="import-link"
@@ -327,15 +329,15 @@
     {#if error}
         <p class="note note-error">{error}</p>
     {/if}
-</section>
+</Card>
 
 {#if deckPreview}
-    <section class="panel">
+    <Card class="panel" padding="lg">
         <h2 class="panel-title">{deckPreview.title ?? "Geteilter Stapel"}</h2>
         <p class="preview-meta">
-            {countCards(deckPreview.cardCount)}
+            <Badge>{countCards(deckPreview.cardCount)}</Badge>
             {#if deckPreview.errorCount > 0}
-                · {deckPreview.errorCount} Fehler beim Parsen
+                <Badge variant="danger">{deckPreview.errorCount} Fehler</Badge>
             {/if}
         </p>
         {#if deckPreview.existing}
@@ -366,10 +368,10 @@
                 </Button>
             {/if}
         </div>
-    </section>
+    </Card>
 {:else if progressPreview}
     {#if progressPreview.deck}
-        <section class="panel">
+        <Card class="panel" padding="lg">
             <h2 class="panel-title">
                 Fortschritt für „{progressPreview.deck.name}“
             </h2>
@@ -426,9 +428,9 @@
                     </Button>
                 {/if}
             </div>
-        </section>
+        </Card>
     {:else if progressPreview.included}
-        <section class="panel">
+        <Card class="panel" padding="lg">
             <h2 class="panel-title">
                 Kombinierter Link{progressPreview.included.title
                     ? `: „${progressPreview.included.title}“`
@@ -452,16 +454,16 @@
                     {busy ? "Wird importiert …" : "Stapel + Fortschritt importieren"}
                 </Button>
             </div>
-        </section>
+        </Card>
     {:else if progressPreview.stashed}
-        <section class="panel">
+        <Card class="panel" padding="lg">
             <p class="note">
                 Der Fortschritt ist gespeichert und wird angewendet, sobald der
                 passende Stapel importiert wird.
             </p>
-        </section>
+        </Card>
     {:else}
-        <section class="panel">
+        <Card class="panel" padding="lg">
             <p class="note">
                 Der zugehörige Stapel ist auf diesem Gerät nicht vorhanden. Du
                 kannst den Fortschritt speichern — er wird angewendet, sobald
@@ -473,20 +475,14 @@
                     Fortschritt speichern
                 </Button>
             </div>
-        </section>
+        </Card>
     {/if}
 {/if}
 
 <style>
+    /* Card provides border, radius, bg, shadow, padding. */
     .panel {
         margin-bottom: 1.5rem;
-        padding: 1.1rem 1.25rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-
-        background: var(--surface);
-        box-shadow: var(--shadow-card);
     }
 
     .field-label {
@@ -534,10 +530,11 @@
     }
 
     .preview-meta {
-        margin: 0 0 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
 
-        color: var(--text-muted);
-        font-size: 0.85rem;
+        margin: 0 0 1rem;
     }
 
     select {

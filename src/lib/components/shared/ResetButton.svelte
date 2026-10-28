@@ -1,4 +1,6 @@
 <script lang="ts">
+    import Button from "./ui/Button.svelte";
+
     let {
         label,
         confirmText,
@@ -19,56 +21,10 @@
     }
 </script>
 
-<button
-    type="button"
-    class="reset-button {variant} {className}"
+<Button
+    variant={variant === "danger" ? "danger" : "secondary"}
+    class={className}
     onclick={handleClick}
 >
     {label}
-</button>
-
-<style>
-    .reset-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-
-        min-height: 2.65rem;
-        padding: 0.6rem 0.85rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: transparent;
-
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-
-        cursor: pointer;
-
-        transition:
-            border-color var(--transition-fast),
-            background var(--transition-fast),
-            color var(--transition-fast);
-    }
-
-    .reset-button.danger {
-        border-color: var(--danger-border);
-        color: var(--danger-text);
-    }
-
-    .reset-button.danger:hover {
-        background: var(--danger-bg);
-    }
-
-    .reset-button.neutral {
-        color: var(--text-muted);
-    }
-
-    .reset-button.neutral:hover {
-        border-color: var(--border-strong);
-        background: var(--surface-hover);
-        color: var(--text);
-    }
-</style>
+</Button>

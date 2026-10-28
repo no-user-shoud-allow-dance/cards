@@ -12,11 +12,11 @@
         SHARE_HASH_LIMIT,
     } from "#lib/utils/share";
     import { formatStudyTime } from "#lib/utils/time";
-    import Page from "#lib/components/shared/Page.svelte";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import Page from "#lib/components/shared/ui/Page.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
     import type { Deck } from "#lib/types";
     import ShareLinkCard from "#lib/components/sharing/ShareLinkCard.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
 
     let { data } = $props();
 

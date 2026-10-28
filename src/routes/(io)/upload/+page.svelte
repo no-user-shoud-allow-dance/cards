@@ -7,11 +7,13 @@
     import { applyPendingProgressFor } from "#lib/utils/pendingProgress";
     import { countCards } from "#lib/utils/pure";
     import type { DeckType } from "#lib/types";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
-    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
-    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
-    import Button from "#lib/components/shared/Button.svelte";
-    import Toggle from "#lib/components/shared/Toggle.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
+    import SectionLabel from "#lib/components/shared/ui/SectionLabel.svelte";
+    import Card from "#lib/components/shared/ui/Card.svelte";
+    import Badge from "#lib/components/shared/ui/Badge.svelte";
+    import TextInput from "#lib/components/shared/ui/TextInput.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
+    import Toggle from "#lib/components/shared/ui/Toggle.svelte";
     import CardList from "#lib/components/decks/CardList.svelte";
 
     let fileName = $state<string | null>(null);
@@ -107,33 +109,32 @@
     subtitle="Lade einen eigenen Stapel als .md-Datei hoch. Vor dem Speichern siehst du eine Vorschau der Karten."
 />
 
-<section class="upload-box" aria-label="Hochladen">
-    <form class="upload-body" onsubmit={onSubmit}>
-        <div class="field">
-            <label for="upload-file">Datei (.md)</label>
-            <input
-                id="upload-file"
-                type="file"
-                accept=".md,text/markdown"
-                onchange={onFileChange}
-            />
-        </div>
+<Card class="upload-card" padding="lg" aria-label="Hochladen">
+    {#snippet header()}
+        <label class="field-label" for="upload-file">Datei (.md)</label>
+    {/snippet}
+    <form class="upload-form" onsubmit={onSubmit}>
+        <input
+            id="upload-file"
+            type="file"
+            accept=".md,text/markdown"
+            onchange={onFileChange}
+            class="file-input"
+        />
         <div class="field-row">
-            <div class="field">
-                <label for="upload-name">Name</label>
-                <input
-                    id="upload-name"
-                    type="text"
-                    bind:value={name}
-                    placeholder="z. B. Lektion 22"
-                />
-            </div>
-            <div class="field">
-                <label for="upload-folder">Ordner</label>
-                <input id="upload-folder" type="text" bind:value={folder} />
-            </div>
-            <div class="field">
-                <label for="upload-type">Typ</label>
+            <TextInput
+                label="Name"
+                id="upload-name"
+                bind:value={name}
+                placeholder="z. B. Lektion 22"
+            />
+            <TextInput
+                label="Ordner"
+                id="upload-folder"
+                bind:value={folder}
+            />
+            <div class="select-field">
+                <label class="field-label" for="upload-type">Typ</label>
                 <select
                     id="upload-type"
                     value={deckType}
@@ -169,7 +170,7 @@
             des Inhalts vorgeschlagen und kann oben angepasst werden.
         </p>
     </form>
-</section>
+</Card>
 
 {#if preview}
     <section class="preview" aria-label="Vorschau des Stapels">
@@ -177,8 +178,11 @@
         <div class="preview-head">
             <strong class="preview-title">{previewTitle}</strong>
             <span class="preview-meta">
-                {countCards(preview.cards.length)} · {DECK_TYPES[deckType].label}
-                {#if previewPureMode} · Pur-Modus{/if}
+                <Badge>{countCards(preview.cards.length)}</Badge>
+                <Badge variant="info">{DECK_TYPES[deckType].label}</Badge>
+                {#if previewPureMode}
+                    <Badge variant="primary">Pur-Modus</Badge>
+                {/if}
             </span>
             {#if pureModeAvailable}
                 <Toggle
@@ -205,73 +209,41 @@
                 <CardList cards={preview.cards} pureMode={previewPureMode} />
             </div>
         {:else}
-            <EmptyNote>Keine Karten gefunden.</EmptyNote>
+            <p class="empty">Keine Karten gefunden.</p>
         {/if}
     </section>
 {/if}
 
 <style>
-    .upload-box {
+    .upload-card {
         margin-bottom: 2rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-
-        background: var(--surface);
-        box-shadow: var(--shadow-card);
     }
 
-    .upload-body {
+    .field-label {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    .upload-form {
         display: flex;
         flex-direction: column;
         gap: 0.9rem;
-
-        padding: 1.1rem 1.25rem 1.25rem;
-    }
-
-    .field {
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        gap: 0.3rem;
-        min-width: 0;
-    }
-
-    .field label {
-        color: var(--text-muted);
-        font-size: 0.78rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-
-    .field input,
-    .field select {
-        font: inherit;
-
-        padding: 0.5rem 0.65rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface);
-        color: var(--text);
-    }
-
-    .field input:focus,
-    .field select:focus {
-        border-color: var(--primary);
-        outline: 2px solid var(--focus-ring);
     }
 
     /* The native file input keeps its behavior; only its button part is
        styled to match the surrounding fields. */
-    .field input[type="file"] {
+    .file-input {
+        font: inherit;
         padding: 0.35rem 0.65rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        color: var(--text);
     }
 
-    .field input[type="file"]::file-selector-button,
-    .field input[type="file"]::-webkit-file-upload-button {
+    .file-input::file-selector-button,
+    .file-input::-webkit-file-upload-button {
         font: inherit;
         font-size: 0.875rem;
         font-weight: 600;
@@ -292,8 +264,8 @@
             background var(--transition-fast);
     }
 
-    .field input[type="file"]::file-selector-button:hover,
-    .field input[type="file"]::-webkit-file-upload-button:hover {
+    .file-input::file-selector-button:hover,
+    .file-input::-webkit-file-upload-button:hover {
         border-color: var(--border-strong);
         background: var(--surface-hover);
     }
@@ -302,6 +274,42 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.9rem;
+    }
+
+    .field-row :global(.text-input) {
+        flex: 1;
+        min-width: 10rem;
+    }
+
+    .select-field {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 0.4rem;
+        min-width: 8rem;
+    }
+
+    .select-field select {
+        font: inherit;
+        min-height: 2.65rem;
+        padding: 0.55rem 0.8rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 0.9rem;
+    }
+
+    .select-field select:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+
+    .empty {
+        margin: 1rem 0;
+        color: var(--text-muted);
+        font-size: 0.95rem;
     }
 
     .hint {
@@ -355,10 +363,9 @@
     }
 
     .preview-meta {
-        color: var(--text-muted);
-        font-size: 0.85rem;
-        font-weight: 500;
-        font-variant-numeric: tabular-nums;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .preview-head :global(.toggle) {

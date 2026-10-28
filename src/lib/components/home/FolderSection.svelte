@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import SectionLabel from "#lib/components/shared/SectionLabel.svelte";
+    import SectionLabel from "#lib/components/shared/ui/SectionLabel.svelte";
     import DeckCard from "./DeckCard.svelte";
 
     interface DeckInfo {

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { slide } from "svelte/transition";
-    import Term from "#lib/components/shared/Term.svelte";
+    import Badge from "#lib/components/shared/ui/Badge.svelte";
 
     const INTRO_STORAGE_KEY = "kk_intro_open";
 
@@ -48,36 +48,36 @@
                 <p>
                     Lerne mit Karteikarten in Ordnern und Stapeln – jeder Stapel
                     durchläuft dabei drei Phasen:
-                    <Term variant="overview">Übersicht</Term>,
-                    <Term variant="primary">Lernen</Term> und
-                    <Term variant="success">Gelernt</Term>.
+                    <Badge variant="overview">Übersicht</Badge>,
+                    <Badge variant="primary">Lernen</Badge> und
+                    <Badge variant="success">Gelernt</Badge>.
                 </p>
                 <hr />
                 <p>
-                    In der <Term variant="overview">Übersicht</Term> siehst du alle
+                    In der <Badge variant="overview">Übersicht</Badge> siehst du alle
                     Karten eines Stapels zum ersten Mal – die Antwort ist direkt
                     eingeblendet, ganz ohne Bewertung.
                 </p>
                 <p>
-                    Beim <Term variant="primary">Lernen</Term> bewertest du jede
+                    Beim <Badge variant="primary">Lernen</Badge> bewertest du jede
                     Karte: Richtige Antworten schieben die Karte eine Box weiter,
                     von
-                    <Term variant="primary">I</Term> bis <Term variant="primary"
-                        >V</Term
-                    > – dann gilt sie als <Term variant="success">Gelernt</Term
-                    >. Falsche Antworten wandern zurück in <Term
-                        variant="primary">I</Term
+                    <Badge variant="primary">I</Badge> bis <Badge variant="primary"
+                        >V</Badge
+                    > – dann gilt sie als <Badge variant="success">Gelernt</Badge
+                    >. Falsche Antworten wandern zurück in <Badge
+                        variant="primary">I</Badge
                     > und werden so automatisch häufiger wiederholt.
                 </p>
                 <hr />
                 <p>
-                    Der optionale <Term variant="primary">Timer</Term> zählt nur
+                    Der optionale <Badge variant="primary">Timer</Badge> zählt nur
                     aktive Lernzeit. Nach jeder Session folgt eine Pause von einem
                     Sechstel der Session-Dauer – per Doppelklick auf die Schaltfläche
                     überspringst du sie und lernst sofort weiter.
                 </p>
                 <p>
-                    Ist ein Stapel <Term variant="success">Gelernt</Term>, lässt
+                    Ist ein Stapel <Badge variant="success">Gelernt</Badge>, lässt
                     sich der Fortschritt zurücksetzen – und das Lernen beginnt
                     von vorne.
                 </p>

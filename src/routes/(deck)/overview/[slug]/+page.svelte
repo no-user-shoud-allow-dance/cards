@@ -5,7 +5,7 @@
     import OverviewCard from "#lib/components/learning/overview/OverviewCard.svelte";
     import OverviewComplete from "#lib/components/learning/overview/OverviewComplete.svelte";
     import StudyControls from "#lib/components/learning/StudyControls.svelte";
-    import ProgressBar from "#lib/components/shared/ProgressBar.svelte";
+    import ProgressBar from "#lib/components/shared/ui/ProgressBar.svelte";
     import StudyLayout from "#lib/components/learning/StudyLayout.svelte";
     import type { LoadedDeck } from "#lib/types";
     import DeckEmpty from "#lib/components/decks/DeckEmpty.svelte";
@@ -41,11 +41,13 @@
             </div>
             <div class="overview-progress">
                 <span class="overview-progress-label">
-                    {session.seenCount} / {session.totalCards} Karten
-                    angesehen
+                    {session.seenCount} / {session.totalCards} Karten angesehen
                 </span>
                 <span class="overview-progress-bar">
-                    <ProgressBar ratio={session.progressRatio} />
+                    <ProgressBar
+                        ratio={session.progressRatio}
+                        color="overview"
+                    />
                 </span>
             </div>
         {/if}

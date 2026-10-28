@@ -1,12 +1,10 @@
 <script lang="ts">
-    import EmptyNote from "#lib/components/shared/EmptyNote.svelte";
-
     let { text = "Dieser Stapel enthält keine Karten." }: { text?: string } =
         $props();
 </script>
 
 <div class="deck-empty">
-    <EmptyNote>{text}</EmptyNote>
+    <p class="empty">{text}</p>
 </div>
 
 <style>
@@ -15,5 +13,11 @@
         flex: 1 1 auto;
         align-items: center;
         justify-content: center;
+    }
+
+    .empty {
+        margin: 1rem 0;
+        color: var(--text-muted);
+        font-size: 0.95rem;
     }
 </style>

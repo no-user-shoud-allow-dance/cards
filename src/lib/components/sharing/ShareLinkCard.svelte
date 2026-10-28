@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Button from "#lib/components/shared/Button.svelte";
+    import Button from "#lib/components/shared/ui/Button.svelte";
     import QrCode from "./QrCode.svelte";
 
     let {

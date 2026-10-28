@@ -1,6 +1,6 @@
 <script lang="ts">
     import { resolve } from "$app/paths";
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
 </script>
 
 <svelte:head>

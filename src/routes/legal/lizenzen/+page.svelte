@@ -1,5 +1,5 @@
 <script lang="ts">
-    import PageHeader from "#lib/components/shared/PageHeader.svelte";
+    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
 
     // Verbatim license texts of the bundled third-party libraries, taken
     // from each package's LICENSE file ("MIT License" heading added where
