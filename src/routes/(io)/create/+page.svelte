@@ -82,11 +82,7 @@
 <!-- Deck metadata -->
 <Card padding="lg" class="meta-section" aria-label="Stapel-Details">
     <div class="field-row">
-        <TextInput
-            label="Ordner"
-            id="create-folder"
-            bind:value={folder}
-        />
+        <TextInput label="Ordner" id="create-folder" bind:value={folder} />
         <TextInput
             label="Name"
             id="create-name"
@@ -103,7 +99,7 @@
                         .value as DeckType)}
             >
                 {#each DECK_TYPE_OPTIONS as [value, config]}
-                    <option value={value}>{config.label}</option>
+                    <option {value}>{config.label}</option>
                 {/each}
             </select>
         </div>

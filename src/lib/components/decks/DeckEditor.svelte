@@ -137,6 +137,62 @@
     }
 </script>
 
+<!-- Markdown bulk actions -->
+<div class="md-buttons">
+    <Button variant="secondary" onclick={exportMarkdown}>
+        Als Markdown exportieren
+    </Button>
+    <Button variant="secondary" onclick={() => openMdMode("add")}>
+        Aus Markdown hinzufügen
+    </Button>
+    <Button variant="secondary" onclick={() => openMdMode("replace")}>
+        Durch Markdown ersetzen
+    </Button>
+</div>
+
+<Dialog
+    title={mdMode === "add"
+        ? "Karten aus Markdown hinzufügen"
+        : "Karten durch Markdown ersetzen"}
+    open={mdMode !== null}
+    onclose={() => (mdMode = null)}
+>
+    <p class="md-hint">
+        {#if mdMode === "add"}
+            Karten aus dem eingefügten Markdown werden an die bestehenden Karten
+            angehängt.
+        {:else}
+            <strong>Achtung:</strong> Alle bisherigen Karten werden durch den eingefügten
+            Markdown ersetzt.
+        {/if}
+    </p>
+    <textarea
+        class="md-input"
+        rows="6"
+        bind:value={mdInput}
+        placeholder="# Titel
+amo - ich liebe
+amas - du liebst"
+        spellcheck="false"></textarea>
+    {#if mdErrors.length > 0}
+        <ul class="md-errors">
+            {#each mdErrors as err}
+                <li>{err}</li>
+            {/each}
+        </ul>
+    {/if}
+    {#snippet footer()}
+        <Button onclick={() => (mdMode = null)}>Abbrechen</Button>
+        <Button
+            variant="primary"
+            onclick={applyMarkdown}
+            disabled={!mdInput.trim()}
+        >
+            {mdMode === "add" ? "Hinzufügen" : "Ersetzen"}
+        </Button>
+    {/snippet}
+</Dialog>
+
 <!-- Title (H1 in the markdown) -->
 <div class="field">
     <label class="field-label" for="deck-editor-title">Titel</label>
@@ -211,7 +267,11 @@
             {/each}
             <div class="cards-row add-row" role="row">
                 <span class="add-cell" role="cell">
-                    <button type="button" class="add-card-btn" onclick={addCard}>
+                    <button
+                        type="button"
+                        class="add-card-btn"
+                        onclick={addCard}
+                    >
                         + Karte hinzufügen
                     </button>
                 </span>
@@ -237,62 +297,6 @@
             : "Karten ohne Vorder- oder Rückseite werden nicht gespeichert."}
     </p>
 {/if}
-
-<!-- Markdown bulk actions -->
-<div class="md-buttons">
-    <Button variant="secondary" onclick={exportMarkdown}>
-        Als Markdown exportieren
-    </Button>
-    <Button variant="secondary" onclick={() => openMdMode("add")}>
-        Karten aus Markdown hinzufügen
-    </Button>
-    <Button variant="secondary" onclick={() => openMdMode("replace")}>
-        Karten durch Markdown ersetzen
-    </Button>
-</div>
-
-<Dialog
-    title={mdMode === "add"
-        ? "Karten aus Markdown hinzufügen"
-        : "Karten durch Markdown ersetzen"}
-    open={mdMode !== null}
-    onclose={() => (mdMode = null)}
->
-    <p class="md-hint">
-        {#if mdMode === "add"}
-            Karten aus dem eingefügten Markdown werden an die
-            bestehenden Karten angehängt.
-        {:else}
-            <strong>Achtung:</strong> Alle bisherigen Karten werden durch
-            den eingefügten Markdown ersetzt.
-        {/if}
-    </p>
-    <textarea
-        class="md-input"
-        rows="6"
-        bind:value={mdInput}
-        placeholder="# Titel
-amo - ich liebe
-amas - du liebst"
-        spellcheck="false"></textarea>
-    {#if mdErrors.length > 0}
-        <ul class="md-errors">
-            {#each mdErrors as err}
-                <li>{err}</li>
-            {/each}
-        </ul>
-    {/if}
-    {#snippet footer()}
-        <Button onclick={() => (mdMode = null)}>Abbrechen</Button>
-        <Button
-            variant="primary"
-            onclick={applyMarkdown}
-            disabled={!mdInput.trim()}
-        >
-            {mdMode === "add" ? "Hinzufügen" : "Ersetzen"}
-        </Button>
-    {/snippet}
-</Dialog>
 
 <style>
     .field {
@@ -509,6 +513,13 @@ amas - du liebst"
         display: flex;
         flex-wrap: wrap;
         gap: 0.75rem;
+        width: 100%;
+        margin: 1rem 0rem;
+    }
+
+    .md-buttons :global(.btn) {
+        flex: 1;
+        min-width: 0;
     }
 
     .md-hint {
@@ -613,6 +624,10 @@ amas - du liebst"
 
         .col-actions {
             grid-area: actions;
+        }
+
+        .md-buttons {
+            flex-direction: column;
         }
     }
 </style>
