@@ -18,12 +18,12 @@
     .page {
         width: min(100%, var(--content-width));
         margin-inline: auto;
-        padding: 2.25rem 1.5rem 4rem;
+        padding: 2.25rem 1.5rem;
     }
 
     @media (max-width: 540px) {
         .page {
-            padding: 1.5rem 1rem 3rem;
+            padding: 1.5rem 1rem;
         }
     }
 </style>

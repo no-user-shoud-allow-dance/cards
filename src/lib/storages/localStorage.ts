@@ -1,4 +1,4 @@
-import type { CardStates, PersistedTimerState } from "../types";
+import type { CardStates, PersistedTimerState, Profile } from "../types";
 
 const PREFIX = "kk_";
 
@@ -15,6 +15,7 @@ const schema = {
     google_disabled: true as boolean,
     study_time: {} as Record<string, number>,
     timer_state: {} as Record<string, PersistedTimerState>,
+    profile: null as Profile | null,
 } as const;
 
 type SchemaKey = keyof typeof schema;

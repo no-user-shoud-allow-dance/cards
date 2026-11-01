@@ -3,7 +3,6 @@
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
     import Card from "#lib/components/shared/ui/Card.svelte";
     import Badge from "#lib/components/shared/ui/Badge.svelte";
-    import Toggle from "#lib/components/shared/ui/Toggle.svelte";
 </script>
 
 <svelte:head>
@@ -49,6 +48,12 @@
     <li>
         <Badge variant="primary">IndexedDB</Badge>: Stapel, die Sie selbst
         hochladen (Ordner, Name und Kartentext).
+    </li>
+    <li>
+        <Badge variant="primary">Local Storage</Badge>: Profildaten des
+        Kontos (Name, Gerätename, Konto-UUID) — lokal generiert, ohne
+        Server und ohne Registrierung. Der Avatar wird lokal aus der UUID
+        gezeichnet und verlässt das Gerät nicht.
     </li>
 </ul>
 <p>
@@ -97,8 +102,8 @@
         <br />
         {#if settingStore.googleDisabled}
             <i
-                >Ausgeschaltet — über den Schalter unten können Sie Google
-                wieder aktivieren.</i
+                >Ausgeschaltet — auf der Konto-Seite können Sie Google wieder
+                aktivieren.</i
             >
         {:else}
             Beim Laden der App werden Schriftarten von
@@ -118,8 +123,8 @@
         <br />
         {#if settingStore.googleDisabled}
             <i
-                >Ausgeschaltet — über den Schalter unten können Sie Google
-                wieder aktivieren.</i
+                >Ausgeschaltet — auf der Konto-Seite können Sie Google wieder
+                aktivieren.</i
             >
         {:else}
             Diese Schaltflächen öffnen eine
@@ -134,18 +139,6 @@
         {/if}
     </li>
 </ul>
-
-<div class="google-toggle">
-    <Toggle
-        label="Google erlauben"
-        checked={!settingStore.googleDisabled}
-        onchange={(value) => settingStore.setGoogleDisabled(!value)}
-    />
-    <p>
-        Lädt Schriftarten von Google Fonts nach und blendet die Hilfe- und
-        Mnemotechnik-Suche ein, die eine Google-Suche öffnet.
-    </p>
-</div>
 
 <h2>Inhalte und Urheberrecht</h2>
 <ul>
@@ -195,15 +188,4 @@
         line-height: 1.7;
     }
 
-    .google-toggle {
-        margin: 0.25rem 0 1.25rem;
-    }
-
-    .google-toggle p {
-        margin: 0.45rem 0 0;
-
-        color: var(--text-muted);
-        font-size: 0.85rem;
-        line-height: 1.6;
-    }
 </style>

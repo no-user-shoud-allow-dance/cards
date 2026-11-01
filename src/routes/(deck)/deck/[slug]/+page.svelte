@@ -228,7 +228,7 @@
 
 <style>
     /* Card provides border, radius, bg, shadow, padding. */
-    .hero-cta {
+    :global(.hero-cta) {
         margin-bottom: 2rem;
     }
 

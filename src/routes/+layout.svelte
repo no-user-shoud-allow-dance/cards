@@ -6,6 +6,8 @@
     import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
     import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
     import { decks } from "#lib/stores/data/deckStore.svelte";
+    import { syncStore } from "#lib/sync/store/syncStore.svelte";
+    import ProfileAvatar from "#lib/sync/components/ProfileAvatar.svelte";
     import Toggle from "#lib/components/shared/ui/Toggle.svelte";
     import BackButton from "#lib/components/shared/ui/BackButton.svelte";
     import AppLogo from "#lib/components/shared/ui/AppLogo.svelte";
@@ -59,7 +61,6 @@
         if (isCramPage || isOverviewPage || isDeckExportPage) {
             return resolve("/(deck)/deck/[slug]", { slug });
         }
-        if (isDeckPage) return resolve("/");
         if (routePath === "/") return null;
         return resolve("/");
     });
@@ -69,6 +70,7 @@
         if (isOverviewPage) return `${deckName} · Übersicht`;
         if (isDeckExportPage) return `${deckName} · Exportieren`;
         if (isDeckPage) return deckName;
+        if (routePath === "/account") return "Konto";
         return "";
     });
 
@@ -123,6 +125,7 @@
         cardStore.init();
         settingStore.init();
         decks.init();
+        syncStore.init();
         viewportH = window.innerHeight;
         window.addEventListener("resize", () => {
             viewportH = window.innerHeight;
@@ -235,6 +238,11 @@
                         <span class="separator" aria-hidden="true">/</span>
                         <span aria-current="page">Übersicht</span>
                     </li>
+                {:else if routePath === "/account"}
+                    <li>
+                        <span class="separator" aria-hidden="true">/</span>
+                        <span aria-current="page">Konto</span>
+                    </li>
                 {/if}
             </ol>
         </nav>
@@ -260,6 +268,10 @@
                 onchange={(value) => settingStore.setPureMode(value)}
             />
         {/if}
+
+        <!-- Account entry point, visible on every page, right of the
+             pure-mode toggle. -->
+        <ProfileAvatar href={resolve("/account")} size={32} />
     </header>
 
     <main>
