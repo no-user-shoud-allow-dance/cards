@@ -1,5 +1,6 @@
 import { BOX_COUNT, type CardStates, type DeckType, type FlashCard } from "../types";
 import { applyReplacements } from "./replacements";
+import { imageTokensToAltText, stripImageTokens } from "./parser";
 
 // Weighted learning progress: each card contributes (box - 1) / (BOX_COUNT - 1),
 // so box 1 = 0 % and box BOX_COUNT = 100 %. Averaged across all cards.
@@ -80,46 +81,52 @@ function removeBrackets(text: string): string {
 // ── Card display helpers ─────────────────────────────────────────
 
 /**
- * The front side as shown in normal mode (brackets hidden, content
- * visible). Used for search queries and overview display.
+ * The front side as text with image tokens replaced by their alt text.
+ * Used for search queries and progress diffs — not for card display,
+ * where the image is rendered separately (see displayFront).
  */
 export function cardPrompt(card: FlashCard): string {
-    return stripBrackets(card.front);
+    return stripBrackets(imageTokensToAltText(card.front));
 }
 
-/** The back side (answer / translation). */
+/** The back side (answer / translation), image tokens as alt text. */
 export function cardAnswer(card: FlashCard): string {
-    return card.back;
+    return imageTokensToAltText(card.back);
 }
 
 /**
- * The front side in pure mode: bracketed content removed and
- * language-specific diacritic replacements applied (e.g. Greek
- * without breathing marks / tonos, Latin without macrons).
+ * The front side in pure mode: bracketed content removed, image tokens
+ * stripped (the image is rendered on the prompt side), and
+ * language-specific diacritic replacements applied (e.g. Greek without
+ * breathing marks / tonos, Latin without macrons).
  */
 export function purePrompt(card: FlashCard, deckType: DeckType): string {
-    let s = removeBrackets(card.front);
+    let s = removeBrackets(stripImageTokens(card.front));
     s = applyReplacements(s, deckType);
     return s;
 }
 
-/** Front text for display: normal or pure mode. */
+/**
+ * Front text for card display: normal or pure mode. Image tokens are
+ * stripped — the image itself (with its alt as loading/error fallback)
+ * is rendered above the text, so the alt must not repeat as text.
+ */
 export function displayFront(
     card: FlashCard,
     pureMode: boolean,
     deckType: DeckType,
 ): string {
-    if (!pureMode) return cardPrompt(card);
+    if (!pureMode) return stripBrackets(stripImageTokens(card.front));
     const p = purePrompt(card, deckType);
-    return p || cardPrompt(card);
+    return p || stripBrackets(stripImageTokens(card.front));
 }
 
-/** Back text for display: normal shows just the answer; pure shows prompt + answer. */
+/** Back text for card display: normal shows just the answer; pure shows prompt + answer. */
 export function displayBack(
     card: FlashCard,
     pureMode: boolean,
     _deckType: DeckType,
 ): string {
-    if (!pureMode) return cardAnswer(card);
-    return `${cardPrompt(card)}: ${cardAnswer(card)}`;
+    if (!pureMode) return stripImageTokens(card.back);
+    return `${stripBrackets(stripImageTokens(card.front))}: ${stripImageTokens(card.back)}`;
 }

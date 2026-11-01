@@ -1,14 +1,22 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
     import { fadeOutInPlace } from "#lib/utils/transitions";
+    import CardImages from "#lib/components/shared/ui/CardImages.svelte";
+    import type { CardImage } from "#lib/types";
 
     let {
         frontText,
         backText,
+        frontImages = [],
+        backImages = [],
         onclick,
     }: {
         frontText: string;
         backText: string;
+        /** Images written on the front side. */
+        frontImages?: CardImage[];
+        /** Images written on the back side. */
+        backImages?: CardImage[];
         onclick?: () => void;
     } = $props();
 </script>
@@ -24,8 +32,10 @@
         {onclick}
         aria-label="Nächste Karte"
     >
+        <CardImages images={frontImages} />
         <span class="overview-card-front">{frontText}</span>
         <span class="overview-card-divider" aria-hidden="true"></span>
+        <CardImages images={backImages} />
         <span class="overview-card-back">{backText}</span>
     </button>
 </div>
@@ -59,6 +69,9 @@
 
         cursor: pointer;
         user-select: none;
+
+        /* Image cards can be taller than the minimum card height. */
+        overflow-y: auto;
 
         transition:
             border-color var(--transition-fast),

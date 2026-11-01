@@ -1,6 +1,7 @@
 <script lang="ts">
     import { displayFront, displayBack } from "#lib/utils/pure";
-    import type { DeckType, FlashCard } from "#lib/types";
+    import CardImages from "#lib/components/shared/ui/CardImages.svelte";
+    import type { CardImage, DeckType, FlashCard } from "#lib/types";
 
     let {
         cards,
@@ -11,14 +12,22 @@
         pureMode: boolean;
         deckType: DeckType;
     } = $props();
+
+    const frontImages = (card: FlashCard): CardImage[] =>
+        card.images.filter((image) => image.side === "front");
+
+    const backImages = (card: FlashCard): CardImage[] =>
+        card.images.filter((image) => image.side === "back");
 </script>
 
 <ul class="card-list">
     {#each cards as card (card.id)}
         <li>
+            <CardImages images={frontImages(card)} variant="thumb" />
             <span class="front">{displayFront(card, pureMode, deckType)}</span>
             <span class="sep">→</span>
             <span class="back">{displayBack(card, pureMode, deckType)}</span>
+            <CardImages images={backImages(card)} variant="thumb" />
         </li>
     {/each}
 </ul>
@@ -37,7 +46,7 @@
     .card-list li {
         display: flex;
         flex-wrap: wrap;
-        align-items: baseline;
+        align-items: center;
         gap: 0.35rem 0.65rem;
 
         min-width: 0;

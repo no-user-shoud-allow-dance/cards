@@ -1,15 +1,23 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
     import { fadeOutInPlace } from "#lib/utils/transitions";
+    import CardImages from "#lib/components/shared/ui/CardImages.svelte";
+    import type { CardImage } from "#lib/types";
 
     let {
         frontText,
         backText,
+        frontImages = [],
+        backImages = [],
         flipped,
         onFlip,
     }: {
         frontText: string;
         backText: string;
+        /** Images written on the front side (prompt side). */
+        frontImages?: CardImage[];
+        /** Images written on the back side — revealed with the answer. */
+        backImages?: CardImage[];
         flipped: boolean;
         onFlip: () => void;
     } = $props();
@@ -29,10 +37,12 @@
     >
         <div class="card-inner">
             <div class="card-face card-front">
+                <CardImages images={frontImages} />
                 <span class="card-text">{frontText}</span>
             </div>
             <div class="card-face card-back-face">
                 <span class="hint">{frontText}</span>
+                <CardImages images={backImages} />
                 <span class="card-answer">{backText}</span>
             </div>
         </div>
@@ -74,7 +84,6 @@
     .card-inner {
         position: relative;
         width: 100%;
-        height: 100%;
         min-height: clamp(280px, 45dvh, 440px);
 
         transform-style: preserve-3d;
@@ -86,9 +95,6 @@
     }
 
     .card-face {
-        position: absolute;
-        inset: 0;
-
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -111,6 +117,13 @@
             box-shadow var(--transition-normal);
     }
 
+    /* The front face is in normal flow, so the card grows with its
+       content (e.g. an image) instead of becoming scrollable. */
+    .card-front {
+        position: relative;
+        min-height: clamp(280px, 45dvh, 440px);
+    }
+
     .card:hover .card-face {
         border-color: var(--border-strong);
     }
@@ -120,9 +133,16 @@
     }
 
     .card-back-face {
+        position: absolute;
+        inset: 0;
+
         transform: rotateX(180deg);
 
         background: var(--surface-soft);
+
+        /* Only the back face can scroll, and only when it holds the image
+           and is taller than the front-driven card height. */
+        overflow-y: auto;
     }
 
     .card-text {
@@ -177,7 +197,8 @@
 
     @media (max-width: 400px) {
         .card,
-        .card-inner {
+        .card-inner,
+        .card-front {
             min-height: 260px;
         }
 

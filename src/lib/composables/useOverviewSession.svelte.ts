@@ -1,7 +1,7 @@
 import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
 import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
 import { DECK_TYPES } from "#lib/utils/deckTypes";
-import { cardPrompt, cardAnswer } from "#lib/utils/pure";
+import { cardPrompt, cardAnswer, displayFront, displayBack } from "#lib/utils/pure";
 import type { FlashCard, LoadedDeck } from "#lib/types";
 
 export function useOverviewSession(
@@ -25,10 +25,30 @@ export function useOverviewSession(
     );
 
     // Overview always shows the original front and back — pure mode
-    // only applies to cram sessions, not to browsing.
-    const frontText = $derived(currentCard ? cardPrompt(currentCard) : "");
+    // only applies to cram sessions, not to browsing. Display text strips
+    // image tokens (the images render separately above the text).
+    const deckType = $derived(deck?.deckType ?? "english");
 
-    const backText = $derived(currentCard ? cardAnswer(currentCard) : "");
+    const frontText = $derived(
+        currentCard ? displayFront(currentCard, false, deckType) : "",
+    );
+
+    const backText = $derived(
+        currentCard ? displayBack(currentCard, false, deckType) : "",
+    );
+
+    // Overview shows both sides at once; images follow their side.
+    const frontImages = $derived(
+        currentCard
+            ? currentCard.images.filter((image) => image.side === "front")
+            : [],
+    );
+
+    const backImages = $derived(
+        currentCard
+            ? currentCard.images.filter((image) => image.side === "back")
+            : [],
+    );
 
     const totalCards = $derived(deck?.cards.length ?? 0);
 
@@ -154,6 +174,8 @@ export function useOverviewSession(
         get currentCardId() { return currentCard?.id ?? null; },
         get frontText() { return frontText; },
         get backText() { return backText; },
+        get frontImages() { return frontImages; },
+        get backImages() { return backImages; },
         get finished() { return finished; },
         get totalCards() { return totalCards; },
         get seenCount() { return seenCount; },

@@ -65,6 +65,21 @@ export function useCramSession(resolveDeck: () => LoadedDeck | null) {
         currentCard ? displayBack(currentCard, pureMode, deckType) : "",
     );
 
+    // Images follow the side they were written on: front images are part
+    // of the prompt (also in pure mode), back images are revealed with
+    // the answer because the back face only shows when flipped.
+    const frontImages = $derived(
+        currentCard
+            ? currentCard.images.filter((image) => image.side === "front")
+            : [],
+    );
+
+    const backImages = $derived(
+        currentCard
+            ? currentCard.images.filter((image) => image.side === "back")
+            : [],
+    );
+
     const learnedCount = $derived(
         deck
             ? deck.cards.filter(
@@ -309,6 +324,12 @@ export function useCramSession(resolveDeck: () => LoadedDeck | null) {
         },
         get backText() {
             return backText;
+        },
+        get frontImages() {
+            return frontImages;
+        },
+        get backImages() {
+            return backImages;
         },
         get learnedCount() {
             return learnedCount;

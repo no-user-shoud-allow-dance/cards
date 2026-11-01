@@ -5,7 +5,11 @@
         back: string;
     }
 
-    /** Serializes the editor state to the deck markdown format. */
+    /**
+     * Serializes the editor state to the deck markdown format. Image
+     * tokens (`![alt](url)`) stay verbatim inside the side texts, so
+     * saving round-trips them losslessly.
+     */
     export function serializeDeckMarkdown(
         title: string,
         cards: { front: string; back: string }[],
@@ -22,10 +26,11 @@
 </script>
 
 <script lang="ts">
-    import { parseDeck } from "#lib/utils/parser";
+    import { extractImages, parseDeck } from "#lib/utils/parser";
     import Button from "#lib/components/shared/ui/Button.svelte";
     import CheckBox from "#lib/components/shared/ui/CheckBox.svelte";
     import Dialog from "#lib/components/shared/ui/Dialog.svelte";
+    import CardImages from "#lib/components/shared/ui/CardImages.svelte";
 
     let {
         title = $bindable(""),
@@ -172,7 +177,7 @@
         bind:value={mdInput}
         placeholder="# Titel
 amo - ich liebe
-amas - du liebst"
+![Katze](https://hosting.example/katze.jpg) - die Katze"
         spellcheck="false"></textarea>
     {#if mdErrors.length > 0}
         <ul class="md-errors">
@@ -243,6 +248,12 @@ amas - du liebst"
                             placeholder="Vorderseite"
                             aria-label="Vorderseite"
                         />
+                        <!-- Thumbnail preview: a broken image link is
+                             visible while writing. -->
+                        <CardImages
+                            images={extractImages(card.front)}
+                            variant="thumb"
+                        />
                     </span>
                     <span class="col-back" role="cell">
                         <input
@@ -250,6 +261,10 @@ amas - du liebst"
                             bind:value={card.back}
                             placeholder="Rückseite"
                             aria-label="Rückseite"
+                        />
+                        <CardImages
+                            images={extractImages(card.back)}
+                            variant="thumb"
                         />
                     </span>
                     <span class="col-actions" role="cell">
@@ -390,6 +405,15 @@ amas - du liebst"
     .col-check {
         display: flex;
         justify-content: center;
+    }
+
+    /* The cell holds the text input plus thumbnails of the side's images. */
+    .col-front,
+    .col-back {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-width: 0;
     }
 
     .col-front input,

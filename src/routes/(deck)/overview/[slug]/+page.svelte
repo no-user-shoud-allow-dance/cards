@@ -66,6 +66,8 @@
                 <OverviewCard
                     frontText={session.frontText}
                     backText={session.backText}
+                    frontImages={session.frontImages}
+                    backImages={session.backImages}
                     onclick={session.next}
                 />
             {/key}

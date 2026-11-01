@@ -135,6 +135,8 @@
                 <FlashCard
                     frontText={session.frontText}
                     backText={session.backText}
+                    frontImages={session.frontImages}
+                    backImages={session.backImages}
                     flipped={session.revealed}
                     onFlip={session.toggleFlip}
                 />
