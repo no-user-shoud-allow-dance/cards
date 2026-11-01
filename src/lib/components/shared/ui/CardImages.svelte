@@ -1,15 +1,18 @@
 <script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
     import type { CardImage } from "#lib/types";
 
+    // `class` arrives via rest and is merged into the class expression.
     let {
         images,
         variant = "card",
+        ...rest
     }: {
         /** Images of one card side, in markdown order. */
         images: CardImage[];
         /** "card" stacks images above the card text, "thumb" is a small inline row. */
         variant?: "card" | "thumb";
-    } = $props();
+    } & HTMLAttributes<HTMLDivElement> = $props();
 
     // URLs that failed to load — the alt text is shown instead. While an
     // image is still loading, the browser shows the alt attribute.
@@ -23,7 +26,7 @@
 </script>
 
 {#if images.length > 0}
-    <div class="card-images" class:thumb={variant === "thumb"}>
+    <div {...rest} class={["card-images", rest.class]} class:thumb={variant === "thumb"}>
         {#each images as image, i (i)}
             {#if failed.has(image.url)}
                 <span class="image-fallback">{image.alt || "Bild nicht verfügbar"}</span>

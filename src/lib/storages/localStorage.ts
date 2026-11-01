@@ -1,6 +1,7 @@
 import type { CardStates, PersistedTimerState, Profile } from "../types";
 
-const PREFIX = "kk_";
+/** Key prefix for everything the app writes to localStorage. */
+export const PREFIX = "kk_";
 
 /**
  * Schema mapping each storage key (without prefix) to a default value.
@@ -16,6 +17,9 @@ const schema = {
     study_time: {} as Record<string, number>,
     timer_state: {} as Record<string, PersistedTimerState>,
     profile: null as Profile | null,
+    intro_open: true as boolean,
+    privacy_toast_dismissed: false as boolean,
+    impersistent_toast_dismissed: false as boolean,
 } as const;
 
 type SchemaKey = keyof typeof schema;

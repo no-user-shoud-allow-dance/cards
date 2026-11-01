@@ -1,7 +1,12 @@
 import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
 import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
-import { DECK_TYPES } from "#lib/utils/deckTypes";
-import { cardPrompt, cardAnswer, displayFront, displayBack } from "#lib/utils/pure";
+import { displayFront, displayBack } from "#lib/utils/pure";
+import {
+    isEditableTarget,
+    isOnControl,
+    openHelpSearch as openHelpSearchFor,
+    openMnemonicSearch as openMnemonicSearchFor,
+} from "#lib/utils/studyActions";
 import type { FlashCard, LoadedDeck } from "#lib/types";
 
 export function useOverviewSession(
@@ -34,7 +39,7 @@ export function useOverviewSession(
     );
 
     const backText = $derived(
-        currentCard ? displayBack(currentCard, false, deckType) : "",
+        currentCard ? displayBack(currentCard, false) : "",
     );
 
     // Overview shows both sides at once; images follow their side.
@@ -90,61 +95,22 @@ export function useOverviewSession(
 
     function openHelpSearch(): void {
         if (!currentCard || !deck) return;
-
-        const language = DECK_TYPES[deck.deckType].language;
-
-        const query =
-            `"${cardAnswer(currentCard)}" im Kontext im Deutschen und Vergleich mit Beispielen? ` +
-            `Und wie ist der Fall, wenn es um die Übersetzung aus dem ${language} ` +
-            `"${cardPrompt(currentCard)}" geht (auch mit Beispielen)?`;
-
-        const params = new URLSearchParams({
-            q: query,
-            udm: "50",
-        });
-
-        window.open(
-            `https://www.google.com/search?${params}`,
-            "_blank",
-            "noopener,noreferrer",
-        );
+        openHelpSearchFor(currentCard, deck.deckType);
     }
 
     function openMnemonicSearch(): void {
         if (!currentCard) return;
-
-        const query =
-            `"${cardPrompt(currentCard)}" Mnemotechnik oder verwandte Wörter in anderen Sprachen`;
-
-        const params = new URLSearchParams({
-            q: query,
-            udm: "50",
-        });
-
-        window.open(
-            `https://www.google.com/search?${params}`,
-            "_blank",
-            "noopener,noreferrer",
-        );
+        openMnemonicSearchFor(currentCard);
     }
 
     function handleKeydown(event: KeyboardEvent): void {
         if (!currentCard) return;
 
-        const target = event.target;
-
-        if (
-            target instanceof HTMLElement &&
-            target.closest("input, textarea, select, [contenteditable='true']")
-        ) {
-            return;
-        }
+        if (isEditableTarget(event.target)) return;
 
         // Space advances to the next card.
         if (event.code === "Space") {
-            if (target instanceof HTMLElement && target.closest("button, a")) {
-                return;
-            }
+            if (isOnControl(event.target)) return;
             event.preventDefault();
             next();
             return;

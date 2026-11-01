@@ -45,13 +45,12 @@
     }
 
     // On mobile the box overview moves from the top (above the progress
-    // bar) to the bottom, above the controls. The (deck) layout renders
-    // this page only on the client (after the IndexedDB decks load), so
-    // the viewport can be read synchronously at init.
-    const mobileQuery = window.matchMedia("(max-width: 700px)");
-    let isMobile = $state(mobileQuery.matches);
+    // bar) to the bottom, above the controls.
+    let isMobile = $state(false);
 
     onMount(() => {
+        const mobileQuery = window.matchMedia("(max-width: 700px)");
+        isMobile = mobileQuery.matches;
         const handleChange = (event: MediaQueryListEvent) => {
             isMobile = event.matches;
         };

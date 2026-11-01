@@ -177,15 +177,10 @@
         text-underline-offset: 3px;
     }
 
-    /* Card provides bg-primary; only the left accent border + spacing remain. */
-    .legal-notice {
+    /* Card provides bg-primary; only the left accent border + spacing remain.
+       The class lands on the Card root (a child component), so :global. */
+    :global(.legal-notice) {
         margin: 1.5rem 0;
         border-left: 4px solid var(--primary);
     }
-
-    .legal-notice :global(.card-body p) {
-        margin: 0;
-        line-height: 1.7;
-    }
-
 </style>

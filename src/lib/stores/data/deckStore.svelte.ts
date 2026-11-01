@@ -2,7 +2,7 @@ import { DECK_TYPES } from "../../utils/deckTypes";
 import { parseDeck } from "../../utils/parser";
 import { hashDeckContent } from "../../utils/hash";
 import type { Deck, DeckType, LoadedDeck } from "../../types";
-import { BaseStore } from "./baseStore";
+import { IndexedDbStore } from "./indexedDbStore";
 
 export interface AddDeckResult {
     deck: Deck;
@@ -17,7 +17,7 @@ export interface AddDeckResult {
  * stored deck into a LoadedDeck (cached per deck object, so a renamed or
  * moved entry is parsed again).
  */
-class DeckStore extends BaseStore {
+class DeckStore extends IndexedDbStore {
     protected readonly dbName = "nsc-user-decks";
     protected readonly dbVersion = 1;
     protected readonly storeName = "decks";
@@ -78,7 +78,7 @@ class DeckStore extends BaseStore {
         if (!deck) return null;
         let loaded = this.#loadedCache.get(deck);
         if (!loaded) {
-            const parsed = parseDeck(deck.raw, deck.deckType);
+            const parsed = parseDeck(deck.raw);
             loaded = {
                 slug: deck.slug,
                 folder: deck.folder,
@@ -105,6 +105,17 @@ class DeckStore extends BaseStore {
     ): Promise<AddDeckResult> {
         await this.init();
         const contentHash = await hashDeckContent(raw, deckType);
+        // Import dedup: identical content (same hash) already stored means
+        // the deck exists — return it instead of creating a duplicate.
+        const existing = await this.findByHash(contentHash);
+        if (existing) {
+            const parsed = parseDeck(raw);
+            return {
+                deck: existing,
+                cardCount: parsed.cards.length,
+                errors: parsed.errors,
+            };
+        }
         // The slug is the content hash plus a random suffix. The hash
         // keeps the deck identifiable across devices (import dedup,
         // progress links), while the suffix makes every deck instance
@@ -120,7 +131,7 @@ class DeckStore extends BaseStore {
             contentHash,
             createdAt: Date.now(),
         };
-        const parsed = parseDeck(raw, deckType);
+        const parsed = parseDeck(raw);
         if (typeof window !== "undefined") {
             await this.put(deck);
         }

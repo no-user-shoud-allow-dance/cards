@@ -1,17 +1,21 @@
 <script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
     import { displayFront, displayBack } from "#lib/utils/pure";
     import CardImages from "#lib/components/shared/ui/CardImages.svelte";
     import type { CardImage, DeckType, FlashCard } from "#lib/types";
 
+    // `class` arrives via rest and is merged into the class expression; other
+    // attributes fall through to the <ul> via {...rest}.
     let {
         cards,
         pureMode,
         deckType,
+        ...rest
     }: {
         cards: FlashCard[];
         pureMode: boolean;
         deckType: DeckType;
-    } = $props();
+    } & HTMLAttributes<HTMLUListElement> = $props();
 
     const frontImages = (card: FlashCard): CardImage[] =>
         card.images.filter((image) => image.side === "front");
@@ -20,13 +24,13 @@
         card.images.filter((image) => image.side === "back");
 </script>
 
-<ul class="card-list">
+<ul {...rest} class={["card-list", rest.class]}>
     {#each cards as card (card.id)}
         <li>
             <CardImages images={frontImages(card)} variant="thumb" />
             <span class="front">{displayFront(card, pureMode, deckType)}</span>
             <span class="sep">→</span>
-            <span class="back">{displayBack(card, pureMode, deckType)}</span>
+            <span class="back">{displayBack(card, pureMode)}</span>
             <CardImages images={backImages(card)} variant="thumb" />
         </li>
     {/each}

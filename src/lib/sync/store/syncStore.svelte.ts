@@ -1,5 +1,5 @@
 import { read, write } from "../../storages/localStorage";
-import { BaseStore } from "../../stores/persistent/baseStore";
+import { LocalStorageStore } from "../../stores/persistent/localStorageStore";
 import type { Profile } from "../../types";
 
 /**
@@ -7,7 +7,7 @@ import type { Profile } from "../../types";
  * name, and a rotatable account UUID — persisted in localStorage, never
  * sent anywhere. "Deleting the account" means clearing the site data.
  */
-class SyncStore extends BaseStore {
+class SyncStore extends LocalStorageStore {
     profile = $state<Profile>({
         name: "",
         deviceName: "",

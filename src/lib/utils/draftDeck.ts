@@ -16,7 +16,7 @@ export interface DraftDeck {
     title: string | null;
 }
 
-const DRAFT_KEY = "nsc_draft_deck";
+const DRAFT_KEY = "kk_draft_deck";
 
 /** Stashes a deck draft for the create page and navigates there. */
 export function stashDraftDeck(draft: DraftDeck): void {

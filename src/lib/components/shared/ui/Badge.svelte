@@ -1,18 +1,19 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
 
+    // `class` arrives via rest and is merged into the class expression.
     let {
         variant = "default",
-        class: className = "",
         children,
+        ...rest
     }: {
         variant?: "default" | "primary" | "success" | "danger" | "warning" | "overview" | "info";
-        class?: string;
         children: Snippet;
-    } = $props();
+    } & HTMLAttributes<HTMLSpanElement> = $props();
 </script>
 
-<span class="badge {variant} {className}">{@render children()}</span>
+<span {...rest} class={["badge", variant, rest.class]}>{@render children()}</span>
 
 <style>
     .badge {

@@ -6,7 +6,7 @@ import { openDatabase, toPromise } from "../../storages/indexedStorage";
  * generic getAll/put/delete helpers. Subclasses define the database
  * configuration and implement hydrate().
  */
-export abstract class BaseStore {
+export abstract class IndexedDbStore {
     #dbPromise: Promise<IDBDatabase> | null = null;
     #initPromise: Promise<void> | null = null;
 

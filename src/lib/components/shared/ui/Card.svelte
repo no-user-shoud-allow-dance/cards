@@ -1,37 +1,49 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
 
+    // `class` arrives via rest and is merged into the class expression;
+    // aria-*/id/… fall through to the root element via {...rest}.
     let {
         href,
         hover = false,
         padding = "md",
         bg = "surface",
-        class: className = "",
         onclick,
         children,
         header,
         footer,
+        ...rest
     }: {
         href?: string;
         hover?: boolean;
         padding?: "sm" | "md" | "lg";
         bg?: "surface" | "soft" | "primary" | "success" | "danger" | "warning" | "info" | "overview";
-        class?: string;
-        onclick?: (event: MouseEvent) => void;
+        onclick?: (event: MouseEvent | KeyboardEvent) => void;
         children: Snippet;
         header?: Snippet;
         footer?: Snippet;
-    } = $props();
+    } & HTMLAttributes<HTMLElement> = $props();
+
+    // The non-link branch renders role="button": activate it with
+    // Enter/Space as well, not only with a click.
+    function handleKeydown(event: KeyboardEvent): void {
+        if (!onclick) return;
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onclick(event);
+        }
+    }
 </script>
 
 {#if href}
-    <a class="card {padding} bg-{bg} {className}" class:hover {href} {onclick}>
+    <a {...rest} class={["card", padding, `bg-${bg}`, rest.class]} class:hover {href} {onclick}>
         {#if header}<div class="card-header">{@render header()}</div>{/if}
         <div class="card-body">{@render children()}</div>
         {#if footer}<div class="card-footer">{@render footer()}</div>{/if}
     </a>
 {:else}
-    <div class="card {padding} bg-{bg} {className}" class:hover role={onclick ? "button" : undefined} {onclick} tabindex={onclick ? 0 : undefined}>
+    <div {...rest} class={["card", padding, `bg-${bg}`, rest.class]} class:hover role={onclick ? "button" : undefined} {onclick} onkeydown={handleKeydown} tabindex={onclick ? 0 : undefined}>
         {#if header}<div class="card-header">{@render header()}</div>{/if}
         <div class="card-body">{@render children()}</div>
         {#if footer}<div class="card-footer">{@render footer()}</div>{/if}

@@ -1,6 +1,7 @@
 import { onMount } from "svelte";
 import { studyTimeStore } from "#lib/stores/persistent/studyTimeStore.svelte";
 import { timerStateStore } from "#lib/stores/persistent/timerStateStore.svelte";
+import { isActionKey } from "#lib/utils/studyActions";
 
 export const TIMER_PRESETS = [
     { label: "10 Sekunden", ms: 10_000 },
@@ -36,27 +37,6 @@ interface CramSessionLike {
     openMnemonicSearch: () => void;
     handleKeydown: (event: KeyboardEvent) => void;
     readonly finished: boolean;
-}
-
-// Mirrors the action keys handled by the cram session keyboard controls,
-// so keyboard-driven flips/answers/help/mnemonics also count as activity.
-function isActionKey(event: KeyboardEvent): boolean {
-    const target = event.target;
-    if (
-        target instanceof HTMLElement &&
-        target.closest("input, textarea, select, [contenteditable='true']")
-    ) {
-        return false;
-    }
-
-    if (event.code === "Space") {
-        if (target instanceof HTMLElement && target.closest("button, a")) {
-            return false;
-        }
-        return true;
-    }
-
-    return ["w", "r", "h", "m"].includes(event.key.toLowerCase());
 }
 
 export function useStudyTimer(getSlug: () => string) {

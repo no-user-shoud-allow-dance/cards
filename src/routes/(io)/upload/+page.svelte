@@ -57,7 +57,8 @@
 </Card>
 
 <style>
-    .upload-card {
+    /* The passed class lands on the Card root (a child component). */
+    :global(.upload-card) {
         display: flex;
         flex-direction: column;
         gap: 0.9rem;

@@ -8,8 +8,6 @@ export interface DeckTypeConfig {
     language: string;
     /** Whether decks of this type offer a pure mode. */
     pureMode: boolean;
-    /** Known article/gender markers that prefix the question. */
-    articles: readonly string[];
 }
 
 /**
@@ -21,19 +19,16 @@ export const DECK_TYPES: Record<DeckType, DeckTypeConfig> = {
         label: "Englisch",
         language: "Englischen",
         pureMode: false,
-        articles: ["the", "a", "an"],
     },
     latin: {
         label: "Latein",
         language: "Lateinischen",
         pureMode: true,
-        articles: ["m.", "f.", "n."],
     },
     greek: {
         label: "Altgriechisch",
         language: "Altgriechischen",
         pureMode: true,
-        articles: ["ὁ", "ἡ", "τό", "τοῦ", "τῆς", "τῷ", "τόν", "τήν", "τοί", "ταί", "τά"],
     },
 };
 
@@ -54,9 +49,7 @@ const LATIN_ENDING =
  * The result is a guess — the user can override it.
  */
 export function guessDeckType(raw: string): DeckType {
-    // Parse without article stripping — use "latin" as a neutral default
-    // so the parser doesn't strip English articles before we inspect.
-    const { cards } = parseDeck(raw, "latin");
+    const { cards } = parseDeck(raw);
     if (cards.length === 0) return "english";
 
     // Strip bracketed hints from the front for analysis — the bracket

@@ -2,8 +2,7 @@
     import { onMount } from "svelte";
     import { slide } from "svelte/transition";
     import Badge from "#lib/components/shared/ui/Badge.svelte";
-
-    const INTRO_STORAGE_KEY = "kk_intro_open";
+    import { read, write } from "#lib/storages/localStorage";
 
     let introOpen = $state(true);
     let mounted = $state(false);
@@ -11,12 +10,8 @@
     // Restore the expanded/collapsed state from the last visit. Gated on
     // mounted so the server render and the first client render agree.
     onMount(() => {
-        try {
-            const saved = localStorage.getItem(INTRO_STORAGE_KEY);
-            if (saved !== null) introOpen = saved === "true";
-        } catch {
-            /* ignore */
-        }
+        const saved = read("intro_open");
+        if (saved !== null) introOpen = saved;
         mounted = true;
     });
 
@@ -24,11 +19,7 @@
 
     function toggleIntro(): void {
         introOpen = !introOpen;
-        try {
-            localStorage.setItem(INTRO_STORAGE_KEY, String(introOpen));
-        } catch {
-            /* ignore */
-        }
+        write("intro_open", introOpen);
     }
 </script>
 

@@ -74,6 +74,15 @@
         min-height: 100dvh;
     }
 
+    /* Mobile chrome keeps the global header in the flow, so full-height
+       subtracts its height — this mirrors the layout's mobile media query
+       and lets the rule stay scoped to the element that owns it. */
+    @media (max-width: 700px), (pointer: coarse) {
+        .study-page.full-height {
+            min-height: calc(100dvh - var(--header-h));
+        }
+    }
+
     .study-top {
         flex: 0 0 auto;
     }

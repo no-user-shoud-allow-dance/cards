@@ -1,9 +1,9 @@
 // Total active learning time per deck, persisted across sessions.
 
 import { read, write } from "../../storages/localStorage";
-import { BaseStore } from "./baseStore";
+import { LocalStorageStore } from "./localStorageStore";
 
-class StudyTimeStore extends BaseStore {
+class StudyTimeStore extends LocalStorageStore {
     times = $state<Record<string, number>>({});
 
     protected hydrate(): void {
@@ -23,7 +23,7 @@ class StudyTimeStore extends BaseStore {
 
     /** Sets the total study time absolutely (used when syncing progress). */
     set(slug: string, ms: number): void {
-        if (ms <= 0) return;
+        if (ms < 0) return;
         this.times = { ...this.times, [slug]: ms };
         this.persist();
     }

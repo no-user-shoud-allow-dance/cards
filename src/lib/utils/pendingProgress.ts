@@ -1,6 +1,7 @@
 import { cardStore } from "../stores/persistent/cardStore.svelte";
 import { studyTimeStore } from "../stores/persistent/studyTimeStore.svelte";
 import { decks } from "../stores/data/deckStore.svelte";
+import { PREFIX } from "../storages/localStorage";
 import type { CardStates } from "../types";
 import type { ProgressSharePayload } from "./share";
 
@@ -13,7 +14,7 @@ import type { ProgressSharePayload } from "./share";
  * the links the user shares themselves.
  */
 
-const STORAGE_KEY = "kk_pending_progress";
+const STORAGE_KEY = PREFIX + "pending_progress";
 /** Pending progress expires after a week. */
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 

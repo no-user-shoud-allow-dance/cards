@@ -1,7 +1,7 @@
 import { read, write } from "../../storages/localStorage";
-import { BaseStore } from "./baseStore";
+import { LocalStorageStore } from "./localStorageStore";
 
-class SettingStore extends BaseStore {
+class SettingStore extends LocalStorageStore {
     pureMode = $state(false);
     /** Google search buttons (help/mnemonic) hidden by the user. On by default. */
     googleDisabled = $state(true);

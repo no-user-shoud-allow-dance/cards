@@ -1,27 +1,30 @@
 <script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
+
     let {
         label,
-        checked,
+        checked = $bindable(false),
         onchange,
         disabled = false,
         variant = "primary",
         size = "md",
+        ...rest
     }: {
         label: string;
-        checked: boolean;
-        onchange: (checked: boolean) => void;
+        checked?: boolean;
+        onchange?: (checked: boolean) => void;
         disabled?: boolean;
         variant?: "primary" | "success" | "danger" | "warning" | "info" | "overview";
         size?: "sm" | "md" | "lg";
-    } = $props();
+    } & HTMLAttributes<HTMLLabelElement> = $props();
 </script>
 
-<label class="toggle {variant} {size}" class:disabled>
+<label {...rest} class={["toggle", variant, size, rest.class]} class:disabled>
     <input
         type="checkbox"
-        checked={checked}
+        bind:checked
         {disabled}
-        onchange={(e) => onchange(e.currentTarget.checked)}
+        onchange={(e) => onchange?.(e.currentTarget.checked)}
     />
     <span>{label}</span>
 </label>

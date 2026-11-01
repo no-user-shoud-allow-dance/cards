@@ -4,27 +4,18 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { toastStore } from "#lib/stores/session/toastStore.svelte";
-
-    const STORAGE_KEY = "kk_privacy_toast_dismissed";
+    import { read, write } from "#lib/storages/localStorage";
 
     let dismissed = $state(false);
     let toastId: string | null = $state(null);
 
     function persistDismiss(): void {
         dismissed = true;
-        try {
-            localStorage.setItem(STORAGE_KEY, "true");
-        } catch {
-            /* ignore */
-        }
+        write("privacy_toast_dismissed", true);
     }
 
     onMount(() => {
-        try {
-            dismissed = localStorage.getItem(STORAGE_KEY) === "true";
-        } catch {
-            dismissed = false;
-        }
+        dismissed = read("privacy_toast_dismissed") ?? false;
     });
 
     // Show/hide the toast based on dismissal state and current page.

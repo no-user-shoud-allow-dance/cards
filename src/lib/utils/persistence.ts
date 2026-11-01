@@ -1,4 +1,5 @@
 import { detectIncognito } from "detectincognitojs";
+import { PREFIX } from "../storages/localStorage";
 
 /**
  * Best-effort check for impersistent storage: private/incognito mode
@@ -13,7 +14,7 @@ import { detectIncognito } from "detectincognitojs";
  * disabled storage, some in-app browsers).
  */
 
-const PROBE_KEY = "kk_persistence_probe";
+const PROBE_KEY = PREFIX + "persistence_probe";
 
 function localStorageWorks(): boolean {
     try {

@@ -31,7 +31,7 @@
             <h1 class="error-title">{title}</h1>
             <p class="error-message">{message}</p>
             <div class="error-actions">
-                <Button variant="primary" href={resolve("/")}
+                <Button variant="primary" class="error-btn" href={resolve("/")}
                     >Zur Startseite</Button
                 >
             </div>
@@ -40,6 +40,8 @@
 </Page>
 
 <style>
+    /* Classes passed to Page/Card land on child component roots, so they are
+       targeted via :global. */
     :global(.error-page) {
         display: flex;
         align-items: center;
@@ -88,7 +90,7 @@
     }
 
     @media (max-width: 540px) {
-        .error-actions :global(.btn) {
+        .error-actions :global(.error-btn) {
             width: 100%;
         }
     }

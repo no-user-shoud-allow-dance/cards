@@ -107,7 +107,7 @@
                 toastStore.error("Der Link ist ungültig oder beschädigt.");
                 return;
             }
-            const parsed = parseDeck(payload.raw, payload.deckType);
+            const parsed = parseDeck(payload.raw);
             stashDraftDeck({
                 raw: payload.raw,
                 deckType: payload.deckType,
@@ -123,7 +123,7 @@
                 toastStore.error("Der Link ist ungültig oder beschädigt.");
                 return;
             }
-            const parsed = parseDeck(combined.deck.raw, combined.deck.deckType);
+            const parsed = parseDeck(combined.deck.raw);
             // Stash the progress so it is applied after the deck is created
             // on the create page (matched by content hash).
             stashPendingProgress(combined.progress);
@@ -284,8 +284,9 @@
 {/if}
 
 <style>
-    /* Card provides border, radius, bg, shadow, padding. */
-    .panel {
+    /* Card provides border, radius, bg, shadow, padding; the passed class
+       lands on the Card root (a child component), so :global. */
+    :global(.panel) {
         margin-bottom: 1.5rem;
     }
 

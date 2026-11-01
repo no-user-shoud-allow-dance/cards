@@ -1,31 +1,31 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
 
+    // `class` arrives via rest and is merged into the class expression;
+    // aria-*/onclick/… fall through via {...rest}.
     let {
         variant = "secondary",
         href,
         type = "button",
         disabled = false,
-        class: className = "",
-        onclick,
         children,
+        ...rest
     }: {
         variant?: "primary" | "secondary" | "danger" | "overview" | "warning";
         href?: string;
         type?: "button" | "submit";
         disabled?: boolean;
-        class?: string;
-        onclick?: (event: MouseEvent) => void;
         children: Snippet;
-    } = $props();
+    } & HTMLAttributes<HTMLElement> = $props();
 </script>
 
 {#if href}
-    <a class="btn {variant} {className}" {href} {onclick}>
+    <a {...rest} class={["btn", variant, rest.class]} {href}>
         {@render children()}
     </a>
 {:else}
-    <button class="btn {variant} {className}" {type} {disabled} {onclick}>
+    <button {...rest} class={["btn", variant, rest.class]} {type} {disabled}>
         {@render children()}
     </button>
 {/if}

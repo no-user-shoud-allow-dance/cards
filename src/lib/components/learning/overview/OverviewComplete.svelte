@@ -13,10 +13,10 @@
         um Antworten zu bewerten.
     </p>
     <div class="overview-done-actions">
-        <Button variant="secondary" href={resolve("/(deck)/deck/[slug]", { slug })}>
+        <Button variant="secondary" class="done-btn" href={resolve("/(deck)/deck/[slug]", { slug })}>
             Zurück zum Stapel
         </Button>
-        <Button variant="primary" href={resolve("/(deck)/cram/[slug]", { slug })}>
+        <Button variant="primary" class="done-btn" href={resolve("/(deck)/cram/[slug]", { slug })}>
             Lernmodus starten
             <span aria-hidden="true">→</span>
         </Button>
@@ -66,7 +66,7 @@
             flex-direction: column;
         }
 
-        .overview-done-actions :global(.btn) {
+        .overview-done-actions :global(.done-btn) {
             width: 100%;
         }
     }

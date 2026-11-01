@@ -1,8 +1,16 @@
 <script lang="ts">
-    let { href }: { href: string } = $props();
+    import type { HTMLAnchorAttributes } from "svelte/elements";
+
+    // `class` arrives via rest and is merged into the class expression.
+    let {
+        href,
+        ...rest
+    }: {
+        href: string;
+    } & HTMLAnchorAttributes<HTMLAnchorElement> = $props();
 </script>
 
-<a class="back-button" {href} aria-label="Zurück">
+<a {...rest} class={["back-button", rest.class]} {href} aria-label="Zurück">
     <svg
         width="18"
         height="18"
@@ -22,7 +30,8 @@
 
 <style>
     /* Hidden on desktop, where the breadcrumb path already provides
-       navigation. Shown on mobile (≤700px) via the layout's media query. */
+       navigation; shown on mobile (≤700px), where the layout swaps the
+       breadcrumbs for this button. */
     .back-button {
         display: none;
         flex: 0 0 auto;
@@ -46,5 +55,11 @@
     .back-button:hover {
         border-color: var(--primary);
         background: var(--primary-soft);
+    }
+
+    @media (max-width: 700px) {
+        .back-button {
+            display: inline-flex;
+        }
     }
 </style>

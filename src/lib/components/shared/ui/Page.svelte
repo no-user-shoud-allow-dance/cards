@@ -1,16 +1,14 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
 
-    let {
-        class: className = "",
-        children,
-    }: {
-        class?: string;
-        children: Snippet;
-    } = $props();
+    // No `class` prop declaration needed: it arrives via rest and is merged
+    // into the class expression (Svelte joins ClassValue arrays), so a
+    // parent's class can never override the component's own classes.
+    let { children, ...rest }: { children: Snippet } & HTMLAttributes<HTMLDivElement> = $props();
 </script>
 
-<div class="page {className}">
+<div {...rest} class={["page", rest.class]}>
     {@render children()}
 </div>
 

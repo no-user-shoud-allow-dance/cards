@@ -9,12 +9,10 @@
 
     let {
         groups,
-        activeBox,
-        onSelect,
+        activeBox = $bindable(1),
     }: {
         groups: BoxGroup[];
-        activeBox: number;
-        onSelect: (box: number) => void;
+        activeBox?: number;
     } = $props();
 </script>
 
@@ -26,7 +24,7 @@
             class:learned={BOX_LABELS.length === group.box}
             role="tab"
             aria-selected={activeBox === group.box}
-            onclick={() => onSelect(group.box)}
+            onclick={() => (activeBox = group.box)}
         >
             {group.label}
             <span class="box-count">{group.cards.length}</span>

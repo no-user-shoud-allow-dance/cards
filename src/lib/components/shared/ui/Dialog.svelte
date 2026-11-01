@@ -1,25 +1,27 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition";
     import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
     import type { DialogType } from "#lib/types";
 
+    // `class` arrives via rest and is merged into the class expression; other
+    // attributes fall through to the dialog panel via {...rest}.
     let {
         title,
         open = $bindable(false),
         bg = "surface",
-        class: className = "",
         onclose,
         children,
         footer,
+        ...rest
     }: {
         title: string;
         open?: boolean;
         bg?: DialogType;
-        class?: string;
         onclose?: () => void;
         children: Snippet;
         footer?: Snippet;
-    } = $props();
+    } & HTMLAttributes<HTMLDivElement> = $props();
 
     function closeModal(): void {
         open = false;
@@ -49,7 +51,8 @@
         onclick={handleBackdropClick}
     >
         <div
-            class="dialog bg-{bg} {className}"
+            {...rest}
+            class={["dialog", `bg-${bg}`, rest.class]}
             role="dialog"
             aria-modal="true"
             aria-label={title}

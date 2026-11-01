@@ -217,7 +217,7 @@
 
         padding: 1.25rem;
 
-        background: rgb(33 32 28 / 82%);
+        background: var(--backdrop-strong);
     }
 
     .scanner-frame {
@@ -230,7 +230,7 @@
         border: 1px solid var(--border-strong);
         border-radius: var(--radius-lg);
 
-        background: #000000;
+        background: var(--scanner-bg);
         box-shadow: var(--shadow-card);
     }
 
@@ -246,7 +246,7 @@
         position: absolute;
         inset: 12%;
 
-        border: 2px solid rgb(255 255 255 / 85%);
+        border: 2px solid color-mix(in srgb, var(--on-backdrop) 85%, transparent);
         border-radius: var(--radius-md);
 
         animation: reticle-pulse 2.2s ease-in-out infinite;
@@ -276,8 +276,8 @@
         border: 0;
         border-radius: var(--radius-pill);
 
-        background: rgb(255 255 255 / 14%);
-        color: #ffffff;
+        background: color-mix(in srgb, var(--on-backdrop) 14%, transparent);
+        color: var(--on-backdrop);
 
         font-size: 1.35rem;
         line-height: 1;
@@ -288,13 +288,13 @@
     }
 
     .scanner-close:hover {
-        background: rgb(255 255 255 / 26%);
+        background: color-mix(in srgb, var(--on-backdrop) 26%, transparent);
     }
 
     .scanner-hint {
         margin: 0;
 
-        color: rgb(255 255 255 / 80%);
+        color: color-mix(in srgb, var(--on-backdrop) 80%, transparent);
         font-size: 0.8rem;
         line-height: 1.5;
         text-align: center;

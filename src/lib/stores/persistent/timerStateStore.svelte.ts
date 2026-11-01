@@ -3,9 +3,9 @@
 
 import type { PersistedTimerState } from "../../types";
 import { read, write } from "../../storages/localStorage";
-import { BaseStore } from "./baseStore";
+import { LocalStorageStore } from "./localStorageStore";
 
-class TimerStateStore extends BaseStore {
+class TimerStateStore extends LocalStorageStore {
     states = $state<Record<string, PersistedTimerState>>({});
 
     protected hydrate(): void {

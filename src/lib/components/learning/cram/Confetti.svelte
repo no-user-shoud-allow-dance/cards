@@ -3,15 +3,16 @@
 
     let { onDone }: { onDone: () => void } = $props();
 
-    // Festive palette drawn from the app's theme colors.
-    const COLORS = [
-        "#3d5a80", // primary blue
-        "#37714b", // success green
-        "#a05a3c", // overview orange
-        "#a04a41", // danger red
-        "#c9a227", // gold
-        "#7a5aa0", // violet
-    ];
+    // Festive palette: the app's theme colors, read from the CSS custom
+    // properties at mount so dark mode is followed.
+    const COLOR_VARS = [
+        "--primary",
+        "--success-text",
+        "--overview",
+        "--danger-text",
+        "--warning-text",
+        "--info-text",
+    ] as const;
 
     const PIECE_COUNT = 160;
     const GRAVITY = 0.09;
@@ -45,6 +46,12 @@
         // does not have to re-narrow on every frame.
         const ctx: CanvasRenderingContext2D = context;
 
+        const css = getComputedStyle(document.documentElement);
+        const COLORS = COLOR_VARS.map((name) =>
+            css.getPropertyValue(name).trim(),
+        ).filter(Boolean);
+        if (COLORS.length === 0) COLORS.push(css.getPropertyValue("--text").trim());
+
         const dpr = window.devicePixelRatio || 1;
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -59,9 +66,7 @@
             y: -20 - Math.random() * height * 0.4,
             w: 6 + Math.random() * 6,
             h: 8 + Math.random() * 8,
-            color:
-                COLORS[Math.floor(Math.random() * COLORS.length)] ??
-                COLORS[0],
+            color: COLORS[Math.floor(Math.random() * COLORS.length)] ?? COLORS[0],
             vx: -1.5 + Math.random() * 3,
             vy: 1 + Math.random() * 2.5,
             rotation: Math.random() * Math.PI * 2,

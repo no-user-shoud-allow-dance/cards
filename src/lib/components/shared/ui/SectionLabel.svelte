@@ -1,11 +1,13 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
 
-    let { children }: { children: Snippet } = $props();
+    // `class` arrives via rest and is merged into the class expression.
+    let { children, ...rest }: { children: Snippet } & HTMLAttributes<HTMLHeadingElement> = $props();
 </script>
 
 <!-- Section heading: small, uppercase, muted, with a quiet rule below. -->
-<h2 class="section-label">{@render children()}</h2>
+<h2 {...rest} class={["section-label", rest.class]}>{@render children()}</h2>
 
 <style>
     .section-label {

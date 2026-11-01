@@ -1,9 +1,9 @@
 import { BOX_COUNT } from "../../types";
 import type { CardState, CardStates } from "../../types";
 import { read, write } from "../../storages/localStorage";
-import { BaseStore } from "./baseStore";
+import { LocalStorageStore } from "./localStorageStore";
 
-class CardStore extends BaseStore {
+class CardStore extends LocalStorageStore {
     states = $state<CardStates>({});
     overviewDone = $state<Record<string, boolean>>({});
 

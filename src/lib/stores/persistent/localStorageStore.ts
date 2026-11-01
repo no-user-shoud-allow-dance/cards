@@ -2,7 +2,7 @@
  * Base class for localStorage-backed stores. Handles the SSR guard,
  * idempotent init, and delegates loading/persistence to subclasses.
  */
-export abstract class BaseStore {
+export abstract class LocalStorageStore {
     #loaded = false;
 
     init(): void {

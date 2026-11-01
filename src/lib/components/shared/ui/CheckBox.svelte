@@ -1,4 +1,6 @@
 <script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
+
     let {
         label,
         checked = $bindable(false),
@@ -9,6 +11,7 @@
         id,
         ariaLabel,
         onchange,
+        ...rest
     }: {
         label?: string;
         checked?: boolean;
@@ -19,10 +22,10 @@
         id?: string;
         ariaLabel?: string;
         onchange?: (checked: boolean) => void;
-    } = $props();
+    } & HTMLAttributes<HTMLLabelElement> = $props();
 </script>
 
-<label class="checkbox {variant} {size}" class:disabled>
+<label {...rest} class={["checkbox", variant, size, rest.class]} class:disabled>
     <input
         type="checkbox"
         {id}

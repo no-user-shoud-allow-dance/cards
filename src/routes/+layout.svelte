@@ -469,9 +469,7 @@
             display: none;
         }
 
-        :global(.back-button) {
-            display: inline-flex;
-        }
+        /* The back button shows itself on mobile — see BackButton.svelte. */
 
         .mobile-title {
             display: block;
@@ -567,8 +565,7 @@
             display: none;
         }
 
-        .layout.study-mode :global(.study-page.full-height) {
-            min-height: calc(100dvh - var(--header-h));
-        }
+        /* The matching .study-page.full-height rule lives in StudyLayout,
+           which owns that element. */
     }
 </style>

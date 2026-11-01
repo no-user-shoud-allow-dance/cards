@@ -1,8 +1,16 @@
 <script lang="ts">
-    let { size = 18 }: { size?: number } = $props();
+    import type { HTMLAttributes } from "svelte/elements";
+
+    // `class` arrives via rest and is merged into the class expression.
+    let {
+        size = 18,
+        ...rest
+    }: {
+        size?: number;
+    } & HTMLAttributes<HTMLSpanElement> = $props();
 </script>
 
-<span class="app-logo" aria-hidden="true">
+<span {...rest} class={["app-logo", rest.class]} aria-hidden="true">
     <svg
         width={size}
         height={size}

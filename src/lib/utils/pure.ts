@@ -122,11 +122,7 @@ export function displayFront(
 }
 
 /** Back text for card display: normal shows just the answer; pure shows prompt + answer. */
-export function displayBack(
-    card: FlashCard,
-    pureMode: boolean,
-    _deckType: DeckType,
-): string {
+export function displayBack(card: FlashCard, pureMode: boolean): string {
     if (!pureMode) return stripImageTokens(card.back);
     return `${stripBrackets(stripImageTokens(card.front))}: ${stripImageTokens(card.back)}`;
 }

@@ -1,30 +1,41 @@
 <script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
     import Button from "./ui/Button.svelte";
+    import { dialogStore } from "#lib/stores/session/dialogStore.svelte";
 
+    // class/aria-*/… are forwarded to the inner Button (which merges class
+    // with its own) via {...rest}.
     let {
         label,
         confirmText,
         onReset,
+        confirmLabel = "Bestätigen",
         variant = "danger",
-        class: className = "",
+        ...rest
     }: {
         label: string;
         confirmText: string;
         onReset: () => void;
+        confirmLabel?: string;
         variant?: "danger" | "neutral";
-        class?: string;
-    } = $props();
+    } & HTMLAttributes<HTMLElement> = $props();
 
-    function handleClick(): void {
-        if (!confirm(confirmText)) return;
-        onReset();
+    async function handleClick(): Promise<void> {
+        const ok = await dialogStore.open({
+            title: label,
+            message: confirmText,
+            confirmLabel,
+            cancelLabel: "Abbrechen",
+            bg: variant === "danger" ? "danger" : "surface",
+        });
+        if (ok) onReset();
     }
 </script>
 
 <Button
     variant={variant === "danger" ? "danger" : "secondary"}
-    class={className}
     onclick={handleClick}
+    {...rest}
 >
     {label}
 </Button>

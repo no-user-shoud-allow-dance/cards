@@ -1,27 +1,29 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
 
+    // `class` arrives via rest and is merged into the class expression; other
+    // attributes fall through to the <header> via {...rest}. For custom title
+    // layouts, style the elements inside the title snippet instead of
+    // reaching into the h1 from outside.
     let {
         title,
         subtitle,
         compact = false,
-        class: className = "",
-        titleClass = "",
         actions,
+        ...rest
     }: {
         /** Page title; pass a snippet for a custom (e.g. editable) title. */
         title: string | Snippet;
         subtitle?: string;
         /** Tighter subtitle spacing when content follows directly. */
         compact?: boolean;
-        class?: string;
-        titleClass?: string;
         actions?: Snippet;
-    } = $props();
+    } & HTMLAttributes<HTMLElement> = $props();
 </script>
 
-<header class="page-header {className}">
-    <h1 class="page-title {titleClass}">
+<header {...rest} class={["page-header", rest.class]}>
+    <h1 class="page-title">
         {#if typeof title === "string"}
             {title}
         {:else}

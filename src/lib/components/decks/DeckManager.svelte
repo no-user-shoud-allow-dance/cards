@@ -59,29 +59,31 @@
     }
 </script>
 
-<PageHeader {subtitle} titleClass="deck-title">
+<PageHeader {subtitle}>
     {#snippet title()}
-        <button
-            type="button"
-            class="title-part"
-            class:editing={editing === "move"}
-            title="Ordner ändern"
-            aria-label="Ordner ändern: {deck.folder}"
-            onclick={startMove}
-        >
-            {deck.folder}
-        </button>
-        <span class="title-separator" aria-hidden="true">/</span>
-        <button
-            type="button"
-            class="title-part"
-            class:editing={editing === "rename"}
-            title="Stapel umbenennen"
-            aria-label="Stapel umbenennen: {deck.name}"
-            onclick={startRename}
-        >
-            {deck.name}
-        </button>
+        <span class="deck-title">
+            <button
+                type="button"
+                class="title-part"
+                class:editing={editing === "move"}
+                title="Ordner ändern"
+                aria-label="Ordner ändern: {deck.folder}"
+                onclick={startMove}
+            >
+                {deck.folder}
+            </button>
+            <span class="title-separator" aria-hidden="true">/</span>
+            <button
+                type="button"
+                class="title-part"
+                class:editing={editing === "rename"}
+                title="Stapel umbenennen"
+                aria-label="Stapel umbenennen: {deck.name}"
+                onclick={startRename}
+            >
+                {deck.name}
+            </button>
+        </span>
     {/snippet}
 </PageHeader>
 
@@ -147,8 +149,9 @@
 </div>
 
 <style>
-    /* The h1 lives inside PageHeader; only its layout is deck-specific. */
-    :global(.deck-title) {
+    /* Wraps the title snippet inside PageHeader's h1; snippet content is
+       scoped here, so no :global is needed. */
+    .deck-title {
         display: flex;
         flex-wrap: wrap;
         align-items: baseline;

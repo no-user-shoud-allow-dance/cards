@@ -30,25 +30,29 @@
     padding="md"
     class="continue-card"
 >
-    <span class="continue-name">
-        <span class="continue-folder">{folder}</span>
-        {name}
-    </span>
-    <span class="continue-meta">{DECK_TYPES[deckType].label}</span>
-    <ProgressBar {ratio} />
-    <span class="continue-footer">
-        <span class="continue-count">{learned} / {total} gelernt</span>
-        <span class="continue-arrow" aria-hidden="true">→</span>
-    </span>
+    <div class="continue-body">
+        <span class="continue-name">
+            <span class="continue-folder">{folder}</span>
+            {name}
+        </span>
+        <span class="continue-meta">{DECK_TYPES[deckType].label}</span>
+        <ProgressBar {ratio} />
+        <span class="continue-footer">
+            <span class="continue-count">{learned} / {total} gelernt</span>
+            <span class="continue-arrow" aria-hidden="true">→</span>
+        </span>
+    </div>
 </Card>
 
 <style>
-    /* Card provides border, radius, bg, shadow, hover, padding. */
-    .continue-card {
+    /* Card provides border, radius, bg, shadow, hover, padding; its root is
+       a child component element, so the passed class is targeted via
+       :global. Snippet content (.continue-body and below) stays scoped. */
+    :global(.continue-card) {
         min-height: 7.5rem;
     }
 
-    .continue-card :global(.card-body) {
+    .continue-body {
         display: flex;
         flex-direction: column;
         gap: 0.55rem;

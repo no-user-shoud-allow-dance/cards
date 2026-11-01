@@ -175,8 +175,7 @@
             <SectionLabel>Karten stöbern</SectionLabel>
             <BoxTabs
                 groups={boxGroups}
-                {activeBox}
-                onSelect={(box) => (activeBox = box)}
+                bind:activeBox
             />
 
             <Card class="box-panel" padding="sm" bg="soft">
@@ -187,6 +186,7 @@
                                 <p class="empty">Keine Karten in dieser Box.</p>
                             {:else}
                                 <CardList
+                                    class="box-list"
                                     cards={activeGroup.cards}
                                     {pureMode}
                                     deckType={deck.deckType}
@@ -209,7 +209,7 @@
                     />
                 {/if}
                 {#if hasProgress}
-                    <ResetProgress {cardIds} />
+                    <ResetProgress {cardIds} slug={deck.slug} />
                 {/if}
                 {#if studyTimeMs > 0 || hasTimerState}
                     <ResetButton
@@ -227,7 +227,9 @@
 </Page>
 
 <style>
-    /* Card provides border, radius, bg, shadow, padding. */
+    /* Card provides border, radius, bg, shadow, padding. Classes passed to
+       child components (Card/Button/CardList roots) are targeted via
+       :global, anchored under this page's own elements where possible. */
     :global(.hero-cta) {
         margin-bottom: 2rem;
     }
@@ -278,14 +280,14 @@
     }
 
     /* The main CTA matches the hero's visual weight. */
-    .hero-cta :global(.hero-cta-button) {
+    .hero-cta-actions :global(.hero-cta-button) {
         min-height: 3rem;
         padding: 0.8rem 1.6rem;
         font-size: 1rem;
     }
 
     /* The skip button is deliberately smaller. */
-    .hero-cta :global(.hero-cta-skip) {
+    .hero-cta-actions :global(.hero-cta-skip) {
         min-height: 2.2rem;
         padding: 0.4rem 0.9rem;
         font-size: 0.8rem;
@@ -309,11 +311,11 @@
     }
 
     /* Card provides border, radius, bg-soft, padding. */
-    .box-panel {
+    :global(.box-panel) {
         min-width: 0;
     }
 
-    .box-panel :global(.card-list) {
+    :global(.box-panel) :global(.box-list) {
         margin: 0;
     }
 

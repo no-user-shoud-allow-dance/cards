@@ -1,7 +1,9 @@
 <script lang="ts">
     import { fly } from "svelte/transition";
+    import type { HTMLAttributes } from "svelte/elements";
     import type { ToastType } from "#lib/types";
 
+    // `class` arrives via rest and is merged into the class expression.
     let {
         message,
         type = "info",
@@ -9,6 +11,7 @@
         actionLabel,
         onAction,
         onDismiss,
+        ...rest
     }: {
         message: string;
         type?: ToastType;
@@ -16,11 +19,12 @@
         actionLabel?: string;
         onAction?: () => void;
         onDismiss: () => void;
-    } = $props();
+    } & HTMLAttributes<HTMLElement> = $props();
 </script>
 
 <aside
-    class="toast {type}"
+    {...rest}
+    class={["toast", type, rest.class]}
     role="alert"
     aria-label={title ?? message}
     transition:fly={{ y: 16, duration: 200 }}

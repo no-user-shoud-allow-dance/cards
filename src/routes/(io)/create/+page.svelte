@@ -30,7 +30,7 @@
     onMount(() => {
         const draft = readDraftDeck();
         if (!draft) return;
-        const parsed = parseDeck(draft.raw, draft.deckType);
+        const parsed = parseDeck(draft.raw);
         title = draft.title ?? draft.name;
         name = draft.name;
         deckType = draft.deckType;
@@ -82,10 +82,11 @@
 <!-- Deck metadata -->
 <Card padding="lg" class="meta-section" aria-label="Stapel-Details">
     <div class="field-row">
-        <TextInput label="Ordner" id="create-folder" bind:value={folder} />
+        <TextInput label="Ordner" id="create-folder" class="field-input" bind:value={folder} />
         <TextInput
             label="Name"
             id="create-name"
+            class="field-input"
             bind:value={name}
             placeholder="z. B. Lektion 22"
         />
@@ -123,13 +124,10 @@
 {/if}
 
 <style>
-    .meta-section {
+    /* The class passed to Card targets its root element — a child component
+       — so it needs :global. */
+    :global(.meta-section) {
         margin-bottom: 1.25rem;
-    }
-
-    .meta-section :global(.card-body) {
-        display: flex;
-        flex-direction: column;
     }
 
     .field-row {
@@ -138,7 +136,7 @@
         gap: 0.9rem;
     }
 
-    .field-row :global(.text-input) {
+    .field-row :global(.field-input) {
         flex: 1;
         min-width: 10rem;
     }

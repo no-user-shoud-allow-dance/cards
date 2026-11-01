@@ -23,10 +23,11 @@
         qrSize: number,
         data: string,
     ): QRCodeStyling {
+        const css = getComputedStyle(document.documentElement);
         const primary =
-            getComputedStyle(document.documentElement)
-                .getPropertyValue("--primary")
-                .trim() || "#3d5a80";
+            css.getPropertyValue("--primary").trim() ||
+            css.getPropertyValue("--text").trim();
+        const background = css.getPropertyValue("--qr-bg").trim();
         const instance = new QRCodeStyling({
             width: qrSize,
             height: qrSize,
@@ -43,7 +44,7 @@
             dotsOptions: { color: primary, type: "rounded" },
             cornersSquareOptions: { color: primary, type: "extra-rounded" },
             cornersDotOptions: { color: primary, type: "dot" },
-            backgroundOptions: { color: "#ffffff" },
+            backgroundOptions: { color: background },
         });
         instance.append(target);
         return instance;
@@ -164,7 +165,7 @@
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
 
-        background: #ffffff;
+        background: var(--qr-bg);
         box-shadow: var(--shadow-card);
 
         font: inherit;
@@ -196,7 +197,7 @@
 
         padding: 1.25rem;
 
-        background: rgb(33 32 28 / 82%);
+        background: var(--backdrop-strong);
     }
 
     /* White card behind the enlarged code — scanners need the contrast. */
@@ -205,7 +206,7 @@
 
         border-radius: var(--radius-lg);
 
-        background: #ffffff;
+        background: var(--qr-bg);
         box-shadow: var(--shadow-card);
     }
 
@@ -229,8 +230,8 @@
         border: 0;
         border-radius: var(--radius-pill);
 
-        background: rgb(255 255 255 / 14%);
-        color: #ffffff;
+        background: color-mix(in srgb, var(--on-backdrop) 14%, transparent);
+        color: var(--on-backdrop);
 
         font-size: 1.35rem;
         line-height: 1;
@@ -241,13 +242,13 @@
     }
 
     .qr-close:hover {
-        background: rgb(255 255 255 / 26%);
+        background: color-mix(in srgb, var(--on-backdrop) 26%, transparent);
     }
 
     .qr-hint {
         margin: 0;
 
-        color: rgb(255 255 255 / 80%);
+        color: color-mix(in srgb, var(--on-backdrop) 80%, transparent);
         font-size: 0.8rem;
     }
 </style>

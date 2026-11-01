@@ -1,4 +1,8 @@
 <script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
+
+    // `class` arrives via rest and is merged into the class expression; other
+    // attributes fall through to the root <label> via {...rest}.
     let {
         label,
         value = $bindable(""),
@@ -10,6 +14,7 @@
         name,
         oninput,
         onblur,
+        ...rest
     }: {
         label: string;
         value?: string;
@@ -21,10 +26,10 @@
         name?: string;
         oninput?: (value: string) => void;
         onblur?: (value: string) => void;
-    } = $props();
+    } & HTMLAttributes<HTMLLabelElement> = $props();
 </script>
 
-<label class="text-input" class:disabled>
+<label {...rest} class={["text-input", rest.class]} class:disabled>
     <span class="input-label">{label}{#if required}<span class="required" aria-hidden="true">*</span>{/if}</span>
     <input
         {id}

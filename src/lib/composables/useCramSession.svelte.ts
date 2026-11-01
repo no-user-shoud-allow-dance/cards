@@ -4,10 +4,13 @@ import {
     displayBack,
     displayFront,
     computeProgressRatio,
-    cardPrompt,
-    cardAnswer,
 } from "#lib/utils/pure";
-import { DECK_TYPES } from "#lib/utils/deckTypes";
+import {
+    isEditableTarget,
+    isOnControl,
+    openHelpSearch as openHelpSearchFor,
+    openMnemonicSearch as openMnemonicSearchFor,
+} from "#lib/utils/studyActions";
 import { BOX_COUNT } from "#lib/types";
 import type { FlashCard, CardState, LoadedDeck } from "#lib/types";
 
@@ -62,7 +65,7 @@ export function useCramSession(resolveDeck: () => LoadedDeck | null) {
     );
 
     const backText = $derived(
-        currentCard ? displayBack(currentCard, pureMode, deckType) : "",
+        currentCard ? displayBack(currentCard, pureMode) : "",
     );
 
     // Images follow the side they were written on: front images are part
@@ -203,60 +206,22 @@ export function useCramSession(resolveDeck: () => LoadedDeck | null) {
 
     function openHelpSearch(): void {
         if (!currentCard || !deck) return;
-
-        const language = DECK_TYPES[deck.deckType].language;
-
-        const query =
-            `"${cardAnswer(currentCard)}" im Kontext im Deutschen und Vergleich mit Beispielen? ` +
-            `Und wie ist der Fall, wenn es um die Übersetzung aus dem ${language} ` +
-            `"${cardPrompt(currentCard)}" geht (auch mit Beispielen)?`;
-
-        const params = new URLSearchParams({
-            q: query,
-            udm: "50", // AI search
-        });
-
-        window.open(
-            `https://www.google.com/search?${params}`,
-            "_blank",
-            "noopener,noreferrer",
-        );
+        openHelpSearchFor(currentCard, deck.deckType);
     }
 
     function openMnemonicSearch(): void {
         if (!currentCard) return;
-
-        const query = `"${cardPrompt(currentCard)}" Mnemotechnik oder verwandte Wörter in anderen Sprachen`;
-
-        const params = new URLSearchParams({
-            q: query,
-            udm: "50", // AI search
-        });
-
-        window.open(
-            `https://www.google.com/search?${params}`,
-            "_blank",
-            "noopener,noreferrer",
-        );
+        openMnemonicSearchFor(currentCard);
     }
 
     function handleKeydown(event: KeyboardEvent): void {
         if (!currentCard) return;
 
-        const target = event.target;
-
         // Do not intercept typing or native keyboard activation.
-        if (
-            target instanceof HTMLElement &&
-            target.closest("input, textarea, select, [contenteditable='true']")
-        ) {
-            return;
-        }
+        if (isEditableTarget(event.target)) return;
 
         if (event.code === "Space") {
-            if (target instanceof HTMLElement && target.closest("button, a")) {
-                return;
-            }
+            if (isOnControl(event.target)) return;
             event.preventDefault();
             toggleFlip();
             return;

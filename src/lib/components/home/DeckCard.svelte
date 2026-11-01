@@ -21,19 +21,25 @@
     padding="md"
     class="deck-card"
 >
-    <span class="deck-name">{name}</span>
-    <Badge>{countCards(count)}</Badge>
-    <span class="deck-arrow" aria-hidden="true">→</span>
+    <div class="deck-body">
+        <span class="deck-name">{name}</span>
+        <Badge class="deck-count">{countCards(count)}</Badge>
+        <span class="deck-arrow" aria-hidden="true">→</span>
+    </div>
 </Card>
 
 <style>
-    /* Card provides border, radius, bg, shadow, hover, padding. */
-    .deck-card {
+    /* Card provides border, radius, bg, shadow, hover, padding. Its root is
+       a child component element, so the passed class is targeted via
+       :global — anchored under this component's own .deck-body where
+       possible to avoid leaks. */
+    :global(.deck-card) {
         position: relative;
         min-height: 5.5rem;
     }
 
-    .deck-card :global(.card-body) {
+    /* Snippet content is scoped to this component — no :global needed. */
+    .deck-body {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -47,7 +53,7 @@
         line-height: 1.4;
     }
 
-    .deck-card :global(.badge) {
+    .deck-body :global(.deck-count) {
         align-self: flex-start;
         font-variant-numeric: tabular-nums;
     }

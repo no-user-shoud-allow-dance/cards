@@ -5,6 +5,7 @@
     import { formatStudyTime } from "#lib/utils/time";
     import Button from "#lib/components/shared/ui/Button.svelte";
     import ResetProgress from "#lib/components/shared/ResetProgress.svelte";
+    import Confetti from "./Confetti.svelte";
 
     let {
         slug,
@@ -17,7 +18,14 @@
     studyTimeStore.init();
 
     const studyTimeMs = $derived(studyTimeStore.get(slug));
+
+    // Celebration overlay; hidden again once the animation ends.
+    let showConfetti = $state(true);
 </script>
+
+{#if showConfetti}
+    <Confetti onDone={() => (showConfetti = false)} />
+{/if}
 
 <div class="done" in:fade={{ duration: 250 }}>
     <h2>Fertig!</h2>
@@ -30,10 +38,10 @@
     {/if}
 
     <div class="done-actions">
-        <Button variant="secondary" href={resolve("/(deck)/deck/[slug]", { slug })}>
+        <Button variant="secondary" class="done-btn" href={resolve("/(deck)/deck/[slug]", { slug })}>
             Zurück zum Stapel
         </Button>
-        <ResetProgress {cardIds} slug={slug} />
+        <ResetProgress {cardIds} slug={slug} class="done-btn" />
     </div>
 </div>
 
@@ -87,8 +95,7 @@
             flex-direction: column;
         }
 
-        .done-actions :global(.btn),
-        .done-actions :global(.reset-button) {
+        .done-actions :global(.done-btn) {
             width: 100%;
         }
     }

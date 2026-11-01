@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { BOX_LABELS } from "#lib/types";
     import { countCards } from "#lib/utils/pure";
 
@@ -10,8 +11,17 @@
         currentBox: number;
     } = $props();
 
-    const mobileQuery = window.matchMedia("(max-width: 700px)");
-    let isMobile = $state(mobileQuery.matches);
+    let isMobile = $state(false);
+
+    onMount(() => {
+        const mobileQuery = window.matchMedia("(max-width: 700px)");
+        isMobile = mobileQuery.matches;
+        const handleChange = (event: MediaQueryListEvent) => {
+            isMobile = event.matches;
+        };
+        mobileQuery.addEventListener("change", handleChange);
+        return () => mobileQuery.removeEventListener("change", handleChange);
+    });
 </script>
 
 <div class="box-overview" role="list" aria-label="Karten pro Box">

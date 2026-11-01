@@ -1,18 +1,22 @@
 <script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
+
+    // `class` arrives via rest and is merged into the class expression.
     let {
         ratio,
         height,
         color = "primary",
+        ...rest
     }: {
         ratio: number;
         height?: string;
         color?: "primary" | "success" | "danger" | "warning" | "info" | "overview";
-    } = $props();
+    } & HTMLAttributes<HTMLSpanElement> = $props();
 
     const pct = $derived(Math.min(100, Math.max(0, ratio * 100)));
 </script>
 
-<span class="progress-track" style:height={height}>
+<span {...rest} class={["progress-track", rest.class]} style:height={height}>
     <span class="progress-fill {color}" style="--progress: {pct}%"></span>
 </span>
 

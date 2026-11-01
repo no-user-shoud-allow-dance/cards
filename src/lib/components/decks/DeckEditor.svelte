@@ -144,13 +144,13 @@
 
 <!-- Markdown bulk actions -->
 <div class="md-buttons">
-    <Button variant="secondary" onclick={exportMarkdown}>
+    <Button variant="secondary" class="md-btn" onclick={exportMarkdown}>
         Als Markdown exportieren
     </Button>
-    <Button variant="secondary" onclick={() => openMdMode("add")}>
+    <Button variant="secondary" class="md-btn" onclick={() => openMdMode("add")}>
         Aus Markdown hinzufügen
     </Button>
-    <Button variant="secondary" onclick={() => openMdMode("replace")}>
+    <Button variant="secondary" class="md-btn" onclick={() => openMdMode("replace")}>
         Durch Markdown ersetzen
     </Button>
 </div>
@@ -541,7 +541,7 @@ amo - ich liebe
         margin: 1rem 0rem;
     }
 
-    .md-buttons :global(.btn) {
+    .md-buttons :global(.md-btn) {
         flex: 1;
         min-width: 0;
     }

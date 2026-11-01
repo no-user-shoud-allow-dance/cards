@@ -36,7 +36,7 @@
 
     <Card padding="lg" class="profile-card">
         <div class="profile-row">
-            <ProfileAvatar size={96} />
+            <ProfileAvatar size={96} class="profile-avatar" />
             <div class="profile-fields">
                 <TextInput
                     label="Name"
@@ -92,6 +92,8 @@
 </Page>
 
 <style>
+    /* Classes passed to Card/ProfileAvatar land on child component roots, so
+       they are targeted via :global. */
     :global(.profile-card),
     :global(.google-card),
     :global(.sync-card) {
@@ -194,7 +196,7 @@
             align-items: stretch;
         }
 
-        .profile-row :global(.avatar) {
+        .profile-row :global(.profile-avatar) {
             align-self: center;
         }
     }

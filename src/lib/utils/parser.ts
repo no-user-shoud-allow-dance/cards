@@ -1,4 +1,4 @@
-import type { CardImage, CardImageRef, DeckType, FlashCard, ParsedDeck } from "../types";
+import type { CardImage, CardImageRef, FlashCard, ParsedDeck } from "../types";
 
 /**
  * Matches one markdown image token `![alt](url)`: no whitespace between
@@ -72,6 +72,10 @@ export function stripImageTokens(text: string): string {
  *
  *   front - back
  *
+ * The line is split on the FIRST " - " only, so the back side may
+ * itself contain " - " (the editor serializes sides verbatim, and this
+ * keeps save → reload lossless).
+ *
  * The front side may contain bracketed hints, e.g.
  *   ἀγάπη [Liebe] - love
  * In normal mode the brackets are hidden (content shown); in pure
@@ -88,18 +92,14 @@ function parseCardLine(
     lineNo: number,
     errors: string[],
 ): FlashCard | null {
-    const parts = line.split(" - ");
-    if (parts.length === 1) {
+    const sep = line.indexOf(" - ");
+    if (sep === -1) {
         errors.push(`Zeile ${lineNo}: Kein " - " gefunden: "${line}"`);
         return null;
     }
-    if (parts.length > 2) {
-        errors.push(`Zeile ${lineNo}: Mehr als ein " - " gefunden: "${line}"`);
-        return null;
-    }
 
-    const front = parts[0].trim();
-    const back = parts[1].trim();
+    const front = line.slice(0, sep).trim();
+    const back = line.slice(sep + 3).trim();
 
     if (!front || !back) {
         errors.push(`Zeile ${lineNo}: Leere Vorder- oder Rückseite`);
@@ -137,10 +137,14 @@ function parseCardLine(
     return { id: "", front, back, images };
 }
 
-export function parseDeck(raw: string, _deckType: DeckType = "latin"): ParsedDeck {
+/**
+ * Only the first non-empty line can be the H1 title. A "# " line later
+ * in the deck is an ordinary card line — the editor writes the title
+ * first, so a card front starting with "# " round-trips losslessly.
+ */
+export function parseDeck(raw: string): ParsedDeck {
     const lines = raw.split(/\r?\n/);
     let title: string | null = null;
-    let titleCount = 0;
     const cards: FlashCard[] = [];
     const errors: string[] = [];
 
@@ -148,13 +152,8 @@ export function parseDeck(raw: string, _deckType: DeckType = "latin"): ParsedDec
         const trimmed = lines[i].trim();
         if (!trimmed) continue;
 
-        if (trimmed.startsWith("# ")) {
-            titleCount++;
-            if (titleCount > 1) {
-                errors.push(`Zeile ${i + 1}: Mehr als eine H1-Überschrift gefunden`);
-            } else {
-                title = trimmed.slice(2).trim();
-            }
+        if (trimmed.startsWith("# ") && title === null && cards.length === 0) {
+            title = trimmed.slice(2).trim();
             continue;
         }
 
@@ -162,7 +161,7 @@ export function parseDeck(raw: string, _deckType: DeckType = "latin"): ParsedDec
         if (card) cards.push(card);
     }
 
-    if (titleCount === 0) errors.push("Keine H1-Überschrift gefunden");
+    if (title === null) errors.push("Keine H1-Überschrift gefunden");
 
     return { title, cards, errors };
 }
