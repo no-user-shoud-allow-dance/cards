@@ -24,8 +24,11 @@ All data lives in the browser (IndexedDB); there is no backend.
 - Use **runes** (`$state`, `$derived`, `$effect`, `$props`) — never the
   legacy `$:` syntax or `export let`.
 - Component props are declared via `let { … } = $props()`.
-- Shared UI components live in `src/lib/app/components/shared/`.
-- Feature components live under `src/lib/<feature>/components/`.
+- Shared UI components live in `src/lib/components/shared/ui/` (plus
+  `src/lib/components/shared/` for app-level wrappers like ResetButton).
+- Feature components live under `src/lib/components/<feature>/`
+  (decks, home, learning, sharing, layout).
+- Composable logic (session/timer state) lives in `src/lib/composables/`.
 
 ## Styling
 
@@ -40,14 +43,17 @@ All data lives in the browser (IndexedDB); there is no backend.
 
 ## Architecture notes
 
-- **Decks** are stored in IndexedDB via `userDecks` (`src/lib/decks/store/`).
-  Each deck has a `slug` (derived from content hash + optional random suffix
-  for duplicates) and a `contentHash` (hash of raw markdown + deck type).
+- **Decks** are stored in IndexedDB via the `decks` store
+  (`src/lib/stores/data/deckStore.svelte.ts`). Each deck has a `slug`
+  (derived from content hash + random suffix) and a `contentHash` (hash of
+  raw markdown + deck type). Adding a deck dedups by `contentHash`.
 - **Share links** carry data in the URL hash: `#c.…` (deck), `#p.…`
   (progress), `#t.…` (combined). Payloads are gzip-compressed + base64url
-  encoded. See `src/lib/sharing/utils/share.ts` for the full protocol.
+  encoded. See `src/lib/utils/share.ts` for the full protocol.
 - **Learning state** (Leitner boxes, overview done, study time, timer) is in
-  `src/lib/learning/store/` — persisted to `localStorage`.
+  `src/lib/stores/persistent/` — persisted to `localStorage` through the
+  typed schema helpers in `src/lib/storages/localStorage.ts` (prefix `kk_`;
+  raw keys outside the schema must use the exported `PREFIX`).
 - **Deck types**: `english`, `latin`, `greek`. Latin and Greek support "pure
   mode" (hides translations until revealed).
 
@@ -74,13 +80,21 @@ dependency must appear in both.
 ```
 src/
   lib/
-    app/components/     — layout + shared UI (Button, Page, PageHeader, …)
-    decks/              — deck store, parser, types, components
-    learning/           — Leitner logic, stores, cram/overview components
-    sharing/            — share link encode/decode, QR, import/export UI
-    utils/              — pure helpers (time, types, persistence, …)
+    components/         — feature + layout components
+      shared/ui/        — generic UI (Button, Card, Dialog, Page, …)
+      shared/           — app-level wrappers (ResetButton, ResetProgress)
+      decks|home|learning|sharing|layout/
+    composables/        — useCramSession, useOverviewSession, useStudyTimer
+    stores/
+      data/             — IndexedDB-backed stores (deckStore, IndexedDbStore)
+      persistent/       — localStorage-backed stores (LocalStorageStore)
+      session/          — dialog + toast stores
+    storages/           — typed localStorage / IndexedDB wrappers
+    sync/               — local profile (account) + avatar
+    types/              — shared types
+    utils/              — pure helpers (parser, share, pure, studyActions, …)
   routes/
-    (deck)/             — deck-scoped pages (deck, cram, overview, export)
-    (io)/               — import / upload pages
+    (deck)/             — deck-scoped pages (deck, cram, overview, edit, export)
+    (io)/               — create / upload / import pages
     +page.svelte        — home (deck list)
 ```
