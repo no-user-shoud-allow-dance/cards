@@ -82,15 +82,16 @@
                 />
             {/each}
         </g>
-        <text x="50" y="50" class="center-value" dominant-baseline="central"
-            >{total}</text
-        >
         {#if centerLabel}
-            <text
-                x="50"
-                y="62"
-                class="center-label"
-                text-anchor="middle">{centerLabel}</text
+            <text x="50" y="45" class="center-value" dominant-baseline="central"
+                >{total}</text
+            >
+            <text x="50" y="62" class="center-label" text-anchor="middle"
+                >{centerLabel}</text
+            >
+        {:else}
+            <text x="50" y="50" class="center-value" dominant-baseline="central"
+                >{total}</text
             >
         {/if}
     </svg>

@@ -108,25 +108,15 @@
         overflow: hidden;
     }
 
-    /* Background variants */
-    .dialog.bg-surface  { background: var(--surface); }
-    .dialog.bg-soft     { background: var(--surface-soft); }
-    .dialog.bg-primary  { background: var(--primary-soft); }
-    .dialog.bg-success  { background: var(--success-bg); }
-    .dialog.bg-danger   { background: var(--danger-bg); }
-    .dialog.bg-warning  { background: var(--warning-bg); }
-    .dialog.bg-info     { background: var(--info-bg); }
-    .dialog.bg-overview { background: var(--overview-soft); }
-
-    /* Header/footer sit on a slightly darker grade of the bg. */
-    .dialog.bg-surface  .dialog-header, .dialog.bg-surface  .dialog-footer { background: var(--surface-soft); }
-    .dialog.bg-soft     .dialog-header, .dialog.bg-soft     .dialog-footer { background: var(--surface-hover); }
-    .dialog.bg-primary  .dialog-header, .dialog.bg-primary  .dialog-footer { background: color-mix(in srgb, var(--primary-soft) 85%, var(--primary)); }
-    .dialog.bg-success  .dialog-header, .dialog.bg-success  .dialog-footer { background: var(--success-hover); }
-    .dialog.bg-danger   .dialog-header, .dialog.bg-danger   .dialog-footer { background: var(--danger-hover); }
-    .dialog.bg-warning  .dialog-header, .dialog.bg-warning  .dialog-footer { background: var(--warning-hover); }
-    .dialog.bg-info     .dialog-header, .dialog.bg-info     .dialog-footer { background: var(--info-hover); }
-    .dialog.bg-overview .dialog-header, .dialog.bg-overview .dialog-footer { background: color-mix(in srgb, var(--overview-soft) 85%, var(--overview)); }
+    /* Header sit on a slightly darker grade of the bg. */
+    .dialog.bg-surface  .dialog-header { color: var(--text); background: var(--surface-soft); }
+    .dialog.bg-soft     .dialog-header { color: var(--text-muted); background: var(--surface-hover); }
+    .dialog.bg-primary  .dialog-header { color: var(--primary); background: color-mix(in srgb, var(--primary-soft) 85%, var(--primary)); }
+    .dialog.bg-success  .dialog-header { color: var(--success-text); background: var(--success-hover); }
+    .dialog.bg-danger   .dialog-header { color: var(--danger-text); background: var(--danger-hover); }
+    .dialog.bg-warning  .dialog-header { color: var(--warning-text); background: var(--warning-hover); }
+    .dialog.bg-info     .dialog-header { color: var(--info-text); background: var(--info-hover); }
+    .dialog.bg-overview .dialog-header { color: var(--overview-text); background: color-mix(in srgb, var(--overview-soft) 85%, var(--overview)); }
 
     .dialog-header {
         display: flex;
@@ -159,12 +149,23 @@
         color: var(--text-muted);
         cursor: pointer;
         transition:
+            border-color var(--transition-fast),
             background var(--transition-fast),
             color var(--transition-fast);
     }
 
+    /* Header sit on a slightly darker grade of the bg. */
+    .dialog.bg-surface  .dialog-close { color: var(--text); }
+    .dialog.bg-soft     .dialog-close { color: var(--text-muted); }
+    .dialog.bg-primary  .dialog-close { color: var(--primary); }
+    .dialog.bg-success  .dialog-close { color: var(--success-text); }
+    .dialog.bg-danger   .dialog-close { color: var(--danger-text); }
+    .dialog.bg-warning  .dialog-close { color: var(--warning-text); }
+    .dialog.bg-info     .dialog-close { color: var(--info-text); }
+    .dialog.bg-overview .dialog-close { color: var(--overview-text); }
+
     .dialog-close:hover {
-        background: var(--surface-hover);
+        border-color: var(--border-strong);
         color: var(--text);
     }
 
@@ -180,16 +181,16 @@
         align-items: center;
         justify-content: flex-end;
         gap: 0.6rem;
-        padding: 0.75rem 1.25rem;
+        padding: 0.75rem 0rem;
+        margin: 0.0rem 1.25rem;
         border-top: 1px solid var(--border);
-        background: var(--surface-soft);
     }
 
     /* ── Mobile ─────────────────────────────────────────────────── */
     @media (max-width: 540px) {
         .dialog-backdrop { padding: 1rem; }
         .dialog { max-height: calc(100dvh - 2rem); }
-        .dialog-body { padding: 0.9rem 1rem; }
+        .dialog-body { padding: 0.9rem 0rem; margin: 0 1rem; }
         .dialog-footer { padding: 0.65rem 1rem; }
     }
 </style>
