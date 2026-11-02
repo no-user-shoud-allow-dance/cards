@@ -191,6 +191,13 @@ class DeckStore extends IndexedDbStore {
         delete next[slug];
         this.decks = next;
     }
+
+    /** Drops the whole decks database and clears the in-memory list. */
+    async clearAll(): Promise<void> {
+        await this.init();
+        await this.destroy();
+        this.decks = {};
+    }
 }
 
 export const decks = new DeckStore();

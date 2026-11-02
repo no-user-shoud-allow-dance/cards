@@ -1,4 +1,8 @@
-import { openDatabase, toPromise } from "../../storages/indexedStorage";
+import {
+    openDatabase,
+    toPromise,
+    deleteDatabase,
+} from "../../storages/indexedStorage";
 
 /**
  * Base class for IndexedDB-backed stores. Handles the SSR guard,
@@ -9,6 +13,7 @@ import { openDatabase, toPromise } from "../../storages/indexedStorage";
 export abstract class IndexedDbStore {
     #dbPromise: Promise<IDBDatabase> | null = null;
     #initPromise: Promise<void> | null = null;
+    #db: IDBDatabase | null = null;
 
     protected abstract readonly dbName: string;
     protected abstract readonly dbVersion: number;
@@ -31,8 +36,24 @@ export abstract class IndexedDbStore {
             this.dbVersion,
             this.storeName,
             this.keyPath,
-        );
+        ).then((db) => {
+            this.#db = db;
+            return db;
+        });
         return this.#dbPromise;
+    }
+
+    /**
+     * Closes the connection and drops the entire database. The store can
+     * be init()ed again afterwards (it re-creates an empty database).
+     */
+    async destroy(): Promise<void> {
+        if (typeof window === "undefined") return;
+        this.#db?.close();
+        this.#db = null;
+        this.#dbPromise = null;
+        this.#initPromise = null;
+        await deleteDatabase(this.dbName);
     }
 
     protected async getAll<T>(): Promise<T[]> {

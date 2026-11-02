@@ -47,8 +47,8 @@
         display: grid;
         place-items: center;
 
-        width: 1.95rem;
-        height: 1.95rem;
+        width: 2.2rem;
+        height: 2.2rem;
 
         border: 1px solid var(--border-strong);
         border-radius: var(--radius-md);

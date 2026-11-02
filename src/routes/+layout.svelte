@@ -6,10 +6,9 @@
     import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
     import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
     import { decks } from "#lib/stores/data/deckStore.svelte";
-    import { syncStore } from "#lib/sync/store/syncStore.svelte";
-    import ProfileAvatar from "#lib/sync/components/ProfileAvatar.svelte";
     import Toggle from "#lib/components/shared/ui/Toggle.svelte";
     import BackButton from "#lib/components/shared/ui/BackButton.svelte";
+    import SettingsLink from "#lib/components/shared/ui/SettingsLink.svelte";
     import AppLogo from "#lib/components/shared/ui/AppLogo.svelte";
     import PrivacyToast from "#lib/components/layout/PrivacyToast.svelte";
     import ImpersistentToast from "#lib/components/layout/ImpersistentToast.svelte";
@@ -125,7 +124,6 @@
         cardStore.init();
         settingStore.init();
         decks.init();
-        syncStore.init();
         viewportH = window.innerHeight;
         window.addEventListener("resize", () => {
             viewportH = window.innerHeight;
@@ -269,9 +267,9 @@
             />
         {/if}
 
-        <!-- Account entry point, visible on every page, right of the
+        <!-- Settings entry point, visible on every page, right of the
              pure-mode toggle. -->
-        <ProfileAvatar href={resolve("/account")} size={32} />
+        <SettingsLink href={resolve("/account")} />
     </header>
 
     <main>

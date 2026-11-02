@@ -17,6 +17,7 @@ const schema = {
     study_time: {} as Record<string, number>,
     timer_state: {} as Record<string, PersistedTimerState>,
     profile: null as Profile | null,
+    mistral_api_key: "" as string,
     intro_open: true as boolean,
     privacy_toast_dismissed: false as boolean,
     impersistent_toast_dismissed: false as boolean,
@@ -58,4 +59,15 @@ export function write<K extends SchemaKey>(
     } catch {
         /* ignore */
     }
+}
+
+/** Removes every key the app wrote (PREFIX-prefixed). No-op during SSR. */
+export function clearAll(): void {
+    if (typeof window === "undefined") return;
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(PREFIX)) keys.push(key);
+    }
+    for (const key of keys) localStorage.removeItem(key);
 }

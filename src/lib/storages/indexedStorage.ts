@@ -25,3 +25,12 @@ export function toPromise<T>(request: IDBRequest<T>): Promise<T> {
         request.onerror = () => reject(request.error);
     });
 }
+
+/** Deletes a whole database; resolves even if it did not exist. */
+export function deleteDatabase(dbName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.deleteDatabase(dbName);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}

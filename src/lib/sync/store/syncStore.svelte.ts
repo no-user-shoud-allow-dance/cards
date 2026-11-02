@@ -3,14 +3,12 @@ import { LocalStorageStore } from "../../stores/persistent/localStorageStore";
 import type { Profile } from "../../types";
 
 /**
- * The local serverless profile ("account"): a user-defined name, a device
- * name, and a rotatable account UUID — persisted in localStorage, never
- * sent anywhere. "Deleting the account" means clearing the site data.
+ * The local serverless profile ("account"): a rotatable account UUID —
+ * persisted in localStorage, never sent anywhere. "Deleting the account"
+ * means clearing the site data.
  */
 class SyncStore extends LocalStorageStore {
     profile = $state<Profile>({
-        name: "",
-        deviceName: "",
         createdAt: 0,
         uuid: "",
     });
@@ -21,8 +19,6 @@ class SyncStore extends LocalStorageStore {
             this.profile = stored;
         } else {
             this.profile = {
-                name: "",
-                deviceName: "",
                 createdAt: Date.now(),
                 uuid: crypto.randomUUID(),
             };
@@ -30,19 +26,9 @@ class SyncStore extends LocalStorageStore {
         }
     }
 
-    setName(name: string): void {
-        this.profile = { ...this.profile, name };
-        this.persist();
-    }
-
-    setDeviceName(deviceName: string): void {
-        this.profile = { ...this.profile, deviceName };
-        this.persist();
-    }
-
     /**
-     * Rotates the account UUID: new avatar, new identity. Pairings with
-     * other devices (once sync ships) have to be re-established afterwards.
+     * Rotates the account UUID: new identity. Pairings with other devices
+     * (once sync ships) have to be re-established afterwards.
      */
     rotateUuid(): void {
         this.profile = { ...this.profile, uuid: crypto.randomUUID() };

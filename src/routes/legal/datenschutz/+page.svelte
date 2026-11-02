@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
     import Card from "#lib/components/shared/ui/Card.svelte";
@@ -43,7 +44,9 @@
     <li>
         <Badge variant="primary">Local Storage</Badge>: Lernfortschritt,
         Einstellungen (z. B.
-        <Badge variant="primary">Pur-Modus</Badge>), Lernzeit und Timer.
+        <Badge variant="primary">Pur-Modus</Badge>,
+        <Badge variant="primary">Mistral API-Schlüssel</Badge>), Lernzeit und
+        Timer.
     </li>
     <li>
         <Badge variant="primary">IndexedDB</Badge>: Stapel, die Sie selbst
@@ -51,9 +54,8 @@
     </li>
     <li>
         <Badge variant="primary">Local Storage</Badge>: Profildaten des
-        Kontos (Name, Gerätename, Konto-UUID) — lokal generiert, ohne
-        Server und ohne Registrierung. Der Avatar wird lokal aus der UUID
-        gezeichnet und verlässt das Gerät nicht.
+        Kontos (Konto-UUID) — lokal generiert, ohne Server und ohne
+        Registrierung.
     </li>
 </ul>
 <p>
@@ -161,7 +163,9 @@
     Da alles lokal in Ihrem Browser gespeichert ist, können Sie Ihre Daten
     jederzeit löschen, indem Sie die
     <Badge variant="primary">Website-Daten</Badge> dieser Seite in den Einstellungen
-    Ihres Browsers entfernen. Bei Fragen schreiben Sie an
+    Ihres Browsers entfernen — oder direkt in der App über
+    <strong>„Alle Daten löschen"</strong> auf der
+    <a href={resolve("/account")}>Konto-Seite</a>. Bei Fragen schreiben Sie an
     <a href="mailto:nousad@web.de">nousad@web.de</a>.
 </p>
 
