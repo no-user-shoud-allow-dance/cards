@@ -26,6 +26,7 @@
 	},
 	"dependencies": {
 		"detectincognitojs": "^1.9.0",
+		"peerjs": "^1.5.5",
 		"qr-code-styling": "^1.9.2"
 	}
 }

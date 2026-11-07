@@ -75,6 +75,97 @@ export const LEGACY_DECK_PREFIX = "deck=v1.";
 export const PROGRESS_PREFIX = "p.";
 /** Prefix of a combined ("together") share link: cards + progress. */
 export const COMBINED_PREFIX = "t.";
+/** Prefix of a full-sync payload (`s.…`) used by device-to-device sync. */
+export const SYNC_PREFIX = "s.";
+
+/**
+ * Full-sync payload (plain JSON, before gzip+base64url), exchanged
+ * peer-to-peer during device sync:
+ *
+ *   {"kind":"nsc-sync","version":1,"uuid": account UUID,
+ *    "decks": [Deck…],                          // full deck records
+ *    "progress": { contentHash: { "s": [boxPerCardIndex], "o": 0|1 } } }
+ *
+ * Progress is keyed by deck contentHash (not slug), because slugs carry
+ * a random per-device suffix — the hash is the stable identity.
+ */
+export interface SyncPayload {
+    kind: "nsc-sync";
+    version: 1;
+    /** Account UUID of the sender; payloads from another UUID are rejected. */
+    uuid: string;
+    /** Full deck records (raw markdown, name, folder, deckType, contentHash). */
+    decks: unknown[];
+    /** Per-deck progress keyed by contentHash: boxes per card index + overview flag. */
+    progress: Record<string, { s: number[]; o: boolean }>;
+}
+
+/** Encodes a full-sync payload as an `s.…` string (gzip + base64url). */
+export async function encodeSyncShare(payload: SyncPayload): Promise<string> {
+    const json = JSON.stringify(payload);
+    const compressed = await gzip(new TextEncoder().encode(json));
+    return `${SYNC_PREFIX}${bytesToBase64Url(compressed)}`;
+}
+
+/**
+ * Decodes an `s.…` sync payload; null if invalid (bad prefix, corrupt
+ * gzip/base64, wrong kind/version, malformed fields).
+ */
+export async function decodeSyncShare(hash: string): Promise<SyncPayload | null> {
+    const payload = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!payload.startsWith(SYNC_PREFIX)) return null;
+    try {
+        const json = new TextDecoder().decode(
+            await gunzip(base64UrlToBytes(payload.slice(SYNC_PREFIX.length))),
+        );
+        const data: unknown = JSON.parse(json);
+        if (typeof data !== "object" || data === null) return null;
+        const d = data as {
+            kind?: unknown;
+            version?: unknown;
+            uuid?: unknown;
+            decks?: unknown;
+            progress?: unknown;
+        };
+        if (d.kind !== "nsc-sync" || d.version !== 1) return null;
+        if (typeof d.uuid !== "string" || !d.uuid) return null;
+        if (!Array.isArray(d.decks)) return null;
+        if (typeof d.progress !== "object" || d.progress === null) return null;
+        const progress: SyncPayload["progress"] = {};
+        for (const [hashKey, value] of Object.entries(
+            d.progress as Record<string, unknown>,
+        )) {
+            if (typeof value !== "object" || value === null) continue;
+            const v = value as { s?: unknown; o?: unknown };
+            if (!Array.isArray(v.s)) continue;
+            const boxes: number[] = [];
+            let valid = true;
+            for (const box of v.s) {
+                if (
+                    typeof box !== "number" ||
+                    !Number.isInteger(box) ||
+                    box < 0 ||
+                    box > BOX_COUNT
+                ) {
+                    valid = false;
+                    break;
+                }
+                boxes.push(box);
+            }
+            if (!valid) continue;
+            progress[hashKey] = { s: boxes, o: v.o === 1 || v.o === true };
+        }
+        return {
+            kind: "nsc-sync",
+            version: 1,
+            uuid: d.uuid,
+            decks: d.decks,
+            progress,
+        };
+    } catch {
+        return null;
+    }
+}
 
 export interface SharePayload {
     raw: string;

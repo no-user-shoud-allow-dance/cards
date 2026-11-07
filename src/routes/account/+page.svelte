@@ -3,6 +3,7 @@
     import { resolve } from "$app/paths";
     import { BOX_COUNT, BOX_LABELS } from "#lib/types";
     import { syncStore } from "#lib/sync/store/syncStore.svelte";
+    import SyncPeer from "#lib/sync/components/SyncPeer.svelte";
     import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
     import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
     import { studyTimeStore } from "#lib/stores/persistent/studyTimeStore.svelte";
@@ -350,11 +351,7 @@
 
     <Card padding="lg" class="sync-card" bg="soft">
         <h2 class="sync-title">Synchronisieren</h2>
-        <p class="placeholder">In Arbeit …</p>
-        <p class="placeholder-note">
-            Die Synchronisation zwischen deinen Geräten (QR-Code / WebRTC)
-            ist noch in Entwicklung und erscheint in einer späteren Version.
-        </p>
+        <SyncPeer />
     </Card>
 
     <Card padding="lg" class="danger-card">
@@ -614,22 +611,6 @@
 
         font-size: 1rem;
         font-weight: 600;
-    }
-
-    .placeholder {
-        margin: 0.25rem 0;
-
-        color: var(--text-muted);
-        font-size: 1.15rem;
-        font-weight: 600;
-    }
-
-    .placeholder-note {
-        margin: 0;
-
-        color: var(--text-muted);
-        font-size: 0.85rem;
-        line-height: 1.6;
     }
 
     @media (max-width: 540px) {
