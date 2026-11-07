@@ -47,10 +47,11 @@
 
 <div class="sync-peer">
     <p class="sync-note">
-        Synchronisiere dieses Gerät direkt mit einem deiner anderen Geräte
-        (WebRTC über PeerJS — die Daten verlassen die Geräte nicht, nur die
-        Peer-ID läuft über den Signalisierungs-Server). Beide Geräte müssen
-        online sein und dieselbe Konto-UUID haben.
+        Synchronisiere dieses Gerät direkt mit einem anderen Gerät (WebRTC
+        über PeerJS — die Daten verlassen die Geräte nicht, nur die Peer-ID
+        läuft über den Signalisierungs-Server). Beide Geräte müssen online
+        sein. Die Peer-ID ist das gemeinsame Secret: sie wird per QR-Code
+        oder abgetippt übertragen.
     </p>
 
     {#if syncStore.status === "hosting" && syncStore.peerId}
@@ -102,6 +103,17 @@
                 Trennen
             </Button>
         </div>
+    {/if}
+
+    {#if syncStore.logs.length > 0}
+        <textarea
+            class="sync-log"
+            rows="6"
+            readonly
+            value={syncStore.logs.join("\n")}
+            aria-label="Sync-Protokoll"
+            spellcheck="false"
+        ></textarea>
     {/if}
 </div>
 
@@ -183,5 +195,24 @@
     .join :global(.text-input) {
         flex: 1;
         min-width: min(100%, 14rem);
+    }
+
+    /* Readonly protocol of the sync session (same lines as the console). */
+    .sync-log {
+        width: 100%;
+        padding: 0.5rem 0.65rem;
+
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+
+        background: var(--surface-soft);
+        color: var(--text-muted);
+
+        font-family:
+            ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.72rem;
+        line-height: 1.5;
+
+        resize: vertical;
     }
 </style>

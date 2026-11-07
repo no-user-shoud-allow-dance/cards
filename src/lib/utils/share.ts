@@ -82,18 +82,17 @@ export const SYNC_PREFIX = "s.";
  * Full-sync payload (plain JSON, before gzip+base64url), exchanged
  * peer-to-peer during device sync:
  *
- *   {"kind":"nsc-sync","version":1,"uuid": account UUID,
+ *   {"kind":"nsc-sync","version":1,
  *    "decks": [Deck…],                          // full deck records
  *    "progress": { contentHash: { "s": [boxPerCardIndex], "o": 0|1 } } }
  *
  * Progress is keyed by deck contentHash (not slug), because slugs carry
- * a random per-device suffix — the hash is the stable identity.
+ * a random per-device suffix — the hash is the stable identity. There is
+ * no account UUID in the payload: the peer ID is the sync trust anchor.
  */
 export interface SyncPayload {
     kind: "nsc-sync";
     version: 1;
-    /** Account UUID of the sender; payloads from another UUID are rejected. */
-    uuid: string;
     /** Full deck records (raw markdown, name, folder, deckType, contentHash). */
     decks: unknown[];
     /** Per-deck progress keyed by contentHash: boxes per card index + overview flag. */
@@ -123,12 +122,10 @@ export async function decodeSyncShare(hash: string): Promise<SyncPayload | null>
         const d = data as {
             kind?: unknown;
             version?: unknown;
-            uuid?: unknown;
             decks?: unknown;
             progress?: unknown;
         };
         if (d.kind !== "nsc-sync" || d.version !== 1) return null;
-        if (typeof d.uuid !== "string" || !d.uuid) return null;
         if (!Array.isArray(d.decks)) return null;
         if (typeof d.progress !== "object" || d.progress === null) return null;
         const progress: SyncPayload["progress"] = {};
@@ -158,7 +155,6 @@ export async function decodeSyncShare(hash: string): Promise<SyncPayload | null>
         return {
             kind: "nsc-sync",
             version: 1,
-            uuid: d.uuid,
             decks: d.decks,
             progress,
         };

@@ -2,7 +2,6 @@
     import { onMount } from "svelte";
     import { resolve } from "$app/paths";
     import { BOX_COUNT, BOX_LABELS } from "#lib/types";
-    import { syncStore } from "#lib/sync/store/syncStore.svelte";
     import SyncPeer from "#lib/sync/components/SyncPeer.svelte";
     import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
     import { settingStore } from "#lib/stores/persistent/settingStore.svelte";
@@ -22,7 +21,6 @@
     import Toggle from "#lib/components/shared/ui/Toggle.svelte";
 
     onMount(() => {
-        syncStore.init();
         settingStore.init();
         cardStore.init();
         studyTimeStore.init();
@@ -30,15 +28,10 @@
         decks.init();
     });
 
-    function handleRotate(): void {
-        syncStore.rotateUuid();
-        toastStore.success("Neue UUID erstellt.");
-    }
-
     // Wipes every piece of app data on this device: all kk_* localStorage
-    // keys (progress, settings, API key, profile/UUID, …), the session
+    // keys (progress, settings, API key, …), the session
     // draft, and the whole nsc-user-decks IndexedDB database. The reload
-    // re-hydrates every store from scratch (fresh UUID, no decks).
+    // re-hydrates every store from scratch (leer, keine Stapel).
     async function handleDeleteAll(): Promise<void> {
         clearAll();
         sessionStorage.clear();
@@ -146,11 +139,6 @@
             value: entryCount(Object.keys(timerStateStore.states).length),
         },
         {
-            key: "profile",
-            description: "Konto-UUID (rotierbar)",
-            value: syncStore.profile.uuid ? "vorhanden" : "—",
-        },
-        {
             key: "mistral_api_key",
             description: "Mistral API-Schlüssel",
             value: settingStore.mistralApiKey ? "gesetzt" : "leer",
@@ -218,7 +206,7 @@
 <Page>
     <PageHeader
         title="Konto"
-        subtitle="Lokales Profil ohne Server — die Konto-UUID bleibt auf diesem Gerät."
+        subtitle="Ohne Server — alle Daten bleiben auf diesem Gerät."
         compact
     />
 
@@ -272,19 +260,6 @@
                 <dd>{formatStudyTime(totalStudyMs)}</dd>
             </div>
         </dl>
-    </Card>
-
-    <Card padding="lg" class="profile-card">
-        <div class="uuid-row">
-            <span class="uuid-label">Konto-UUID</span>
-            <code class="uuid">{syncStore.profile.uuid}</code>
-            <ResetButton
-                variant="neutral"
-                label="UUID erneuern"
-                confirmText="UUID wirklich erneuern? Bestehende Verknüpfungen mit anderen Geräten gehen verloren."
-                onReset={handleRotate}
-            />
-        </div>
     </Card>
 
     <Card padding="lg" class="mistral-card">
@@ -359,13 +334,12 @@
         <p class="card-note">
             Entfernt unwiderruflich alle Daten dieser App auf diesem Gerät:
             Stapel (IndexedDB), Lernfortschritt, Übersicht, Timer, Lernzeit,
-            Einstellungen, Mistral API-Schlüssel und die Konto-UUID (Local
-            Storage). Danach wird eine neue UUID erstellt.
+            Einstellungen, Mistral API-Schlüssel.
         </p>
         <div class="danger-action">
             <ResetButton
                 label="Alle Daten löschen"
-                confirmText="Wirklich alle Daten löschen? Stapel, Fortschritt, Einstellungen und Konto-UUID werden unwiderruflich entfernt — das kann nicht rückgängig gemacht werden."
+                confirmText="Wirklich alle Daten löschen? Stapel, Fortschritt und Einstellungen werden unwiderruflich entfernt — das kann nicht rückgängig gemacht werden."
                 onReset={handleDeleteAll}
             />
         </div>
@@ -376,7 +350,6 @@
     /* Classes passed to Card land on the child component root, so they are
        targeted via :global. */
     :global(.stats-card),
-    :global(.profile-card),
     :global(.mistral-card),
     :global(.google-card),
     :global(.storage-card),
@@ -576,34 +549,6 @@
 
     .danger-action {
         margin-top: 0.9rem;
-    }
-
-    .uuid-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.6rem 0.9rem;
-    }
-
-    .uuid-label {
-        color: var(--text-muted);
-        font-size: 0.78rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-
-    .uuid {
-        flex: 1;
-        min-width: 12rem;
-
-        padding: 0.3rem 0.55rem;
-
-        border-radius: var(--radius-md);
-        background: var(--surface-soft);
-
-        font-size: 0.78rem;
-        overflow-wrap: anywhere;
     }
 
     .sync-title {

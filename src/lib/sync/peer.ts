@@ -5,13 +5,41 @@ import { applySyncPayload, buildSyncPayload } from "./payload";
 import { syncStore } from "./store/syncStore.svelte";
 import { toastStore } from "../stores/session/toastStore.svelte";
 
-/** Peer ID scheme: "nsc-<account-uuid>-<random device suffix>". */
+/**
+ * Peer ID scheme: "nsc-<random>" — the peer ID itself is the shared
+ * secret, exchanged via QR/paste. There is no account UUID: it would be
+ * embedded in the peer ID anyway, so it could not add any secrecy
+ * beyond the peer ID. Trust boundary: whoever holds the peer ID.
+ */
 const PEER_PREFIX = "nsc-";
 
 /** Prefix of the tiny QR/paste payload that carries a host's peer ID. */
 export const PEER_LINK_PREFIX = "nsc-peer:";
 
-const deviceSuffix = (): string => Math.random().toString(36).slice(2, 6);
+const deviceSuffix = (): string =>
+    Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+
+/** Log helpers: console AND the sync card's log textarea (via syncStore). */
+function fmtArgs(args: unknown[]): string {
+    return args
+        .map((a) => (typeof a === "string" ? a : JSON.stringify(a)))
+        .join(" ");
+}
+
+function syncLog(msg: string, ...args: unknown[]): void {
+    console.log("[sync]", msg, ...args);
+    syncStore.addLog(`[sync] ${msg}${args.length ? " " + fmtArgs(args) : ""}`);
+}
+
+function syncWarn(msg: string, ...args: unknown[]): void {
+    console.warn("[sync]", msg, ...args);
+    syncStore.addLog(`[sync] ${msg}${args.length ? " " + fmtArgs(args) : ""}`);
+}
+
+function syncError(msg: string, ...args: unknown[]): void {
+    console.error("[sync]", msg, ...args);
+    syncStore.addLog(`[sync] ${msg}${args.length ? " " + fmtArgs(args) : ""}`);
+}
 
 /** Maps a PeerJS error type to a German UI message. */
 function peerErrorMessage(type: string): string {
@@ -31,7 +59,7 @@ function peerErrorMessage(type: string): string {
 }
 
 function handlePeerError(err: { type?: string }): void {
-    console.error("[sync] peer error:", err.type ?? "unknown");
+    syncError("peer error:", err.type ?? "unknown");
     syncStore.status = "error";
     syncStore.error = peerErrorMessage(err.type ?? "unknown");
 }
@@ -41,7 +69,7 @@ function reportSyncSuccess(result: {
     decksAdded: number;
     progressApplied: number;
 }): void {
-    console.log("[sync] applied payload:", result);
+    syncLog("applied payload:", result);
     const decks =
         result.decksAdded === 1
             ? "1 neuer Stapel"
@@ -55,31 +83,27 @@ function reportSyncSuccess(result: {
     );
 }
 
-/** Accepts and answers a data connection, but only from the same account UUID. */
+/**
+ * Accepts and answers a data connection. The peer ID is the trust
+ * anchor, so every connection to our (unguessable) host ID is accepted.
+ */
 function wireConnection(conn: DataConnection): void {
     conn.on("open", () => {
-        console.log("[sync] connection open, peer:", conn.peer);
+        syncLog("connection open, peer:", conn.peer);
         syncStore.status = "connected";
         syncStore.error = null;
     });
     conn.on("data", (data) => {
-        const meta = conn.metadata as { uuid?: string } | undefined;
-        if (meta?.uuid !== syncStore.profile.uuid) {
-            // Foreign account (e.g. pre-rotation UUID): reject and close.
-            console.warn("[sync] rejected payload from foreign account UUID");
-            conn.close();
-            return;
-        }
         void (async () => {
             try {
-                console.log("[sync] received payload, applying …");
+                syncLog("received payload, applying …");
                 const result = await applySyncPayload(data as string);
                 reportSyncSuccess(result);
                 // Answer with our own payload → two-way sync.
                 conn.send(await buildSyncPayload());
-                console.log("[sync] sent own payload back");
+                syncLog("sent own payload back");
             } catch (err) {
-                console.error("[sync] could not apply payload:", err);
+                syncError("could not apply payload:", err);
             }
         })();
     });
@@ -87,20 +111,18 @@ function wireConnection(conn: DataConnection): void {
 }
 
 /**
- * Host: listen for the other device of the same account. The peer ID
- * (`nsc-<uuid>-<suffix>`) is shown as text and QR for the other device.
+ * Host: listen for the other device. The peer ID ("nsc-<random>") is
+ * shown as text and QR for the other device.
  */
 export function hostSync(): void {
     syncStore.destroyPeer();
-    const peer = new Peer(
-        `${PEER_PREFIX}${syncStore.profile.uuid}-${deviceSuffix()}`,
-    );
+    const peer = new Peer(`${PEER_PREFIX}${deviceSuffix()}`);
     syncStore.peer = peer;
     syncStore.status = "connecting";
     syncStore.error = null;
 
     peer.on("open", (id) => {
-        console.log("[sync] hosting as", id);
+        syncLog("hosting as", id);
         syncStore.peerId = id;
         syncStore.status = "hosting";
     });
@@ -111,8 +133,6 @@ export function hostSync(): void {
 
 /**
  * Join: connect to a host's peer ID (pasted or scanned from its QR).
- * The account UUID travels as connection metadata; the host only
- * accepts data from a matching UUID.
  */
 export function joinSync(hostPeerId: string): void {
     const target = hostPeerId.trim().replace(PEER_LINK_PREFIX, "");
@@ -129,28 +149,25 @@ export function joinSync(hostPeerId: string): void {
     syncStore.error = null;
 
     peer.on("open", () => {
-        console.log("[sync] joining", target);
-        const conn = peer.connect(target, {
-            reliable: true,
-            metadata: { uuid: syncStore.profile.uuid },
-        });
+        syncLog("joining", target);
+        const conn = peer.connect(target, { reliable: true });
         conn.on("open", async () => {
-            console.log("[sync] connection open, peer:", conn.peer);
+            syncLog("connection open, peer:", conn.peer);
             syncStore.status = "connected";
             syncStore.error = null;
             try {
                 conn.send(await buildSyncPayload()); // send ours first
-                console.log("[sync] sent own payload");
+                syncLog("sent own payload");
             } catch {
                 // send failure — the host's answer may still arrive
-                console.error("[sync] could not send own payload");
+                syncError("could not send own payload");
             }
         });
         conn.on("data", (data) => {
             void applySyncPayload(data as string)
                 .then((result) => reportSyncSuccess(result))
                 .catch((err) => {
-                    console.error("[sync] could not apply payload:", err);
+                    syncError("could not apply payload:", err);
                 });
         });
         conn.on("error", () => handlePeerError({ type: "network" }));

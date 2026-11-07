@@ -1,4 +1,4 @@
-import type { CardStates, PersistedTimerState, Profile } from "../types";
+import type { CardStates, PersistedTimerState } from "../types";
 
 /** Key prefix for everything the app writes to localStorage. */
 export const PREFIX = "kk_";
@@ -16,7 +16,6 @@ const schema = {
     google_disabled: true as boolean,
     study_time: {} as Record<string, number>,
     timer_state: {} as Record<string, PersistedTimerState>,
-    profile: null as Profile | null,
     mistral_api_key: "" as string,
     intro_open: true as boolean,
     privacy_toast_dismissed: false as boolean,

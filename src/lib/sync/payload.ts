@@ -6,7 +6,6 @@ import {
     encodeSyncShare,
     type SyncPayload,
 } from "../utils/share";
-import { syncStore } from "./store/syncStore.svelte";
 import type { DeckType } from "../types";
 
 /** Shape of one deck record inside the sync payload (subset of Deck). */
@@ -68,7 +67,6 @@ export async function buildSyncPayload(): Promise<string> {
     return encodeSyncShare({
         kind: "nsc-sync",
         version: 1,
-        uuid: syncStore.profile.uuid,
         decks: syncDecks,
         progress,
     });
@@ -84,10 +82,11 @@ export interface SyncResult {
 
 /**
  * Merges a received sync payload into the local stores. Throws a German
- * error when the payload comes from a different account UUID or is
- * malformed. Decks dedup by contentHash (existing deck keeps its local
- * slug and progress); progress merges with "higher box wins" via the
- * existing applyProgress; the overview flag is OR-merged.
+ * error when the payload is malformed. (The peer ID is the trust anchor,
+ * so there is no account-UUID check here.) Decks dedup by contentHash
+ * (existing deck keeps its local slug and progress); progress merges
+ * with "higher box wins" via the existing applyProgress; the overview
+ * flag is OR-merged.
  */
 export async function applySyncPayload(
     encoded: string,
@@ -95,11 +94,6 @@ export async function applySyncPayload(
     const payload = await decodeSyncShare(encoded);
     if (!payload) {
         throw new Error("Das Sync-Paket ist ungültig oder beschädigt.");
-    }
-    if (payload.uuid !== syncStore.profile.uuid) {
-        throw new Error(
-            "Das Sync-Paket stammt von einem anderen Konto (andere UUID) und wurde abgelehnt.",
-        );
     }
 
     await decks.init();
