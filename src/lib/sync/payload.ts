@@ -74,6 +74,14 @@ export async function buildSyncPayload(): Promise<string> {
     });
 }
 
+/** What a successfully applied sync payload changed. */
+export interface SyncResult {
+    /** Decks that were actually new on this device. */
+    decksAdded: number;
+    /** Progress entries (per deck) that were merged. */
+    progressApplied: number;
+}
+
 /**
  * Merges a received sync payload into the local stores. Throws a German
  * error when the payload comes from a different account UUID or is
@@ -81,7 +89,9 @@ export async function buildSyncPayload(): Promise<string> {
  * slug and progress); progress merges with "higher box wins" via the
  * existing applyProgress; the overview flag is OR-merged.
  */
-export async function applySyncPayload(encoded: string): Promise<void> {
+export async function applySyncPayload(
+    encoded: string,
+): Promise<SyncResult> {
     const payload = await decodeSyncShare(encoded);
     if (!payload) {
         throw new Error("Das Sync-Paket ist ungültig oder beschädigt.");
@@ -96,12 +106,16 @@ export async function applySyncPayload(encoded: string): Promise<void> {
     cardStore.init();
 
     // Decks: add the ones we don't have (dedup by contentHash inside add).
+    let decksAdded = 0;
     for (const raw of payload.decks) {
         if (!isSyncDeck(raw)) continue;
+        if (await decks.findByHash(raw.contentHash)) continue; // already have it
         await decks.add(raw.raw, raw.folder, raw.name, raw.deckType);
+        decksAdded++;
     }
 
     // Progress: map contentHash → local slug, then merge positionally.
+    let progressApplied = 0;
     for (const [hash, prog] of Object.entries(payload.progress)) {
         const local = await decks.findByHash(hash);
         if (!local) continue; // deck not present on this device — skip
@@ -112,5 +126,8 @@ export async function applySyncPayload(encoded: string): Promise<void> {
             overviewDone: prog.o,
             studyTimeMs: 0, // study time stays device-local
         });
+        progressApplied++;
     }
+
+    return { decksAdded, progressApplied };
 }

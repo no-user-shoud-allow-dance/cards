@@ -3,6 +3,7 @@ import type { DataConnection } from "peerjs";
 
 import { applySyncPayload, buildSyncPayload } from "./payload";
 import { syncStore } from "./store/syncStore.svelte";
+import { toastStore } from "../stores/session/toastStore.svelte";
 
 /** Peer ID scheme: "nsc-<account-uuid>-<random device suffix>". */
 const PEER_PREFIX = "nsc-";
@@ -30,13 +31,34 @@ function peerErrorMessage(type: string): string {
 }
 
 function handlePeerError(err: { type?: string }): void {
+    console.error("[sync] peer error:", err.type ?? "unknown");
     syncStore.status = "error";
     syncStore.error = peerErrorMessage(err.type ?? "unknown");
+}
+
+/** German success toast + log after a payload was merged. */
+function reportSyncSuccess(result: {
+    decksAdded: number;
+    progressApplied: number;
+}): void {
+    console.log("[sync] applied payload:", result);
+    const decks =
+        result.decksAdded === 1
+            ? "1 neuer Stapel"
+            : `${result.decksAdded} neue Stapel`;
+    const progress =
+        result.progressApplied === 1
+            ? "1 Fortschritts-Eintrag"
+            : `${result.progressApplied} Fortschritts-Einträge`;
+    toastStore.success(
+        `Synchronisation erfolgreich — ${decks}, ${progress} übernommen.`,
+    );
 }
 
 /** Accepts and answers a data connection, but only from the same account UUID. */
 function wireConnection(conn: DataConnection): void {
     conn.on("open", () => {
+        console.log("[sync] connection open, peer:", conn.peer);
         syncStore.status = "connected";
         syncStore.error = null;
     });
@@ -44,16 +66,20 @@ function wireConnection(conn: DataConnection): void {
         const meta = conn.metadata as { uuid?: string } | undefined;
         if (meta?.uuid !== syncStore.profile.uuid) {
             // Foreign account (e.g. pre-rotation UUID): reject and close.
+            console.warn("[sync] rejected payload from foreign account UUID");
             conn.close();
             return;
         }
         void (async () => {
             try {
-                await applySyncPayload(data as string);
+                console.log("[sync] received payload, applying …");
+                const result = await applySyncPayload(data as string);
+                reportSyncSuccess(result);
                 // Answer with our own payload → two-way sync.
                 conn.send(await buildSyncPayload());
-            } catch {
-                // Malformed/foreign payload — ignore silently, keep channel.
+                console.log("[sync] sent own payload back");
+            } catch (err) {
+                console.error("[sync] could not apply payload:", err);
             }
         })();
     });
@@ -74,6 +100,7 @@ export function hostSync(): void {
     syncStore.error = null;
 
     peer.on("open", (id) => {
+        console.log("[sync] hosting as", id);
         syncStore.peerId = id;
         syncStore.status = "hosting";
     });
@@ -102,23 +129,29 @@ export function joinSync(hostPeerId: string): void {
     syncStore.error = null;
 
     peer.on("open", () => {
+        console.log("[sync] joining", target);
         const conn = peer.connect(target, {
             reliable: true,
             metadata: { uuid: syncStore.profile.uuid },
         });
         conn.on("open", async () => {
+            console.log("[sync] connection open, peer:", conn.peer);
             syncStore.status = "connected";
             syncStore.error = null;
             try {
                 conn.send(await buildSyncPayload()); // send ours first
+                console.log("[sync] sent own payload");
             } catch {
                 // send failure — the host's answer may still arrive
+                console.error("[sync] could not send own payload");
             }
         });
         conn.on("data", (data) => {
-            void applySyncPayload(data as string).catch(() => {
-                // malformed/foreign payload — ignore
-            });
+            void applySyncPayload(data as string)
+                .then((result) => reportSyncSuccess(result))
+                .catch((err) => {
+                    console.error("[sync] could not apply payload:", err);
+                });
         });
         conn.on("error", () => handlePeerError({ type: "network" }));
     });
