@@ -59,6 +59,14 @@ import { BOX_COUNT, type DeckType } from "../types";
 /** Soft size limit for a share-link hash; above this the user is warned. */
 export const SHARE_HASH_LIMIT = 1_000_000;
 
+/**
+ * Approximate URL length above which a QR code can no longer hold the
+ * link: byte-mode capacity at error-correction level M is ~2331 bytes
+ * (version 40), and the URL adds the origin plus "/#". Above this the
+ * QR rendering fails with "code length overflow" — warn beforehand.
+ */
+export const SHARE_QR_LIMIT = 2_200;
+
 /** Prefix of a deck ("cards") share link. */
 export const DECK_PREFIX = "c.";
 /** Legacy deck-link prefix; still decoded, never emitted. */

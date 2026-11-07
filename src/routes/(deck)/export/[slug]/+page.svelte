@@ -13,6 +13,7 @@
         formatShareLength,
         nativeShare,
         SHARE_HASH_LIMIT,
+        SHARE_QR_LIMIT,
         type ProgressSharePayload,
     } from "#lib/utils/share";
     import Page from "#lib/components/shared/ui/Page.svelte";
@@ -177,14 +178,17 @@
     <p class="mode-hint">{activeMode.hint}</p>
 
     {#if shareUrl}
+        {@const qrTooBig = shareLength > SHARE_QR_LIMIT}
         <ShareLinkCard
             title={activeMode.title}
             url={shareUrl}
             copyLabel={activeMode.copyLabel}
-            warning={shareLength > SHARE_HASH_LIMIT}
-            warningText="Der Link ist etwa {formatShareLength(
-                shareLength,
-            )} lang — Links über ~1 MB funktionieren nicht zuverlässig."
+            warning={shareLength > SHARE_HASH_LIMIT || qrTooBig}
+            warningText={shareLength > SHARE_HASH_LIMIT
+                ? `Der Link ist etwa ${formatShareLength(
+                      shareLength,
+                  )} lang — Links über ~1 MB funktionieren nicht zuverlässig.`
+                : `Der Link ist zu lang für einen QR-Code — der Stapel ist zu groß zum Scannen. Bitte kopiere den Link oder nutze „Teilen …“.`}
         />
         <div class="actions">
             {#if canShare}
