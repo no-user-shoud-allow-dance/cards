@@ -31,6 +31,7 @@
     import CheckBox from "#lib/components/shared/ui/CheckBox.svelte";
     import Dialog from "#lib/components/shared/ui/Dialog.svelte";
     import CardImages from "#lib/components/shared/ui/CardImages.svelte";
+    import SourceField from "#lib/components/shared/ui/SourceField.svelte";
 
     let {
         title = $bindable(""),
@@ -177,6 +178,7 @@
         bind:value={mdInput}
         placeholder="# Titel
 amo - ich liebe
+H~2~O - Wasser
 ![Katze](https://hosting.example/katze.jpg) - die Katze"
         spellcheck="false"></textarea>
     {#if mdErrors.length > 0}
@@ -242,11 +244,10 @@ amo - ich liebe
                         />
                     </span>
                     <span class="col-front" role="cell">
-                        <input
-                            type="text"
+                        <SourceField
                             bind:value={card.front}
                             placeholder="Vorderseite"
-                            aria-label="Vorderseite"
+                            ariaLabel="Vorderseite"
                         />
                         <!-- Thumbnail preview: a broken image link is
                              visible while writing. -->
@@ -256,11 +257,10 @@ amo - ich liebe
                         />
                     </span>
                     <span class="col-back" role="cell">
-                        <input
-                            type="text"
+                        <SourceField
                             bind:value={card.back}
                             placeholder="Rückseite"
-                            aria-label="Rückseite"
+                            ariaLabel="Rückseite"
                         />
                         <CardImages
                             images={extractImages(card.back)}
@@ -312,6 +312,15 @@ amo - ich liebe
             : "Karten ohne Vorder- oder Rückseite werden nicht gespeichert."}
     </p>
 {/if}
+
+<p class="note">
+    Erlaubte Formatierung: <code>`code`</code>, <code>**fett**</code>,
+    <code>*kursiv*</code>, <code>++unterstrichen++</code>,
+    <code>~~durchgestrichen~~</code>, <code>==markiert==</code>,
+    <code>^hochgestellt^</code>, <code>~tiefgestellt~</code> — Text
+    markieren, um ihn zu umbrechen; ein Markierung anklicken, um sie zu
+    entfernen.
+</p>
 
 <style>
     .field {
@@ -416,30 +425,23 @@ amo - ich liebe
         min-width: 0;
     }
 
-    .col-front input,
-    .col-back input {
-        font: inherit;
+    /* The source fields style themselves (see SourceField). */
+    .col-front :global(.source-field),
+    .col-back :global(.source-field) {
         width: 100%;
-
-        padding: 0.4rem 0.55rem;
-
-        border: 1px solid transparent;
-        border-radius: var(--radius-md);
-
-        background: transparent;
-        color: var(--text);
     }
 
-    .col-front input:focus,
-    .col-back input:focus {
-        border-color: var(--border);
-        background: var(--surface);
-        outline: 2px solid var(--focus-ring);
-    }
+    .note code {
+        padding: 0.05em 0.3em;
 
-    .col-front input:hover,
-    .col-back input:hover {
-        border-color: var(--border);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+
+        background: var(--surface-soft);
+
+        font-family:
+            ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.85em;
     }
 
     .row-delete {

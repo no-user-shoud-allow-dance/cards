@@ -2,6 +2,7 @@
     import { fade } from "svelte/transition";
     import { fadeOutInPlace } from "#lib/utils/transitions";
     import CardImages from "#lib/components/shared/ui/CardImages.svelte";
+    import RichText from "#lib/components/shared/ui/RichText.svelte";
     import type { CardImage } from "#lib/types";
 
     let {
@@ -38,12 +39,12 @@
         <div class="card-inner">
             <div class="card-face card-front">
                 <CardImages images={frontImages} />
-                <span class="card-text">{frontText}</span>
+                <span class="card-text"><RichText text={frontText} /></span>
             </div>
             <div class="card-face card-back-face">
-                <span class="hint">{frontText}</span>
+                <span class="hint"><RichText text={frontText} /></span>
                 <CardImages images={backImages} />
-                <span class="card-answer">{backText}</span>
+                <span class="card-answer"><RichText text={backText} /></span>
             </div>
         </div>
     </button>

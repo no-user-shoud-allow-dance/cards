@@ -2,6 +2,7 @@
     import type { HTMLAttributes } from "svelte/elements";
     import { displayFront, displayBack } from "#lib/utils/pure";
     import CardImages from "#lib/components/shared/ui/CardImages.svelte";
+    import RichText from "#lib/components/shared/ui/RichText.svelte";
     import type { CardImage, DeckType, FlashCard } from "#lib/types";
 
     // `class` arrives via rest and is merged into the class expression; other
@@ -28,9 +29,13 @@
     {#each cards as card (card.id)}
         <li>
             <CardImages images={frontImages(card)} variant="thumb" />
-            <span class="front">{displayFront(card, pureMode, deckType)}</span>
+            <span class="front"
+                ><RichText text={displayFront(card, pureMode, deckType)} /></span
+            >
             <span class="sep">→</span>
-            <span class="back">{displayBack(card, pureMode)}</span>
+            <span class="back"
+                ><RichText text={displayBack(card, pureMode)} /></span
+            >
             <CardImages images={backImages(card)} variant="thumb" />
         </li>
     {/each}

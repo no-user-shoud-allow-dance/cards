@@ -1,5 +1,6 @@
 import { BOX_COUNT, type CardStates, type DeckType, type FlashCard } from "../types";
 import { applyReplacements } from "./replacements";
+import { stripInlineFormat } from "./inlineFormat";
 import { imageTokensToAltText, stripImageTokens } from "./parser";
 
 // Weighted learning progress: each card contributes (box - 1) / (BOX_COUNT - 1),
@@ -81,17 +82,18 @@ function removeBrackets(text: string): string {
 // ── Card display helpers ─────────────────────────────────────────
 
 /**
- * The front side as text with image tokens replaced by their alt text.
- * Used for search queries and progress diffs — not for card display,
- * where the image is rendered separately (see displayFront).
+ * The front side as plain text with image tokens replaced by their alt
+ * text and allowlisted inline formatting stripped. Used for search queries and
+ * progress diffs — not for card display, where the image is rendered
+ * separately and tags render as elements (see displayFront + RichText).
  */
 export function cardPrompt(card: FlashCard): string {
-    return stripBrackets(imageTokensToAltText(card.front));
+    return stripBrackets(stripInlineFormat(imageTokensToAltText(card.front)));
 }
 
-/** The back side (answer / translation), image tokens as alt text. */
+/** The back side (answer / translation) as plain text, formatting stripped. */
 export function cardAnswer(card: FlashCard): string {
-    return imageTokensToAltText(card.back);
+    return stripInlineFormat(imageTokensToAltText(card.back));
 }
 
 /**
@@ -110,6 +112,8 @@ export function purePrompt(card: FlashCard, deckType: DeckType): string {
  * Front text for card display: normal or pure mode. Image tokens are
  * stripped — the image itself (with its alt as loading/error fallback)
  * is rendered above the text, so the alt must not repeat as text.
+ * Allowlisted markdown formatting stays in the string; RichText renders
+ * it as real elements.
  */
 export function displayFront(
     card: FlashCard,

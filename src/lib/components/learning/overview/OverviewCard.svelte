@@ -2,6 +2,7 @@
     import { fade } from "svelte/transition";
     import { fadeOutInPlace } from "#lib/utils/transitions";
     import CardImages from "#lib/components/shared/ui/CardImages.svelte";
+    import RichText from "#lib/components/shared/ui/RichText.svelte";
     import type { CardImage } from "#lib/types";
 
     let {
@@ -33,10 +34,10 @@
         aria-label="Nächste Karte"
     >
         <CardImages images={frontImages} />
-        <span class="overview-card-front">{frontText}</span>
+        <span class="overview-card-front"><RichText text={frontText} /></span>
         <span class="overview-card-divider" aria-hidden="true"></span>
         <CardImages images={backImages} />
-        <span class="overview-card-back">{backText}</span>
+        <span class="overview-card-back"><RichText text={backText} /></span>
     </button>
 </div>
 
