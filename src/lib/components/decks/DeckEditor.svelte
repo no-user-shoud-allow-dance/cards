@@ -30,6 +30,7 @@
 
 <script lang="ts">
     import { escapeCardSide, extractImages, parseDeck } from "#lib/utils/parser";
+    import { toastStore } from "#lib/stores/session/toastStore.svelte";
     import Button from "#lib/components/shared/ui/Button.svelte";
     import CheckBox from "#lib/components/shared/ui/CheckBox.svelte";
     import Dialog from "#lib/components/shared/ui/Dialog.svelte";
@@ -53,6 +54,10 @@
     let mdMode = $state<"add" | "replace" | null>(null);
     let mdInput = $state("");
     let mdErrors = $state<string[]>([]);
+
+    // Markdown export dialog
+    let exportOpen = $state(false);
+    let exportText = $state("");
 
     // Keep nextId ahead of all card ids (cards may be set externally).
     $effect(() => {
@@ -102,15 +107,30 @@
         selected = new Set();
     }
 
-    function exportMarkdown(): void {
-        const raw = serializeDeckMarkdown(title, cards, defaultFileName);
-        const blob = new Blob([raw], { type: "text/markdown" });
+    function openExportDialog(): void {
+        exportText = serializeDeckMarkdown(title, cards, defaultFileName);
+        exportOpen = true;
+    }
+
+    function downloadMarkdown(): void {
+        const blob = new Blob([exportText], { type: "text/markdown" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `${defaultFileName}.md`;
         a.click();
         URL.revokeObjectURL(url);
+    }
+
+    async function copyMarkdown(): Promise<void> {
+        try {
+            await navigator.clipboard.writeText(exportText);
+            toastStore.success("Markdown in die Zwischenablage kopiert.");
+        } catch {
+            toastStore.error(
+                "Kopieren fehlgeschlagen — bitte den Text manuell markieren und kopieren.",
+            );
+        }
     }
 
     function openMdMode(mode: "add" | "replace"): void {
@@ -148,7 +168,7 @@
 
 <!-- Markdown bulk actions -->
 <div class="md-buttons">
-    <Button variant="secondary" class="md-btn" onclick={exportMarkdown}>
+    <Button variant="secondary" class="md-btn" onclick={openExportDialog}>
         Als Markdown exportieren
     </Button>
     <Button variant="secondary" class="md-btn" onclick={() => openMdMode("add")}>
@@ -199,6 +219,38 @@ H~2~O - Wasser
             disabled={!mdInput.trim()}
         >
             {mdMode === "add" ? "Hinzufügen" : "Ersetzen"}
+        </Button>
+    {/snippet}
+</Dialog>
+
+<!-- Markdown export dialog: readonly multi-line preview + copy / save / close -->
+<Dialog
+    title="Markdown exportieren"
+    open={exportOpen}
+    onclose={() => (exportOpen = false)}
+>
+    <p class="md-hint">
+        Der komplette Stapel als Markdown — kopieren oder als Datei speichern.
+    </p>
+    <textarea
+        class="md-input export-input"
+        rows="12"
+        readonly
+        bind:value={exportText}
+        spellcheck="false"
+        aria-label="Markdown-Vorschau"
+    ></textarea>
+    {#snippet footer()}
+        <Button onclick={copyMarkdown}>Kopieren</Button>
+        <Button
+            variant="primary"
+            onclick={downloadMarkdown}
+            title="Als .md-Datei speichern"
+        >
+            Speichern
+        </Button>
+        <Button variant="secondary" onclick={() => (exportOpen = false)}>
+            Schließen
         </Button>
     {/snippet}
 </Dialog>
@@ -581,6 +633,19 @@ H~2~O - Wasser
     .md-input:focus {
         border-color: var(--primary);
         outline: 2px solid var(--focus-ring);
+    }
+
+    /* Readonly export preview: monospace, no wrapping so lines stay
+       intact (multi-line card sides included). */
+    .export-input {
+        font-family:
+            ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.78rem;
+        white-space: pre;
+        overflow: auto;
+
+        background: var(--surface-soft);
+        cursor: default;
     }
 
     .md-errors {
