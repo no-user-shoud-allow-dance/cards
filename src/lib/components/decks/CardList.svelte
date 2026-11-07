@@ -76,6 +76,8 @@
     .card-list .front {
         font-weight: 600;
         overflow-wrap: anywhere;
+        /* Multi-line card sides render with their line breaks. */
+        white-space: pre-wrap;
     }
 
     .card-list .sep {
@@ -88,6 +90,7 @@
         min-width: 0;
         color: var(--text-muted);
         overflow-wrap: anywhere;
+        white-space: pre-wrap;
     }
 
     @media (max-width: 540px) {

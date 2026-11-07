@@ -66,9 +66,13 @@ export function progressDiff(
 /**
  * Normal mode: brackets are hidden, content inside is shown.
  *   ἀγάπη [Liebe]  →  ἀγάπη Liebe
+ * Spaces/tabs collapse, real newlines are kept (multi-line sides).
  */
 function stripBrackets(text: string): string {
-    return text.replace(/\[([^\]]*)\]/g, "$1").replace(/\s+/g, " ").trim();
+    return text
+        .replace(/\[([^\]]*)\]/g, "$1")
+        .replace(/[^\S\n]+/g, " ")
+        .trim();
 }
 
 /**
@@ -76,7 +80,10 @@ function stripBrackets(text: string): string {
  *   ἀγάπη [Liebe]  →  ἀγάπη
  */
 function removeBrackets(text: string): string {
-    return text.replace(/\s*\[[^\]]*\]/g, "").replace(/\s+/g, " ").trim();
+    return text
+        .replace(/[^\S\n]*\[[^\]]*\]/g, "")
+        .replace(/[^\S\n]+/g, " ")
+        .trim();
 }
 
 // ── Card display helpers ─────────────────────────────────────────
@@ -88,12 +95,17 @@ function removeBrackets(text: string): string {
  * separately and tags render as elements (see displayFront + RichText).
  */
 export function cardPrompt(card: FlashCard): string {
-    return stripBrackets(stripInlineFormat(imageTokensToAltText(card.front)));
+    // Single line for search queries: newlines collapse too.
+    return stripBrackets(stripInlineFormat(imageTokensToAltText(card.front)))
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
-/** The back side (answer / translation) as plain text, formatting stripped. */
+/** The back side (answer / translation) as plain single-line text. */
 export function cardAnswer(card: FlashCard): string {
-    return stripInlineFormat(imageTokensToAltText(card.back));
+    return stripInlineFormat(imageTokensToAltText(card.back))
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
 /**

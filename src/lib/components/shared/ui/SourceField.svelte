@@ -24,7 +24,7 @@
     };
 
     /**
-     * Single-line source editor for one card side. Shows the raw markdown
+     * Multi-line source editor for one card side. Shows the raw markdown
      * in a contenteditable: every allowlisted delimiter (`**`, `~`, …)
      * stays visible as a pill chip, while the content inside is wrapped
      * in the real element, so it previews live (bold, subscript, …).
@@ -65,15 +65,17 @@
     // ── DOM ↔ source serialization ──────────────────────────────
 
     // Length of a DOM node in source characters: text nodes count their
-    // value, tag chips their literal markup, live tag elements their
-    // children (the tag source itself lives in the chips). Anything
-    // else (e.g. a stray <br>) counts 0.
+    // value (newlines included), tag chips their literal markup, live tag
+    // elements their children (the tag source itself lives in the chips),
+    // and a <br> counts as one newline.
     function innerLength(node: Node): number {
         if (node.nodeType === Node.TEXT_NODE) return node.nodeValue?.length ?? 0;
         if (node.nodeType !== Node.ELEMENT_NODE) return 0;
-        if ((node as HTMLElement).dataset.literal !== undefined) {
-            return (node as HTMLElement).dataset.literal!.length;
+        const element = node as HTMLElement;
+        if (element.dataset.literal !== undefined) {
+            return element.dataset.literal!.length;
         }
+        if (element.tagName === "BR") return 1;
         let sum = 0;
         for (const child of Array.from(node.childNodes)) sum += innerLength(child);
         return sum;
@@ -84,6 +86,7 @@
         if (node.nodeType !== Node.ELEMENT_NODE) return "";
         const element = node as HTMLElement;
         if (element.dataset.literal !== undefined) return element.dataset.literal;
+        if (element.tagName === "BR") return "\n";
         let out = "";
         for (const child of Array.from(node.childNodes)) out += serialize(child);
         return out;
@@ -242,8 +245,9 @@
             const len = innerLength(child);
             if (offset <= acc) return { node: root, offset: i };
             if (offset < acc + len) {
-                if ((child as HTMLElement).dataset?.literal !== undefined) {
-                    return { node: root, offset: i }; // inside a chip → before it
+                const ce = child as HTMLElement;
+                if (ce.dataset?.literal !== undefined || ce.tagName === "BR") {
+                    return { node: root, offset: i }; // inside a chip/<br> → before it
                 }
                 return locate(child, offset - acc); // descend into a live tag
             }
@@ -332,25 +336,38 @@
         value = serialize(el);
     }
 
-    function handleKeydown(event: KeyboardEvent): void {
-        // Card sides are single-line; a newline would split the card.
-        if (event.key === "Enter") event.preventDefault();
-        if (event.key === "Escape") toolbarPos = null;
-    }
-
-    function handlePaste(event: ClipboardEvent): void {
-        event.preventDefault();
-        const text = event.clipboardData?.getData("text/plain") ?? "";
+    // Inserts plain text at the caret (used for Enter and paste, so the
+    // DOM stays flat: text nodes, chips and live spans only — newlines
+    // are real "\n" characters in text nodes, rendered via pre-wrap).
+    function insertTextAtCaret(text: string): void {
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0) return;
         const range = sel.getRangeAt(0);
         range.deleteContents();
-        const node = document.createTextNode(text.replace(/[\r\n]+/g, " "));
+        const node = document.createTextNode(text);
         range.insertNode(node);
         range.setStartAfter(node);
         range.collapse(true);
         sel.removeAllRanges();
         sel.addRange(range);
+    }
+
+    function handleKeydown(event: KeyboardEvent): void {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            insertTextAtCaret("\n");
+            handleInput();
+        }
+        if (event.key === "Escape") toolbarPos = null;
+    }
+
+    function handlePaste(event: ClipboardEvent): void {
+        event.preventDefault();
+        const text = (event.clipboardData?.getData("text/plain") ?? "").replace(
+            /\r\n?/g,
+            "\n",
+        );
+        insertTextAtCaret(text);
         handleInput();
     }
 
@@ -424,7 +441,7 @@
         class:empty={value === ""}
         contenteditable="true"
         role="textbox"
-        aria-multiline="false"
+        aria-multiline="true"
         aria-label={ariaLabel}
         data-placeholder={placeholder}
         spellcheck="false"

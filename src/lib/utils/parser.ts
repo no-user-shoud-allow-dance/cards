@@ -39,6 +39,25 @@ export function extractImages(text: string): CardImage[] {
 }
 
 /**
+ * Escapes a card side for the single-line-per-card markdown format:
+ * backslashes first, then real newlines become the literal `\n`.
+ */
+export function escapeCardSide(text: string): string {
+    return text.replace(/\\/g, "\\\\").replace(/\n/g, "\\n");
+}
+
+/**
+ * Inverse of escapeCardSide, applied when a card line is parsed:
+ * `\n` becomes a real newline, `\\` a single backslash (single pass,
+ * left to right, so the two never interfere).
+ */
+export function unescapeCardSide(text: string): string {
+    return text.replace(/\\(.)/g, (match, ch: string) =>
+        ch === "n" ? "\n" : ch === "\\" ? "\\" : match,
+    );
+}
+
+/**
  * Replaces every image token with its alt text. Used where the alt is
  * wanted as text (search queries, progress diffs) — not for card
  * display, where the image itself is shown.
@@ -63,7 +82,8 @@ export function stripImageTokens(text: string): string {
         .replace(IMAGE_PATTERN, (_match, alt: string, url: string) =>
             isValidImageUrl(url) ? " " : ` ${alt} `,
         )
-        .replace(/\s+/g, " ")
+        // Collapse spaces/tabs but keep real newlines (multi-line sides).
+        .replace(/[^\S\n]+/g, " ")
         .trim();
 }
 
@@ -74,7 +94,9 @@ export function stripImageTokens(text: string): string {
  *
  * The line is split on the FIRST " - " only, so the back side may
  * itself contain " - " (the editor serializes sides verbatim, and this
- * keeps save → reload lossless).
+ * keeps save → reload lossless). Real newlines inside a side are stored
+ * as the literal `\n` escape (the format is one card per line) and
+ * unescaped here via unescapeCardSide.
  *
  * The front side may contain bracketed hints, e.g.
  *   ἀγάπη [Liebe] - love
@@ -98,8 +120,9 @@ function parseCardLine(
         return null;
     }
 
-    const front = line.slice(0, sep).trim();
-    const back = line.slice(sep + 3).trim();
+    // `\n` escapes in the raw line become real newlines (multi-line sides).
+    const front = unescapeCardSide(line.slice(0, sep).trim());
+    const back = unescapeCardSide(line.slice(sep + 3).trim());
 
     if (!front || !back) {
         errors.push(`Zeile ${lineNo}: Leere Vorder- oder Rückseite`);

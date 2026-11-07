@@ -7,8 +7,9 @@
 
     /**
      * Serializes the editor state to the deck markdown format. Image
-     * tokens (`![alt](url)`) stay verbatim inside the side texts, so
-     * saving round-trips them losslessly.
+     * tokens (`![alt](url)`) stay verbatim inside the side texts, and
+     * real newlines are escaped as `\n` (the format is one card per
+     * line), so saving round-trips losslessly.
      */
     export function serializeDeckMarkdown(
         title: string,
@@ -18,7 +19,9 @@
         const lines = [`# ${title.trim() || fallbackName}`, ""];
         for (const card of cards) {
             if (card.front.trim() && card.back.trim()) {
-                lines.push(`${card.front.trim()} - ${card.back.trim()}`);
+                const front = escapeCardSide(card.front.trim());
+                const back = escapeCardSide(card.back.trim());
+                lines.push(`${front} - ${back}`);
             }
         }
         return lines.join("\n") + "\n";
@@ -26,7 +29,7 @@
 </script>
 
 <script lang="ts">
-    import { extractImages, parseDeck } from "#lib/utils/parser";
+    import { escapeCardSide, extractImages, parseDeck } from "#lib/utils/parser";
     import Button from "#lib/components/shared/ui/Button.svelte";
     import CheckBox from "#lib/components/shared/ui/CheckBox.svelte";
     import Dialog from "#lib/components/shared/ui/Dialog.svelte";
