@@ -106,18 +106,24 @@ export type RichNode =
     | { type: "element"; tag: AllowedTag; children: RichNode[] };
 
 /**
- * Editor-only token: bracketed hint spans `[...]` on the front side.
- * `![alt](url)` image tokens are NOT hints — the `[` of `![` is skipped.
+ * Editor-only tokens: bracketed hint spans `[...]` (hint-open/hint-close)
+ * and image tokens `![alt](url)` (image, one leaf token). Used by the
+ * editor to visualize them; the display pipeline strips brackets and
+ * image tokens as plain text before rendering, so parseRichText keeps
+ * ignoring them.
  */
 export type EditorToken =
     | SourceToken
-    | { type: "hint-open" | "hint-close"; raw: string; start: number; end: number };
+    | { type: "hint-open" | "hint-close"; raw: string; start: number; end: number }
+    | { type: "image"; raw: string; start: number; end: number };
+
+/** Sticky variant of the parser's IMAGE_PATTERN, matched at one position. */
+const IMAGE_TOKEN = /!\[[^\]]*\]\([^\s]+\)/y;
 
 /**
  * Like tokenizeInline, but additionally recognizes bracketed hint spans
- * `[...]` as hint-open/hint-close tokens (used by the editor to
- * visualize hints; the display pipeline strips brackets as plain text
- * before rendering, so parseRichText keeps ignoring them).
+ * `[...]` and image tokens `![alt](url)` (used by the editor to
+ * visualize them with a texture overlay).
  */
 export function tokenizeEditorSource(text: string): EditorToken[] {
     const tokens: EditorToken[] = [];
@@ -136,6 +142,25 @@ export function tokenizeEditorSource(text: string): EditorToken[] {
     };
     while (i < text.length) {
         const ch = text[i]!;
+        if (ch === "!") {
+            // Image token: one leaf token, matched before the `[` of
+            // `![` could be mistaken for a hint bracket.
+            IMAGE_TOKEN.lastIndex = i;
+            const m = IMAGE_TOKEN.exec(text);
+            if (m) {
+                emitText(i);
+                tokens.push({
+                    type: "image",
+                    raw: m[0],
+                    start: i,
+                    end: i + m[0].length,
+                });
+                last = i = i + m[0].length;
+                continue;
+            }
+            i++;
+            continue;
+        }
         if (ch === "[" && text[i - 1] !== "!") {
             emitText(i);
             tokens.push({ type: "hint-open", raw: "[", start: i, end: i + 1 });
@@ -236,7 +261,8 @@ export function stripInlineFormat(text: string): string {
 /**
  * Structural signature of the formatting tokens in source: "C<raw>" per
  * delimiter chip (open / close token) and "L<tag>" per live element
- * (formatting tag or "hint" for a bracketed span), in document order,
+ * (formatting tag, "hint" for a bracketed span, "image" for an image
+ * token), in document order,
  * joined with "|". The source editor compares this with the signature
  * of its DOM to detect hand-typed formatting that still sits in plain
  * text nodes and needs to be re-rendered as chips + live preview.
@@ -246,6 +272,10 @@ export function tagStructureSignature(source: string): string {
     const stack: string[] = [];
     for (const token of tokenizeEditorSource(source)) {
         if (token.type === "text") continue;
+        if (token.type === "image") {
+            out.push("Limage");
+            continue;
+        }
         if (token.type === "hint-close") {
             stack.pop();
             continue;

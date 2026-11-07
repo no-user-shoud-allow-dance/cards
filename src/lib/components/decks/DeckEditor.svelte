@@ -321,6 +321,8 @@ H~2~O - Wasser
     markieren, um ihn zu umbrechen; ein Markierung anklicken, um sie zu
     entfernen. Eckige Klammern (z. B. <code>[Liebe]</code>) kennzeichnen
     eine Merkhilfe auf der Vorderseite — im Pur-Modus wird sie ausgeblendet.
+    Bilder (<code>![alt](https://…)</code>) erscheinen wie Klammern
+    schraffiert, in der Akzentfarbe.
 </p>
 
 <style>

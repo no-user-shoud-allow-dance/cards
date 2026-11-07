@@ -28,9 +28,11 @@
      * in a contenteditable: every allowlisted delimiter (`**`, `~`, …)
      * stays visible as a pill chip, while the content inside is wrapped
      * in the real element, so it previews live (bold, subscript, …).
-     * Bracketed hints `[...]` get a hatched texture overlay. Clicking a
-     * chip removes the delimiter and its counterpart; selecting text shows
-     * a toolbar to wrap the selection.
+     * Bracketed hints `[...]` get a hatched texture overlay, image tokens
+     * `![alt](url)` the same hatch in the primary color. Clicking a chip
+     * removes the delimiter
+     * and its counterpart; selecting text shows a toolbar to wrap the
+     * selection.
      *
      * DOM layout per pair: [chip `**`] [<b>…children…</b>] [chip `**`] —
      * the chips carry the literal source, the live element only its
@@ -141,6 +143,16 @@
         for (const token of tokenizeEditorSource(source)) {
             if (token.type === "text") {
                 currentContainer().appendChild(document.createTextNode(token.raw));
+                continue;
+            }
+            if (token.type === "image") {
+                // Image token: a leaf live span with a dotted texture; the
+                // raw `![alt](url)` stays editable text inside it.
+                const img = document.createElement("span");
+                img.className = "live-tag live-image";
+                img.dataset.tag = "image";
+                img.appendChild(document.createTextNode(token.raw));
+                currentContainer().appendChild(img);
                 continue;
             }
             if (token.type === "hint-open") {
@@ -573,6 +585,23 @@
             transparent 7px
         );
         box-shadow: inset 0 0 0 1px var(--border);
+    }
+
+    /* Image token `![alt](url)`: the same hatch texture as a hint, but
+       in the primary color (thumbnails render separately below). */
+    .source-editable :global(.live-image) {
+        padding: 0 0.1em;
+
+        border-radius: var(--radius-sm);
+
+        background: repeating-linear-gradient(
+            -45deg,
+            var(--primary-soft) 0,
+            var(--primary-soft) 3px,
+            transparent 3px,
+            transparent 7px
+        );
+        box-shadow: inset 0 0 0 1px var(--primary);
     }
 
     .tag-toolbar {
