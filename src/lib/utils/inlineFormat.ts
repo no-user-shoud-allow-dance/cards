@@ -106,6 +106,80 @@ export type RichNode =
     | { type: "element"; tag: AllowedTag; children: RichNode[] };
 
 /**
+ * Editor-only token: bracketed hint spans `[...]` on the front side.
+ * `![alt](url)` image tokens are NOT hints — the `[` of `![` is skipped.
+ */
+export type EditorToken =
+    | SourceToken
+    | { type: "hint-open" | "hint-close"; raw: string; start: number; end: number };
+
+/**
+ * Like tokenizeInline, but additionally recognizes bracketed hint spans
+ * `[...]` as hint-open/hint-close tokens (used by the editor to
+ * visualize hints; the display pipeline strips brackets as plain text
+ * before rendering, so parseRichText keeps ignoring them).
+ */
+export function tokenizeEditorSource(text: string): EditorToken[] {
+    const tokens: EditorToken[] = [];
+    const stack: ({ kind: "delim"; tag: AllowedTag } | { kind: "hint" })[] = [];
+    let last = 0;
+    let i = 0;
+    const emitText = (end: number): void => {
+        if (end > last) {
+            tokens.push({
+                type: "text",
+                raw: text.slice(last, end),
+                start: last,
+                end,
+            });
+        }
+    };
+    while (i < text.length) {
+        const ch = text[i]!;
+        if (ch === "[" && text[i - 1] !== "!") {
+            emitText(i);
+            tokens.push({ type: "hint-open", raw: "[", start: i, end: i + 1 });
+            stack.push({ kind: "hint" });
+            last = i = i + 1;
+            continue;
+        }
+        if (ch === "]") {
+            const top = stack[stack.length - 1];
+            if (top && top.kind === "hint") {
+                emitText(i);
+                stack.pop();
+                tokens.push({ type: "hint-close", raw: "]", start: i, end: i + 1 });
+                last = i = i + 1;
+                continue;
+            }
+            i++; // literal ] — becomes part of a later text token
+            continue;
+        }
+        const d = DELIMITERS.find((d) => text.startsWith(d.delim, i));
+        if (!d) {
+            i++;
+            continue;
+        }
+        const top = stack[stack.length - 1];
+        const type: "open" | "close" =
+            top && top.kind === "delim" && top.tag === d.tag ? "close" : "open";
+        emitText(i);
+        tokens.push({
+            type,
+            raw: d.delim,
+            tag: d.tag,
+            start: i,
+            end: i + d.delim.length,
+        });
+        if (type === "open") stack.push({ kind: "delim", tag: d.tag });
+        else stack.pop();
+        last = i = i + d.delim.length;
+    }
+    emitText(text.length);
+    return tokens;
+}
+
+/**
  * Parses text into a renderable node tree. Nesting of allowlisted
  * constructs is supported; a closing delimiter only pairs with the
  * innermost open tag of the same kind (anything else stays literal
@@ -160,23 +234,30 @@ export function stripInlineFormat(text: string): string {
 }
 
 /**
- * Structural signature of the delimiter tokens in source: "C<raw>" per
- * chip (open / close token) and "L<tag>" per live element, in document
- * order, joined with "|". The source editor compares this with the
- * signature of its DOM to detect hand-typed formatting that still sits
- * in plain text nodes and needs to be re-rendered as chips + live
- * preview.
+ * Structural signature of the formatting tokens in source: "C<raw>" per
+ * delimiter chip (open / close token) and "L<tag>" per live element
+ * (formatting tag or "hint" for a bracketed span), in document order,
+ * joined with "|". The source editor compares this with the signature
+ * of its DOM to detect hand-typed formatting that still sits in plain
+ * text nodes and needs to be re-rendered as chips + live preview.
  */
 export function tagStructureSignature(source: string): string {
     const out: string[] = [];
-    const stack: AllowedTag[] = [];
-    for (const token of tokenizeInline(source)) {
+    const stack: string[] = [];
+    for (const token of tokenizeEditorSource(source)) {
         if (token.type === "text") continue;
-        if (token.type === "open") {
+        if (token.type === "hint-close") {
+            stack.pop();
+            continue;
+        }
+        if (token.type === "hint-open") {
+            out.push("Lhint");
+            stack.push("hint");
+        } else if (token.type === "open") {
             out.push("C" + token.raw);
             out.push("L" + token.tag);
-            stack.push(token.tag!);
-        } else if (stack[stack.length - 1] === token.tag) {
+            stack.push("delim:" + token.tag);
+        } else if (stack[stack.length - 1] === "delim:" + token.tag) {
             stack.pop();
             out.push("C" + token.raw);
         }

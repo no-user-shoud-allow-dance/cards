@@ -5,7 +5,7 @@
         TAG_DELIMITER,
         removeTagPair,
         tagStructureSignature,
-        tokenizeInline,
+        tokenizeEditorSource,
         wrapRange,
         type AllowedTag,
     } from "#lib/utils/inlineFormat";
@@ -28,8 +28,9 @@
      * in a contenteditable: every allowlisted delimiter (`**`, `~`, …)
      * stays visible as a pill chip, while the content inside is wrapped
      * in the real element, so it previews live (bold, subscript, …).
-     * Clicking a chip removes the delimiter and its matching counterpart;
-     * selecting text shows a toolbar to wrap the selection.
+     * Bracketed hints `[...]` get a hatched texture overlay. Clicking a
+     * chip removes the delimiter and its counterpart; selecting text shows
+     * a toolbar to wrap the selection.
      *
      * DOM layout per pair: [chip `**`] [<b>…children…</b>] [chip `**`] —
      * the chips carry the literal source, the live element only its
@@ -133,11 +134,31 @@
         el.textContent = "";
         containers.length = 0;
         containers.push(el);
-        const openTags: AllowedTag[] = [];
+        // Stack entries: { kind: "delim", tag } | { kind: "hint" }.
+        const openStack: ({ kind: "delim"; tag: AllowedTag } | { kind: "hint" })[] =
+            [];
 
-        for (const token of tokenizeInline(source)) {
+        for (const token of tokenizeEditorSource(source)) {
             if (token.type === "text") {
                 currentContainer().appendChild(document.createTextNode(token.raw));
+                continue;
+            }
+            if (token.type === "hint-open") {
+                // Bracketed hint: a live span with a texture overlay; the
+                // bracket characters stay editable text inside it.
+                const hint = document.createElement("span");
+                hint.className = "live-tag live-hint";
+                hint.dataset.tag = "hint";
+                currentContainer().appendChild(hint);
+                containers.push(hint);
+                openStack.push({ kind: "hint" });
+                hint.appendChild(document.createTextNode(token.raw));
+                continue;
+            }
+            if (token.type === "hint-close") {
+                currentContainer().appendChild(document.createTextNode(token.raw));
+                containers.pop();
+                openStack.pop();
                 continue;
             }
             if (token.type === "open") {
@@ -148,15 +169,15 @@
                 live.dataset.tag = token.tag!;
                 currentContainer().appendChild(live);
                 containers.push(live);
-                openTags.push(token.tag!);
+                openStack.push({ kind: "delim", tag: token.tag! });
                 continue;
             }
             // Closing delimiter: pairs only with the innermost open tag;
             // the chip goes after the live element, back into its parent.
-            const top = openTags[openTags.length - 1];
-            if (top === token.tag) {
+            const top = openStack[openStack.length - 1];
+            if (top && top.kind === "delim" && top.tag === token.tag) {
                 containers.pop();
-                openTags.pop();
+                openStack.pop();
                 appendChip(token);
             } else {
                 currentContainer().appendChild(document.createTextNode(token.raw));
@@ -535,6 +556,23 @@
         border-radius: var(--radius-sm);
 
         background: var(--warning-bg);
+    }
+
+    /* Bracketed hint `[...]`: a hatched texture overlay so the region
+       stands out from plain text and formatting delimiters. */
+    .source-editable :global(.live-hint) {
+        padding: 0 0.1em;
+
+        border-radius: var(--radius-sm);
+
+        background: repeating-linear-gradient(
+            -45deg,
+            var(--surface-soft) 0,
+            var(--surface-soft) 3px,
+            transparent 3px,
+            transparent 7px
+        );
+        box-shadow: inset 0 0 0 1px var(--border);
     }
 
     .tag-toolbar {
