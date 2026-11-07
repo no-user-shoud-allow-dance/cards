@@ -38,6 +38,14 @@
         joinSync(hostPeerId);
     }
 
+    // Friendly bye when the user disconnects manually (the log buffer is
+    // cleared by destroyPeer, so the bye line is added afterwards).
+    function handleDisconnect(): void {
+        syncStore.destroyPeer();
+        syncStore.addLog("[sync] bye — Verbindung getrennt. Tschüss!");
+        toastStore.success("Tschüss! Bis zum nächsten Sync.");
+    }
+
     // A scanned host QR carries "nsc-peer:<id>" — strip the prefix so the
     // input shows the plain peer ID (joinSync strips it as well).
     function handleScan(value: string): void {
@@ -99,7 +107,7 @@
         </div>
     {:else}
         <div class="actions">
-            <Button variant="secondary" onclick={() => syncStore.destroyPeer()}>
+            <Button variant="secondary" onclick={handleDisconnect}>
                 Trennen
             </Button>
         </div>

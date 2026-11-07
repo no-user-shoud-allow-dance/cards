@@ -107,6 +107,13 @@ function wireConnection(conn: DataConnection): void {
             }
         })();
     });
+    conn.on("close", () => {
+        syncLog("connection closed — tschüss!");
+        if (syncStore.status === "connected") {
+            // Back to hosting (host side) or idle (joiner side).
+            syncStore.status = syncStore.peerId ? "hosting" : "idle";
+        }
+    });
     conn.on("error", () => handlePeerError({ type: "network" }));
 }
 
@@ -169,6 +176,10 @@ export function joinSync(hostPeerId: string): void {
                 .catch((err) => {
                     syncError("could not apply payload:", err);
                 });
+        });
+        conn.on("close", () => {
+            syncLog("connection closed — tschüss!");
+            if (syncStore.status === "connected") syncStore.status = "idle";
         });
         conn.on("error", () => handlePeerError({ type: "network" }));
     });
