@@ -6,13 +6,19 @@
     let { value, size = 200 }: { value: string; size?: number } = $props();
 
     let container = $state<HTMLDivElement | null>(null);
-    let qr = $state<QRCodeStyling | null>(null);
     let trigger = $state<HTMLButtonElement | null>(null);
     let closeButton = $state<HTMLButtonElement | null>(null);
     let fullscreenContainer = $state<HTMLDivElement | null>(null);
-    let fullscreenQr = $state<QRCodeStyling | null>(null);
     let fullscreen = $state(false);
     let fullscreenSize = $state(320);
+
+    // The QRCodeStyling instances are plain (non-reactive) variables:
+    // they are class instances, and making them $state would create a
+    // reactive cycle between the two effects below (an object assigned
+    // to $state always counts as "changed", so each effect would
+    // reschedule the other — the page froze when opening fullscreen).
+    let qr: QRCodeStyling | null = null;
+    let fullscreenQr: QRCodeStyling | null = null;
 
     // True when the payload is too long for a QR code ("code length
     // overflow") — instead of letting the error escape as a 500, the
@@ -63,25 +69,31 @@
     // the first link was too long and the user switches to a shorter
     // mode) — update otherwise. Any failure (payload too long for a QR
     // code) lands in qrFailed and shows the warning instead of throwing.
+    // This effect only writes qrFailed (never read here) — the fullscreen
+    // instance is owned by the effect below, so no reactive cycle.
     $effect(() => {
         const data = value;
-        if (!container) return;
+        const target = container;
+        if (!target) return;
         try {
             if (qr) qr.update({ data });
-            else qr = createQr(container, size, data);
-            fullscreenQr?.update({ data });
+            else qr = createQr(target, size, data);
             qrFailed = qr === null;
         } catch {
             qrFailed = true;
         }
     });
 
-    // Build the enlarged QR once the fullscreen container exists.
+    // Build the enlarged QR while the fullscreen view is open; re-create
+    // on size/link changes (clearing the target first so SVGs never pile
+    // up). Owns fullscreenQr — a plain variable, so nothing reschedules
+    // the effect above.
     $effect(() => {
         if (!fullscreen || qrFailed) return;
         const target = fullscreenContainer;
         if (!target) return;
-        fullscreenQr = createQr(target, fullscreenSize, untrack(() => value));
+        target.replaceChildren();
+        fullscreenQr = createQr(target, fullscreenSize, value);
         if (!fullscreenQr) qrFailed = true;
         return () => {
             fullscreenQr = null;
