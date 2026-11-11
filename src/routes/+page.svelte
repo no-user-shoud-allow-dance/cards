@@ -155,6 +155,10 @@
     });
 </script>
 
+<svelte:head>
+    <title>NSC</title>
+</svelte:head>
+
 {#if ready}
     <Page>
         <img
