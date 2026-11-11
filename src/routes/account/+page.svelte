@@ -154,11 +154,6 @@
             value: boolText(settingStore.googleDisabled),
         },
         {
-            key: "intro_open",
-            description: "Intro auf der Startseite geöffnet",
-            value: boolText(read("intro_open")),
-        },
-        {
             key: "privacy_toast_dismissed",
             description: "Datenschutz-Hinweis quittiert",
             value: boolText(read("privacy_toast_dismissed")),

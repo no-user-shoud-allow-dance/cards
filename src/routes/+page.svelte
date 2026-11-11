@@ -11,7 +11,7 @@
     import FolderSection from "#lib/components/home/FolderSection.svelte";
     import ContinueCard from "#lib/components/home/ContinueCard.svelte";
     import ShareImport from "#lib/components/sharing/ShareImport.svelte";
-    import HomeIntro from "#lib/components/home/HomeIntro.svelte";
+    import Card from "#lib/components/shared/ui/Card.svelte";
     import Button from "#lib/components/shared/ui/Button.svelte";
 
     // Decks live only in this browser (IndexedDB); wait for them before
@@ -114,9 +114,28 @@
 
 {#if ready}
     <Page>
+        <img
+            class="banner"
+            src="/banner.svg"
+            alt="NSC – Banner mit wabernden Formen und Karteikarten"
+            width="1280"
+            height="480"
+        />
+
         <ShareImport />
 
-        <HomeIntro />
+        <Card href={resolve("/docs")} hover bg="primary" class="docs-card">
+            <div class="docs-card-body">
+                <div class="docs-card-texts">
+                    <span class="docs-card-title">Dokumentation</span>
+                    <span class="docs-card-text">
+                        So funktioniert NSC — einfach erklärt, inklusive
+                        technischem Hintergrund für Entwickler:innen.
+                    </span>
+                </div>
+                <span class="docs-card-arrow" aria-hidden="true">→</span>
+            </div>
+        </Card>
 
         <PageHeader
             title="Ordner"
@@ -170,6 +189,72 @@
 {/if}
 
 <style>
+    /* The class lands on the Card root (a child component), so :global.
+       The hover border needs to out-specify Card's own .card.hover:hover. */
+    :global(.docs-card) {
+        margin-bottom: 2rem;
+    }
+
+    :global(.card.docs-card.hover:hover) {
+        border-color: var(--primary);
+    }
+
+    .docs-card-body {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .docs-card-texts {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 0;
+    }
+
+    .docs-card-title {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .docs-card-text {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .docs-card-arrow {
+        flex: 0 0 auto;
+
+        color: var(--primary);
+        font-size: 1.3rem;
+        line-height: 1;
+
+        transition: transform var(--transition-fast);
+    }
+
+    :global(.docs-card:hover) .docs-card-arrow {
+        transform: translateX(4px);
+    }
+
+    .banner {
+        display: block;
+        width: 100%;
+        height: auto;
+
+        margin-bottom: 1.75rem;
+
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-card);
+    }
+
+    @media (max-width: 540px) {
+        .banner {
+            margin-bottom: 1.25rem;
+        }
+    }
+
     .empty {
         margin: 1rem 0;
         color: var(--text-muted);

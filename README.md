@@ -1,8 +1,12 @@
+<p align="center">
+    <img src="static/banner.svg" alt="NSC — wavy banner with flashcards" width="880">
+</p>
+
+# NSC
+
 > [!CAUTION]
 > Vibe-coded / AI-developed app
 > Not yet proofed by a human.
-
-# NSC
 
 ![Mistral AI](https://img.shields.io/badge/mistral%20ai-%23FA520F.svg?style=for-the-badge&logo=mistralai&logoColor=white)
 ![SvelteKit](https://img.shields.io/badge/sveltekit-%23FF3E00.svg?style=for-the-badge&logo=svelte&logoColor=white)
@@ -12,23 +16,17 @@
 ![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
 ![Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg?style=for-the-badge)
 
-NSC is a local-first flashcard app for learning vocabulary with the Leitner system. Upload your own decks as Markdown, browse them in an overview, or run focused cram sessions with a built-in timer.
+NSC is a local-first flashcard app for learning vocabulary with the Leitner system. Upload your own decks as Markdown, browse them in an overview, or run focused cram sessions with a built-in timer. All data lives in your browser — there is no backend.
 
 ## Features
 
-- **Leitner spaced repetition** — Cards progress through 6 boxes based on how well you know them. Cards you struggle with reappear sooner.
-- **Cram mode** — Timed study sessions with a countdown clock, break reminders, and a session summary with confetti on completion.
-- **Overview mode** — Browse all cards in a deck without affecting your Leitner progress.
-- **Deck management** — Upload `.md` decks, organize them into folders, and track per-deck progress. Decks are stored entirely in your browser (IndexedDB).
-- **Deck types** — English, Latin, and Altgriechisch. Latin and Greek decks support a "pure mode" that hides translations until you reveal them. The deck type is auto-detected from the content on upload.
-- **Share & import** — Export a deck as a share link or import one from a link.
-- **Privacy-first** — No accounts, no servers, no tracking. All data stays on your device. Incognito/private windows are detected so you're warned that data won't persist.
-- **PWA** — Installable as a standalone app with offline support.
-- **Study timer** — Track time spent per deck across sessions.
+<p align="center">
+    <img src="static/features.svg" alt="NSC features — wavy-framed table with all features" width="880">
+</p>
 
 ## Deck format
 
-Decks are plain Markdown files. One H1 title line, then one card per line with front and back separated by ` - `:
+Decks are plain Markdown files: one H1 title line, then one card per line with front and back separated by the first ` - ` (the back side may itself contain ` - `):
 
 ```markdown
 # Lektion 22
@@ -38,13 +36,48 @@ amas - du liebst
 amat - er/sie/es liebt
 ```
 
+### Inline styling
+
+Card sides support a small allowlist of inline formatting (nesting works; anything not on the list stays literal text):
+
+| Syntax | Renders as |
+| --- | --- |
+| `` `code` `` | inline `code` |
+| `**bold**` | **bold** |
+| `*italic*` | *italic* |
+| `++underline++` | underlined text |
+| `~~strike~~` | ~~strike~~ |
+| `==mark==` | highlighted text |
+| `^sup^` | superscript |
+| `~sub~` | subscript |
+
+Both sides accept one image each via `![alt](url)` (https URLs only, validated on import).
+
+### Hints
+
+Write a hint in square brackets on the **front** side of a card:
+
+```markdown
+ἀγάπη [Liebe] - love
+```
+
+- **Normal mode** — the brackets are hidden and the hint shows inline on the prompt (`ἀγάπη Liebe`). After you flip the card, the prompt repeats as a small muted line above the answer.
+- **Pure mode** (Latin and Greek decks, toggleable in the settings) — brackets *and* hint content are removed from the prompt, so you only see `ἀγάπη`; language diacritics are normalized as well (Greek without breathing marks and tonos, Latin without macrons). The flipped card then shows prompt and answer together.
+- **Overview** always shows both sides with the hint content inline and the brackets hidden — pure mode only applies to cram sessions.
+
+Hints are ignored for deck-type auto-detection and for search.
+
 ## Tech stack
 
-- [SvelteKit](https://svelte.dev/docs/kit) — App framework (routing, SSR)
-- [Svelte 5](https://svelte.dev) — UI framework (runes mode)
-- [TypeScript](https://www.typescriptlang.org) — Type safety
-- [Vite](https://vite.dev) — Build tool
+<p align="center">
+    <img src="static/stack.svg" alt="Main tech stack: SvelteKit, Svelte 5, TypeScript, Vite" width="880">
+</p>
+
+Libraries:
+
 - [@sveltejs/adapter-vercel](https://svelte.dev/docs/kit/adapter-vercel) — Deployment adapter
+- [PeerJS](https://peerjs.com) — WebRTC device sync
+- [qr-code-styling](https://github.com/kozakdenys/qr-code-styling) — Styled QR codes for sharing and sync pairing
 - [detectincognitojs](https://github.com/Joe12387/detectIncognito) — Incognito detection for the persistence warning
 
 ## Getting started
@@ -68,30 +101,38 @@ bun run build
 bun run preview
 ```
 
+## Documentation
+
+The documentation lives in [`docs/`](docs) as Markdown files and is rendered directly on the website at `/docs` (via [mdsvex](https://mdsvex.pngwn.io), a dev dependency). It explains everyday usage in plain language and covers the technical background for developers.
+
 ## Project structure
 
 ```
 src/
-├── routes/                  # SvelteKit pages
-│   ├── +page.svelte         # Home (folder overview, continue learning)
-│   ├── upload/              # Upload a new deck
-│   ├── (deck)/             # Deck-scoped routes
-│   │   ├── deck/[slug]/     # Deck detail & management
-│   │   ├── cram/[slug]/     # Cram session (Leitner + timer)
-│   │   └── overview/[slug]/ # Overview mode (no Leitner)
-│   └── legal/               # Legal pages (Datenschutz, Impressum, Lizenzen)
-├── lib/
-│   ├── components/          # Svelte components (cram, deck, home, shared, …)
-│   ├── composables/         # Reusable stateful logic (sessions, timer)
-│   ├── decks/               # Deck parsing & type detection
-│   ├── store/               # Svelte 5 runes stores (IndexedDB-backed)
-│   └── utils/               # Pure utilities (types, share, time, …)
-└── app.html                 # HTML shell
+├── routes/
+│   ├── +page.svelte          # Home (folder overview, continue learning)
+│   ├── account/              # Device sync (host / join via PeerJS)
+│   ├── (io)/                 # create / upload / import a deck
+│   ├── (deck)/
+│   │   ├── deck/[slug]/      # Deck detail & management
+│   │   ├── cram/[slug]/      # Cram session (Leitner + timer)
+│   │   ├── overview/[slug]/  # Overview mode (no Leitner)
+│   │   ├── edit/[slug]/      # Deck editor
+│   │   └── export/[slug]/    # Export & share links / QR
+│   └── legal/                # Legal pages (Datenschutz, Impressum, Lizenzen)
+└── lib/
+    ├── components/           # Feature + shared UI components
+    ├── composables/          # useCramSession, useOverviewSession, useStudyTimer
+    ├── stores/               # data (IndexedDB), persistent (localStorage), session
+    ├── storages/             # Typed localStorage / IndexedDB wrappers
+    ├── sync/                 # WebRTC device sync (PeerJS)
+    ├── types/                # Shared types (deck, learning, timer, ui)
+    └── utils/                # Pure helpers (parser, share, hash, studyActions, …)
 ```
 
 ## Privacy
 
-All decks and learning progress are stored locally in your browser's IndexedDB. Nothing is sent to a server. If you use a private/incognito window, the app warns you that your data will be lost when the session ends.
+Decks are stored in your browser's IndexedDB; learning progress, settings, and study time in `localStorage`. Nothing is sent to a server — the only exception is the PeerJS signaling handshake when you explicitly pair a second device, and even then the synced data travels directly between your devices over WebRTC. If you use a private/incognito window, the app warns you that your data will be lost when the session ends.
 
 ## License
 

@@ -291,6 +291,116 @@ kbd {
     text-decoration: underline;
 }
 
+/* ── Docs pages (/docs) ────────────────────────────────────────────
+   The chapter pages render markdown compiled by mdsvex, so the elements
+   come from a child component — like .legal, these rules must be global. */
+
+.docs-content h1 {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+}
+
+.docs-content h2 {
+    margin: 2rem 0 0.6rem;
+    font-size: 1.2rem;
+}
+
+.docs-content h3 {
+    margin: 1.5rem 0 0.4rem;
+    font-size: 1.05rem;
+}
+
+.docs-content p {
+    margin: 0 0 0.9rem;
+}
+
+.docs-content ul,
+.docs-content ol {
+    margin: 0 0 0.9rem;
+    padding-left: 1.25rem;
+}
+
+.docs-content li {
+    margin-bottom: 0.35rem;
+}
+
+.docs-content li > ul,
+.docs-content li > ol {
+    margin-top: 0.35rem;
+}
+
+.docs-content a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.docs-content a:hover {
+    text-decoration: underline;
+}
+
+.docs-content code {
+    padding: 0.06em 0.35em;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+    font-family:
+        ui-monospace,
+        "SF Mono",
+        SFMono-Regular,
+        Menlo,
+        Consolas,
+        monospace;
+    font-size: 0.82em;
+}
+
+.docs-content pre {
+    margin: 0 0 0.9rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface-soft);
+    overflow-x: auto;
+}
+
+.docs-content pre code {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: 0.8rem;
+}
+
+.docs-content blockquote {
+    margin: 0 0 0.9rem;
+    padding-left: 1rem;
+    border-left: 3px solid var(--border-strong);
+    color: var(--text-muted);
+}
+
+.docs-content table {
+    width: 100%;
+    margin: 0 0 0.9rem;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.docs-content th,
+.docs-content td {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border);
+    text-align: left;
+}
+
+.docs-content th {
+    background: var(--surface-soft);
+    font-weight: 600;
+}
+
+.docs-content hr {
+    margin: 1.25rem 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+}
+
 /* ── Reduced motion ──────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

@@ -69,6 +69,7 @@
         if (isOverviewPage) return `${deckName} · Übersicht`;
         if (isDeckExportPage) return `${deckName} · Exportieren`;
         if (isDeckPage) return deckName;
+        if (routePath.startsWith("/docs")) return "Dokumentation";
         if (routePath === "/account") return "Konto";
         return "";
     });
@@ -236,6 +237,11 @@
                         <span class="separator" aria-hidden="true">/</span>
                         <span aria-current="page">Übersicht</span>
                     </li>
+                {:else if routePath.startsWith("/docs")}
+                    <li>
+                        <span class="separator" aria-hidden="true">/</span>
+                        <span aria-current="page">Dokumentation</span>
+                    </li>
                 {:else if routePath === "/account"}
                     <li>
                         <span class="separator" aria-hidden="true">/</span>
@@ -279,6 +285,8 @@
     <!-- ── AppFooter (inlined) ── -->
     <footer class="app-footer">
         <nav class="footer-nav" aria-label="Rechtliches">
+            <a href={resolve("/docs")}>Dokumentation</a>
+            <span class="separator" aria-hidden="true">·</span>
             <a href={resolve("/legal/impressum")}>Impressum</a>
             <span class="separator" aria-hidden="true">·</span>
             <a href={resolve("/legal/datenschutz")}>Datenschutz</a>

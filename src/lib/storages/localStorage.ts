@@ -17,7 +17,6 @@ const schema = {
     study_time: {} as Record<string, number>,
     timer_state: {} as Record<string, PersistedTimerState>,
     mistral_api_key: "" as string,
-    intro_open: true as boolean,
     privacy_toast_dismissed: false as boolean,
     impersistent_toast_dismissed: false as boolean,
 } as const;
