@@ -4,6 +4,12 @@
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
     import Card from "#lib/components/shared/ui/Card.svelte";
     import Badge from "#lib/components/shared/ui/Badge.svelte";
+
+    let { data } = $props();
+
+    // Contact email from the environment (IMPRESSUM_EMAIL), never hardcoded
+    // in the source — loaded server-side in +page.server.ts.
+    const contactEmail = $derived(data.contactEmail);
 </script>
 
 <svelte:head>
@@ -28,7 +34,12 @@
 
 <p>
     Bei Fragen schreiben Sie an
-    <a href="mailto:nousad@web.de">nousad@web.de</a>.
+    {#if contactEmail}
+        <a href="mailto:{contactEmail}">{contactEmail}</a>.
+    {:else}
+        den im <a href={resolve("/legal/impressum")}>Impressum</a> genannten
+        Verantwortlichen.
+    {/if}
 </p>
 
 <h2>Lokal-first: Ihre Daten bleiben auf Ihrem Gerät</h2>
@@ -157,8 +168,9 @@
     das Recht, sich bei einer <strong>Aufsichtsbehörde</strong> zu beschweren
     (Art. 77 DSGVO — z. B. die für Ihren Wohnsitz zuständige Behörde). Der
     Verantwortliche im Sinne der DSGVO ist die im
-    <a href={resolve("/legal/impressum")}>Impressum</a> genannte Person
-    (<a href="mailto:nousad@web.de">nousad@web.de</a>). Aufgrund der kurzen
+    <a href={resolve("/legal/impressum")}>Impressum</a> genannte Person;
+    {#if contactEmail}Kontakt: <a href="mailto:{contactEmail}">{contactEmail}</a>.{/if}
+    Aufgrund der kurzen
     Speicherdauer und der Pseudonymisierung können Rechteanfragen nur
     eingeschränkt umgesetzt werden, soweit die Daten noch vorhanden und Ihnen
     zuordenbar sind.
@@ -336,8 +348,8 @@
     <a href={resolve("/account")}>Konto-Seite</a>. Server-Links laufen nach
     spätestens <strong>2 Tagen automatisch ab</strong> und werden vom Server
     gelöscht; eine frühere Löschung ist über den Anbieter (Vercel/Upstash) bzw.
-    per E-Mail an den Verantwortlichen möglich. Bei Fragen schreiben Sie an
-    <a href="mailto:nousad@web.de">nousad@web.de</a>.
+    per E-Mail an den Verantwortlichen möglich. Bei Fragen nutzen Sie den
+    Kontakt im <a href={resolve("/legal/impressum")}>Impressum</a>.
 </p>
 
 <style>
