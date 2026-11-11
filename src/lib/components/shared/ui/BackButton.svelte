@@ -49,12 +49,18 @@
         text-decoration: none;
         transition:
             background var(--transition-fast),
-            border-color var(--transition-fast);
+            border-color var(--transition-fast),
+            transform var(--transition-spring);
     }
 
     .back-button:hover {
         border-color: var(--primary);
         background: var(--primary-soft);
+        transform: translateX(-2px);
+    }
+
+    .back-button:active {
+        transform: translateX(-4px) scale(0.94);
     }
 
     @media (max-width: 700px) {

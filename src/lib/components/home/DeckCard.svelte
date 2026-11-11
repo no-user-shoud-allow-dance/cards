@@ -66,10 +66,13 @@
         color: var(--text-muted);
         font-size: 0.95rem;
 
-        transition: color var(--transition-fast);
+        transition:
+            color var(--transition-fast),
+            transform var(--transition-spring);
     }
 
     :global(.deck-card:hover) .deck-arrow {
         color: var(--text);
+        transform: translateX(3px);
     }
 </style>

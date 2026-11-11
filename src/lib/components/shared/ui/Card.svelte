@@ -66,11 +66,17 @@
         transition:
             border-color var(--transition-fast),
             background var(--transition-fast),
-            box-shadow var(--transition-fast);
+            box-shadow var(--transition-fast),
+            transform var(--transition-spring);
     }
 
     .card.hover:hover {
         border-color: var(--border-strong);
+        transform: translateY(-2px);
+    }
+
+    .card.hover:active {
+        transform: translateY(0) scale(0.98);
     }
 
     a.card.hover { cursor: pointer; }

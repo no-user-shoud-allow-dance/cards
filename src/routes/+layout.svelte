@@ -349,6 +349,12 @@
 
         color: var(--text);
         text-decoration: none;
+
+        transition: transform var(--transition-spring);
+    }
+
+    .brand:hover {
+        transform: scale(1.06);
     }
 
     .breadcrumbs {
@@ -444,12 +450,18 @@
 
         transition:
             background var(--transition-fast),
-            border-color var(--transition-fast);
+            border-color var(--transition-fast),
+            transform var(--transition-spring);
     }
 
     .add-link:hover {
         background: var(--primary-hover);
         border-color: var(--primary-hover);
+        transform: scale(1.1);
+    }
+
+    .add-link:active {
+        transform: scale(0.94);
     }
 
     .add-link:focus-visible {

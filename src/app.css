@@ -95,6 +95,9 @@
     --transition-normal: 200ms ease;
     --transition-flip: 420ms ease-in-out;
 
+    /* Springy overshoot (easeOutBack) for presses, hovers and pop-ins. */
+    --transition-spring: 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
     /* Layout */
     --content-width: 880px;
 
@@ -410,5 +413,17 @@ kbd {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+
+    /* Hover/press feedback must not move elements at all. */
+    .btn,
+    .card.hover,
+    .chapter,
+    .chapter-icon,
+    .settings-link,
+    .back-button,
+    .add-link,
+    .brand {
+        transform: none !important;
     }
 }

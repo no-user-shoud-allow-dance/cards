@@ -58,12 +58,26 @@
         text-decoration: none;
         transition:
             background var(--transition-fast),
-            border-color var(--transition-fast);
+            border-color var(--transition-fast),
+            transform var(--transition-spring);
+    }
+
+    .settings-link svg {
+        transition: transform var(--transition-spring);
     }
 
     .settings-link:hover {
         border-color: var(--primary);
         background: var(--primary-soft);
+        transform: scale(1.06);
+    }
+
+    .settings-link:hover svg {
+        transform: rotate(45deg);
+    }
+
+    .settings-link:active {
+        transform: scale(0.92);
     }
 
     .settings-link:focus-visible {

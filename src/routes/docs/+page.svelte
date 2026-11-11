@@ -98,11 +98,15 @@
         background: var(--surface);
         box-shadow: var(--shadow-card);
 
-        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transition: transform var(--transition-spring);
     }
 
     .chapter:hover {
         transform: scale(0.95);
+    }
+
+    .chapter:active {
+        transform: scale(0.9);
     }
 
     .chapter-link {
@@ -134,6 +138,16 @@
         flex: 0 0 auto;
         width: 2.5rem;
         height: 2.5rem;
+
+        transition: transform var(--transition-spring);
+    }
+
+    .chapter:hover .chapter-icon {
+        transform: scale(1.12) rotate(-5deg);
+    }
+
+    .chapter:active .chapter-icon {
+        transform: scale(0.95);
     }
 
     .chapter-text {

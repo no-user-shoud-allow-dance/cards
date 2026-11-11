@@ -57,7 +57,16 @@
         transition:
             border-color var(--transition-fast),
             background var(--transition-fast),
-            color var(--transition-fast);
+            color var(--transition-fast),
+            transform var(--transition-spring);
+    }
+
+    .btn:not(:disabled):hover {
+        transform: translateY(-1px);
+    }
+
+    .btn:not(:disabled):active {
+        transform: scale(0.96);
     }
 
     .btn:hover {

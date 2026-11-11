@@ -99,11 +99,11 @@
 
         transition:
             color var(--transition-fast),
-            transform var(--transition-fast);
+            transform var(--transition-spring);
     }
 
     :global(.continue-card:hover) .continue-arrow {
         color: var(--primary);
-        transform: translateX(2px);
+        transform: translateX(4px);
     }
 </style>
