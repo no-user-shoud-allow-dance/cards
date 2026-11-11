@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { kvCommand, kvConfig } from "#lib/server/kv";
+import { hashClientIp, kvCommand, kvConfig } from "#lib/server/kv";
 
 /**
  * `GET /api/share/{id}` — returns the stored ciphertext + meta and bumps
@@ -74,9 +74,10 @@ export const GET: RequestHandler = async (event) => {
     }
 
     try {
-        // Light per-IP rate limit on the public read endpoint.
-        const ip = event.getClientAddress();
-        const bucket = `ratelimit:share-get:${ip}:${new Date().toISOString().slice(0, 13)}`;
+        // Light per-IP rate limit on the public read endpoint. Only the
+        // HMAC-pseudonymized IP is stored (DSGVO), never the raw address.
+        const ipHash = await hashClientIp(event.getClientAddress(), kv.token);
+        const bucket = `ratelimit:share-get:${ipHash}:${new Date().toISOString().slice(0, 13)}`;
         const count = await kvCommand(kv, "INCR", bucket);
         if (count === 1) await kvCommand(kv, "EXPIRE", bucket, 3600);
         if (typeof count === "number" && count > GET_LIMIT_PER_HOUR) {

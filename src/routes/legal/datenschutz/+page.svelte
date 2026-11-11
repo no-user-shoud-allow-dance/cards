@@ -20,7 +20,10 @@
     <br />
     Ihre Stapel, Karten und Ihr Lernfortschritt werden ausschließlich
     <Badge variant="primary">lokal auf Ihrem Gerät</Badge> gespeichert. Es gibt
-    keine Konten, keine Werbung und kein Tracking.
+    keine Konten, keine Werbung und kein Tracking. Nur wenn Sie freiwillig einen
+    verschlüsselten Server-Link für einen zu großen Stapel erstellen, werden
+    ausschließlich <strong>Chiffrat und technische Metadaten</strong> auf einem
+    Server gespeichert — Details siehe „Verschlüsselte Server-Links“ unten.
 </Card>
 
 <p>
@@ -33,9 +36,11 @@
     NSC ist eine reine Browser-App ohne Nutzerkonten.
     <span class="key-statement">
         Es gibt <strong>keine</strong> Registrierung, und es werden
-        <strong>keine</strong> Daten auf einem Server gespeichert
-    </span>.
-    Alle anfallenden Daten liegen lokal in Ihrem Browser:
+        <strong>grundsätzlich keine</strong> Daten auf einem Server gespeichert
+    </span>
+    — die einzige Ausnahme ist der freiwillige verschlüsselte Server-Link
+    (siehe unten), bei dem nur Chiffrat und technische Metadaten anfallen.
+    Alle übrigen Daten liegen lokal in Ihrem Browser:
 </p>
 <ul>
     <li>
@@ -73,11 +78,11 @@
     Inhalte sehen dürfen.
 </p>
 
-<h2>Verschlüsselte Server-Links für große Stapel</h2>
+<h2>Verschlüsselte Server-Links für große Stapel (freiwillig)</h2>
 <p>
     Ist ein Stapel zu groß für einen QR-Code, kann er als
     <strong>verschlüsselter Server-Link</strong> geteilt werden
-    (<Badge variant="primary">/s/…#k.…</Badge>). Dafür wird der Stapel im
+    (<Badge variant="primary">…/#k.…</Badge>). Dafür wird der Stapel im
     Browser mit <Badge variant="primary">AES-256-GCM</Badge> verschlüsselt;
     der 256-Bit-Schlüssel liegt ausschließlich im URL-Fragment
     (<Badge variant="primary">#k.…</Badge>). Das Fragment ist ein rein
@@ -90,14 +95,6 @@
     wieder im Klartext vor, und der normale Import läuft weiter.
 </p>
 <p>
-    Auf dem Server liegen außerdem nur <strong>Metadaten</strong>:
-    Erstellungszeitpunkt, Größe des Chiffrats und Abrufzähler. Die
-    Aufbewahrungsfrist beträgt <strong>2 Tage</strong> — danach löscht der
-    Server das Chiffrat automatisch; es gibt keine manuelle Löschfunktion.
-    Technisch notwendige Verbindungsdaten (z. B. Ihre IP-Adresse) verarbeitet
-    außerdem der Hosting-Anbieter Vercel beim Ausliefern — siehe oben.
-</p>
-<p>
     <span class="key-statement">
         Beachten Sie: Alles, was die volle URL protokolliert oder überträgt
         (Chat-Apps, Link-Vorschau-Bots, Browser-Synchronisation, Proxys),
@@ -105,6 +102,66 @@
     </span>
     Behandeln Sie den Link daher wie ein Passwort. Jeder, der Link <em>und</em>
     Schlüssel kennt, kann den Stapel lesen.
+</p>
+
+<h3>Welche Daten dabei auf dem Server anfallen (Art. 13 DSGVO)</h3>
+<ul>
+    <li>
+        <strong>Das Chiffrat</strong> des Stapels (unlesbar ohne Schlüssel) sowie
+        <strong>Metadaten</strong>: Erstellungszeitpunkt, Größe des Chiffrats
+        und Abrufzähler — unter einer zufälligen 128-Bit-ID.
+    </li>
+    <li>
+        <strong>Rate-Limit-Daten:</strong> Zur Missbrauchsverhinderung wird
+        Ihre <strong>IP-Adresse nicht im Klartext</strong> gespeichert, sondern
+        nur als keyed Hash (HMAC-SHA-256 mit einem server-seitigen geheimen
+        Schlüssel — Pseudonymisierung nach Art. 4 Nr. 5 DSGVO), zusammen mit
+        einem Zeitstempel des Abrufs.
+    </li>
+</ul>
+
+<h3>Zweck, Rechtsgrundlage und Speicherdauer</h3>
+<p>
+    <strong>Zweck:</strong> Bereitstellung und Absicherung der freiwilligen
+    Server-Link-Funktion (Abruf der Chiffrate, Missbrauchs-/Rate-Limit-Schutz).
+    <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO — die
+    vorübergehende, pseudonymisierte Speicherung zum Schutz des Dienstes vor
+    Missbrauch ist ein berechtigtes Interesse; Ihre Interessen an der
+    Nichtverarbeitung überwiegen nicht, da die Roh-IP nicht gespeichert wird
+    und die Daten nur kurz vorgehalten werden.
+    <strong>Speicherdauer:</strong> Chiffrat + Metadaten <strong>2 Tage</strong>
+    (danach automatische Löschung durch Zeitablauf, keine manuelle Löschung);
+    Rate-Limit-Daten <strong>1 Stunde</strong>. Es erfolgen
+    <strong>kein Profiling und keine automatisierte Entscheidungsfindung</strong>
+    (Art. 22 DSGVO).
+</p>
+
+<h3>Empfänger und Drittlandtransfer</h3>
+<p>
+    Die Daten liegen bei <strong>Vercel Inc.</strong> (Hosting) und der
+    Redis-Datenbank <strong>Upstash</strong> (Vercel KV). Beide handeln als
+    Auftragsverarbeiter nach Art. 28 DSGVO (Verträge zur Auftragsverarbeitung;
+    Vercel ist unter dem <strong>EU-US Data Privacy Framework</strong>
+    zertifiziert). Soweit dabei Daten in die USA übertragen werden, dienen
+    Art. 44 ff. DSGVO bzw. das Data Privacy Framework als Garantien; für die
+    Upstash-Datenbank kann eine <strong>EU-Region</strong> gewählt werden.
+    Aufgrund der Ende-zu-Ende-Verschlüsselung können die Anbieter die Inhalte
+    nicht lesen. Technisch notwendige Verbindungsdaten (inkl. IP) verarbeitet
+    außerdem Vercel beim Ausliefern der Seite selbst — siehe „Hosting“ oben.
+</p>
+
+<h3>Ihre Rechte</h3>
+<p>
+    Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
+    Verarbeitung, Datenübertragbarkeit und Widerspruch (Art. 15–21 DSGVO) sowie
+    das Recht, sich bei einer <strong>Aufsichtsbehörde</strong> zu beschweren
+    (Art. 77 DSGVO — z. B. die für Ihren Wohnsitz zuständige Behörde). Der
+    Verantwortliche im Sinne der DSGVO ist die im
+    <a href={resolve("/legal/impressum")}>Impressum</a> genannte Person
+    (<a href="mailto:nousad@web.de">nousad@web.de</a>). Aufgrund der kurzen
+    Speicherdauer und der Pseudonymisierung können Rechteanfragen nur
+    eingeschränkt umgesetzt werden, soweit die Daten noch vorhanden und Ihnen
+    zuordenbar sind.
 </p>
 
 <h2>Synchronisation zwischen zwei Geräten (PeerJS)</h2>
@@ -192,6 +249,25 @@
         >
     </li>
     <li>
+        <strong>Server-Links (Vercel KV / Upstash):</strong>
+        <br />
+        Nur bei freiwilliger Nutzung der verschlüsselten Server-Links werden
+        Chiffrat, Metadaten und pseudonymisierte Rate-Limit-Daten bei Vercel
+        (Hosting) und Upstash (Datenbank) verarbeitet — Details und
+        Rechtsgrundlagen siehe „Verschlüsselte Server-Links“ oben.
+        Datenschutzerklärung:
+        <a
+            href="https://vercel.com/legal/privacy"
+            target="_blank"
+            rel="noopener noreferrer">Vercel</a
+        >,
+        <a
+            href="https://upstash.com/privacy"
+            target="_blank"
+            rel="noopener noreferrer">Upstash</a
+        >.
+    </li>
+    <li>
         <strong>Schriftarten:</strong>
         <br />
         {#if settingStore.googleDisabled}
@@ -253,12 +329,14 @@
 
 <h2>Fragen oder Daten löschen?</h2>
 <p>
-    Da alles lokal in Ihrem Browser gespeichert ist, können Sie Ihre Daten
-    jederzeit löschen, indem Sie die
+    Ihre lokal gespeicherten Daten können Sie jederzeit löschen, indem Sie die
     <Badge variant="primary">Website-Daten</Badge> dieser Seite in den
     Einstellungen Ihres Browsers entfernen — oder direkt in der App über
     <strong>„Alle Daten löschen“</strong> auf der
-    <a href={resolve("/account")}>Konto-Seite</a>. Bei Fragen schreiben Sie an
+    <a href={resolve("/account")}>Konto-Seite</a>. Server-Links laufen nach
+    spätestens <strong>2 Tagen automatisch ab</strong> und werden vom Server
+    gelöscht; eine frühere Löschung ist über den Anbieter (Vercel/Upstash) bzw.
+    per E-Mail an den Verantwortlichen möglich. Bei Fragen schreiben Sie an
     <a href="mailto:nousad@web.de">nousad@web.de</a>.
 </p>
 
