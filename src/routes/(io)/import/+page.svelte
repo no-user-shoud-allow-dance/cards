@@ -24,9 +24,14 @@
         extractShareHash,
         isShareHash,
         LEGACY_DECK_PREFIX,
+        parseServerShareLink,
         PROGRESS_PREFIX,
         type ProgressSharePayload,
     } from "#lib/utils/share";
+    import {
+        fetchServerSharePayload,
+        ServerShareError,
+    } from "#lib/utils/serverShare";
     import { formatStudyTime } from "#lib/utils/time";
     import { BOX_LABELS, type Deck } from "#lib/types";
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
@@ -89,6 +94,29 @@
 
     async function showPreview(): Promise<void> {
         preview = null;
+        // Server links (`https://…/s/{id}#k.…` or a bare `#k.…` hash) are
+        // fetched and decrypted locally first; the result is an ordinary
+        // share hash that flows through the normal path below. The key
+        // from the fragment is never sent to the server.
+        const serverRef = parseServerShareLink(linkInput);
+        if (serverRef) {
+            busy = true;
+            try {
+                const hash = await fetchServerSharePayload(serverRef);
+                linkInput = `#${hash}`;
+            } catch (error) {
+                toastStore.error(
+                    error instanceof ServerShareError
+                        ? error.message
+                        : "Netzwerkfehler — bist du online?",
+                );
+                return;
+            } finally {
+                busy = false;
+            }
+            await showPreview();
+            return;
+        }
         const input = extractShareHash(linkInput);
         if (!input) {
             toastStore.error("Bitte füge einen Link ein.");
@@ -162,7 +190,7 @@
         }
 
         toastStore.error(
-            "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.) oder kombinierter Link (t.).",
+            "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.), kombinierter (t.) oder Server-Link (k. bzw. /s/…#k.…).",
         );
     }
 
@@ -199,7 +227,7 @@
 
 <PageHeader
     title="Importieren"
-    subtitle="Füge einen geteilten Link ein. Stapel-Links (c., t.) öffnen sich im Editor; Fortschritt-Links (p.) gelten für einen bestehenden Stapel."
+    subtitle="Füge einen geteilten Link ein. Stapel-Links (c., t.) öffnen sich im Editor; Fortschritt-Links (p.) gelten für einen bestehenden Stapel; Server-Links (/s/…#k.…) werden lokal entschlüsselt."
 />
 
 <Card class="panel" padding="lg">
@@ -208,12 +236,14 @@
         id="import-link"
         rows="3"
         bind:value={linkInput}
-        placeholder="https://…/#c.…, #p.… oder #t.…"
+        placeholder="https://…/#c.…, #p.…, #t.… oder Server-Link …/s/…#k.…"
         spellcheck="false"
     ></textarea>
     <QrScanner onScan={(value) => (linkInput = value)} />
     <div class="actions">
-        <Button variant="primary" onclick={showPreview}>Vorschau anzeigen</Button>
+        <Button variant="primary" onclick={showPreview} disabled={busy}>
+            {busy ? "Wird entschlüsselt …" : "Vorschau anzeigen"}
+        </Button>
         {#if preview}
             <Button onclick={reset}>Zurücksetzen</Button>
         {/if}

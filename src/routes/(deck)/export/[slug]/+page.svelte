@@ -12,6 +12,7 @@
         encodeProgressShare,
         formatShareLength,
         nativeShare,
+        SERVER_LINK_MIN_LENGTH,
         SHARE_HASH_LIMIT,
         SHARE_QR_LIMIT,
         type ProgressSharePayload,
@@ -21,6 +22,7 @@
     import Badge from "#lib/components/shared/ui/Badge.svelte";
     import type { Deck } from "#lib/types";
     import ShareLinkCard from "#lib/components/sharing/ShareLinkCard.svelte";
+    import ServerLinkCard from "#lib/components/sharing/ServerLinkCard.svelte";
     import Button from "#lib/components/shared/ui/Button.svelte";
 
     let { data } = $props();
@@ -33,9 +35,16 @@
 
     let mode = $state<ShareMode>("together");
     let shareUrl = $state("");
+    let sharePayload = $state("");
     let shareLength = $state(0);
     let canShare = $state(false);
     let nativeShareFailed = $state(false);
+    // The user picks the channel. A link up to half of the max QR size is
+    // "too small" for a server link — serverActive is the effective state,
+    // so a mode change to a small link falls back to QR on its own.
+    let useServerLink = $state(false);
+    let serverAllowed = $derived(shareLength > SERVER_LINK_MIN_LENGTH);
+    let serverActive = $derived(useServerLink && serverAllowed);
 
     onMount(() => {
         canShare = canNativeShare();
@@ -127,6 +136,7 @@
             if (slug !== data.slug || active !== mode) return;
             const url = `${origin}/#${payload}`;
             shareUrl = url;
+            sharePayload = payload;
             shareLength = url.length;
         })();
     });
@@ -179,28 +189,69 @@
 
     {#if shareUrl}
         {@const qrTooBig = shareLength > SHARE_QR_LIMIT}
-        <ShareLinkCard
-            title={activeMode.title}
-            url={shareUrl}
-            copyLabel={activeMode.copyLabel}
-            warning={shareLength > SHARE_HASH_LIMIT || qrTooBig}
-            warningText={shareLength > SHARE_HASH_LIMIT
-                ? `Der Link ist etwa ${formatShareLength(
-                      shareLength,
-                  )} lang — Links über ~1 MB funktionieren nicht zuverlässig.`
-                : `Der Link ist zu lang für einen QR-Code — der Stapel ist zu groß zum Scannen. Bitte kopiere den Link oder nutze „Teilen …“.`}
-        />
-        <div class="actions">
-            {#if canShare}
-                <Button variant="primary" onclick={share}>
-                    Teilen …
-                </Button>
-            {/if}
+        <!-- The user always picks the channel. The server link is only
+             offered when the link exceeds half of the max QR size — below
+             that the deck is "too small" and the option is disabled. -->
+        <div class="server-switch" role="group" aria-label="Teilen über">
+            <button
+                type="button"
+                class="server-switch-button"
+                class:active={!serverActive}
+                aria-pressed={!serverActive}
+                onclick={() => {
+                    useServerLink = false;
+                }}
+            >
+                QR-Code
+            </button>
+            <button
+                type="button"
+                class="server-switch-button"
+                class:active={serverActive}
+                aria-pressed={serverActive}
+                disabled={!serverAllowed}
+                title={!serverAllowed
+                    ? "Der Link ist kleiner als die Hälfte der QR-Maximalgröße — ein Server-Link ist nur für größere Stapel nötig."
+                    : undefined}
+                onclick={() => {
+                    useServerLink = true;
+                }}
+            >
+                Server-Link
+            </button>
         </div>
-        {#if nativeShareFailed}
-            <p class="note">
-                Teilen wird von diesem Gerät nicht unterstützt.
+        {#if !serverAllowed}
+            <p class="switch-hint">
+                Der Link ist kleiner als die Hälfte der QR-Maximalgröße — ein
+                Server-Link ist nur für größere Stapel nötig.
             </p>
+        {/if}
+        {#if serverActive}
+            <ServerLinkCard payload={sharePayload} />
+        {:else}
+            <ShareLinkCard
+                title={activeMode.title}
+                url={shareUrl}
+                copyLabel={activeMode.copyLabel}
+                warning={shareLength > SHARE_HASH_LIMIT || qrTooBig}
+                warningText={shareLength > SHARE_HASH_LIMIT
+                    ? `Der Link ist etwa ${formatShareLength(
+                          shareLength,
+                      )} lang — Links über ~1 MB funktionieren nicht zuverlässig.`
+                    : `Der Link ist zu lang für einen QR-Code — der Stapel ist zu groß zum Scannen. Bitte kopiere den Link oder nutze „Teilen …“.`}
+            />
+            <div class="actions">
+                {#if canShare}
+                    <Button variant="primary" onclick={share}>
+                        Teilen …
+                    </Button>
+                {/if}
+            </div>
+            {#if nativeShareFailed}
+                <p class="note">
+                    Teilen wird von diesem Gerät nicht unterstützt.
+                </p>
+            {/if}
         {/if}
     {/if}
 </Page>
@@ -258,6 +309,80 @@
     .mode-button.active {
         background: var(--danger-bg);
         color: var(--danger-text);
+    }
+
+    /* QR-vs-server choice, shown only when the link is too big for a QR
+       code: same segmented look as the mode switch, but primary-colored
+       (the server link is the constructive alternative, not a warning). */
+    .server-switch {
+        display: flex;
+
+        margin-bottom: 1rem;
+
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+
+        background: var(--surface);
+        box-shadow: var(--shadow-card);
+
+        overflow: hidden;
+    }
+
+    .server-switch-button {
+        flex: 1 1 0;
+        min-width: 0;
+
+        padding: 0.55rem 1.25rem;
+
+        border: 0;
+        border-right: 1px solid var(--border);
+
+        background: transparent;
+        color: var(--text-muted);
+
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition:
+            background var(--transition-fast),
+            color var(--transition-fast);
+    }
+
+    .server-switch-button:last-child {
+        border-right: 0;
+    }
+
+    .server-switch-button:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+    }
+
+    .server-switch-button.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+    }
+
+    /* Disabled (link fits in a QR code): the server option is not a
+       downgrade, it is simply unnecessary for small decks. */
+    .server-switch-button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    .server-switch-button:disabled:hover {
+        background: transparent;
+        color: var(--text-muted);
+    }
+
+    .switch-hint {
+        margin: -0.4rem 0 1rem;
+
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        line-height: 1.5;
     }
 
     .deck-meta {

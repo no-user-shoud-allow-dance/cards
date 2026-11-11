@@ -13,6 +13,8 @@ Auf der Export-Seite eines Stapels bekommst du:
 
 Die Daten stecken komprimiert in der URL hinter dem `#`. Dieser Teil wird nie an einen Server geschickt — er bleibt in deinem Browser. Jeder, der den Link hat, kann den Inhalt lesen; teile ihn also nur mit Personen, die ihn sehen dürfen. Beim Öffnen importierst du den Stapel mit einem Klick, per QR-Scan oder per Link.
 
+**Zu groß für einen QR-Code?** Dann bietet die Export-Seite einen **verschlüsselten Server-Link** (`/s/…#k.…`): Der Stapel wird lokal mit AES-256-GCM verschlüsselt hochgeladen, und der Schlüssel steckt ausschließlich im `#k.…`-Fragment des Links — das Fragment wird nie an den Server gesendet. Der Server (Vercel KV) speichert nur das Chiffrat, 2 Tage lang. Der entstehende Link ist kurz genug für jeden QR-Code. Beachte: Alles, was die volle URL protokolliert, kann den Schlüssel preisgeben — behandle den Link wie ein Passwort. Details in der Datenschutzerklärung.
+
 ## Zwei Geräte synchronisieren
 
 Auf der Konto-Seite kannst du zwei deiner Geräte direkt miteinander verbinden:

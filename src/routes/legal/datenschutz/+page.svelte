@@ -73,6 +73,40 @@
     Inhalte sehen dürfen.
 </p>
 
+<h2>Verschlüsselte Server-Links für große Stapel</h2>
+<p>
+    Ist ein Stapel zu groß für einen QR-Code, kann er als
+    <strong>verschlüsselter Server-Link</strong> geteilt werden
+    (<Badge variant="primary">/s/…#k.…</Badge>). Dafür wird der Stapel im
+    Browser mit <Badge variant="primary">AES-256-GCM</Badge> verschlüsselt;
+    der 256-Bit-Schlüssel liegt ausschließlich im URL-Fragment
+    (<Badge variant="primary">#k.…</Badge>). Das Fragment ist ein rein
+    clientseitiger Teil der URL und wird
+    <span class="key-statement">
+        <strong>nie</strong> in einer HTTP-Anfrage an den Server gesendet
+    </span>
+    — der Server (Vercel KV / Upstash) speichert und liefert ausschließlich
+    das Chiffrat. Erst nach dem Entschlüsseln im Browser steht der Stapel
+    wieder im Klartext vor, und der normale Import läuft weiter.
+</p>
+<p>
+    Auf dem Server liegen außerdem nur <strong>Metadaten</strong>:
+    Erstellungszeitpunkt, Größe des Chiffrats und Abrufzähler. Die
+    Aufbewahrungsfrist beträgt <strong>2 Tage</strong> — danach löscht der
+    Server das Chiffrat automatisch; es gibt keine manuelle Löschfunktion.
+    Technisch notwendige Verbindungsdaten (z. B. Ihre IP-Adresse) verarbeitet
+    außerdem der Hosting-Anbieter Vercel beim Ausliefern — siehe oben.
+</p>
+<p>
+    <span class="key-statement">
+        Beachten Sie: Alles, was die volle URL protokolliert oder überträgt
+        (Chat-Apps, Link-Vorschau-Bots, Browser-Synchronisation, Proxys),
+        kann den Schlüssel preisgeben.
+    </span>
+    Behandeln Sie den Link daher wie ein Passwort. Jeder, der Link <em>und</em>
+    Schlüssel kennt, kann den Stapel lesen.
+</p>
+
 <h2>Synchronisation zwischen zwei Geräten (PeerJS)</h2>
 <p>
     Die einzige Funktion, bei der Daten Ihr Gerät verlassen, ist die

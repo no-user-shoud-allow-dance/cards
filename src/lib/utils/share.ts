@@ -67,6 +67,14 @@ export const SHARE_HASH_LIMIT = 1_000_000;
  */
 export const SHARE_QR_LIMIT = 2_200;
 
+/**
+ * Below this link length (half of the max QR capacity) a deck is "too
+ * small" for a server link: the QR code holds it comfortably, so the
+ * server-link option is disabled on the export page. Above it the user
+ * may freely choose between QR and server link.
+ */
+export const SERVER_LINK_MIN_LENGTH = SHARE_QR_LIMIT / 2;
+
 /** Prefix of a deck ("cards") share link. */
 export const DECK_PREFIX = "c.";
 /** Legacy deck-link prefix; still decoded, never emitted. */
@@ -77,6 +85,14 @@ export const PROGRESS_PREFIX = "p.";
 export const COMBINED_PREFIX = "t.";
 /** Prefix of a full-sync payload (`s.…`) used by device-to-device sync. */
 export const SYNC_PREFIX = "s.";
+/**
+ * Prefix of an encrypted server-link hash: `#k.{id}.{key}`. The fragment
+ * is self-contained — id (128-bit, base64url) and decryption key (256-bit,
+ * base64url) travel together in the URL hash, which browsers never send
+ * to the server. The server only ever sees the id (in the `/s/{id}` path)
+ * and stores ciphertext. Canonical link: `{origin}/s/{id}#k.{id}.{key}`.
+ */
+export const SERVER_PREFIX = "k.";
 
 /**
  * Full-sync payload (plain JSON, before gzip+base64url), exchanged
@@ -427,7 +443,8 @@ export function extractShareHash(input: string): string {
 
 /**
  * Whether a URL hash carries any share payload (deck, legacy deck,
- * progress or combined), with or without the leading "#".
+ * progress, combined or encrypted server link), with or without the
+ * leading "#".
  */
 export function isShareHash(hash: string): boolean {
     const bare = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -435,8 +452,84 @@ export function isShareHash(hash: string): boolean {
         bare.startsWith(DECK_PREFIX) ||
         bare.startsWith(LEGACY_DECK_PREFIX) ||
         bare.startsWith(PROGRESS_PREFIX) ||
-        bare.startsWith(COMBINED_PREFIX)
+        bare.startsWith(COMBINED_PREFIX) ||
+        bare.startsWith(SERVER_PREFIX)
     );
+}
+
+/** A parsed server-link reference: the public id plus the secret key. */
+export interface ServerShareRef {
+    id: string;
+    key: string;
+}
+
+/** 128-bit id, base64url-encoded (22 chars). */
+const SERVER_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
+/** 256-bit key, base64url-encoded (43 chars). */
+const SERVER_KEY_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+/** Whether a string is a well-formed server-link id. */
+export function isServerShareId(id: string): boolean {
+    return SERVER_ID_PATTERN.test(id);
+}
+
+/** Builds the self-contained server-link hash: `k.{id}.{key}`. */
+export function buildServerShareHash(id: string, key: string): string {
+    return `${SERVER_PREFIX}${id}.${key}`;
+}
+
+/**
+ * Parses a `#k.{id}.{key}` hash (with or without the leading "#") into
+ * its id and key; null if the format is invalid.
+ */
+export function parseServerShareHash(hash: string): ServerShareRef | null {
+    const bare = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!bare.startsWith(SERVER_PREFIX)) return null;
+    const parts = bare.slice(SERVER_PREFIX.length).split(".");
+    if (parts.length !== 2) return null;
+    const [id, key] = parts;
+    if (!isServerShareId(id)) return null;
+    if (!SERVER_KEY_PATTERN.test(key)) return null;
+    return { id, key };
+}
+
+/**
+ * Builds the canonical server-link URL: `{origin}/s/{id}#k.{id}.{key}`.
+ * Only the id reaches the server (in the path); the key stays in the
+ * fragment, which is never sent in any HTTP request.
+ */
+export function buildServerShareUrl(
+    origin: string,
+    id: string,
+    key: string,
+): string {
+    return `${origin}/s/${id}#${buildServerShareHash(id, key)}`;
+}
+
+/**
+ * Parses a pasted or scanned server link — a full URL
+ * (`https://…/s/{id}#k.…`) or a bare `#k.…` hash — into its id and key;
+ * null if the input is not a server link. The fragment is self-contained,
+ * so the path part is only used as a fallback when the fragment carries
+ * just the key (`#k.{key}`).
+ */
+export function parseServerShareLink(input: string): ServerShareRef | null {
+    const trimmed = input.trim();
+    const hashIndex = trimmed.indexOf("#");
+    if (hashIndex === -1) return null;
+    const hash = trimmed.slice(hashIndex);
+    const parsed = parseServerShareHash(hash);
+    if (parsed) return parsed;
+    // Fallback: /s/{id} path + `#k.{key}` fragment without id.
+    const bare = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!bare.startsWith(SERVER_PREFIX)) return null;
+    const key = bare.slice(SERVER_PREFIX.length);
+    if (!SERVER_KEY_PATTERN.test(key)) return null;
+    const pathMatch = /\/s\/([A-Za-z0-9_-]{22})(?:[/?#]|$)/.exec(
+        trimmed.slice(0, hashIndex),
+    );
+    if (!pathMatch || !isServerShareId(pathMatch[1])) return null;
+    return { id: pathMatch[1], key };
 }
 
 /** Human-readable hash size for the share warning (German UI). */
