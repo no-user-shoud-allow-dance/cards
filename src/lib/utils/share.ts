@@ -86,11 +86,15 @@ export const COMBINED_PREFIX = "t.";
 /** Prefix of a full-sync payload (`s.…`) used by device-to-device sync. */
 export const SYNC_PREFIX = "s.";
 /**
- * Prefix of an encrypted server-link hash: `#k.{id}.{key}`. The fragment
- * is self-contained — id (128-bit, base64url) and decryption key (256-bit,
- * base64url) travel together in the URL hash, which browsers never send
- * to the server. The server only ever sees the id (in the `/s/{id}` path)
- * and stores ciphertext. Canonical link: `{origin}/s/{id}#k.{id}.{key}`.
+ * Prefix of an encrypted server-link hash: `#k.{payload}`, where payload
+ * is the base64url of the 48 raw bytes `id(16) ‖ key(32)` — encoding the
+ * two together saves the separator and padding overhead of two separate
+ * base64url strings (64 chars instead of 22+1+43=66; the bytes are
+ * random, so gzip would only make them longer). The fragment is
+ * self-contained and never sent to the server; the app extracts id + key
+ * locally and only the id goes to `/api/share/{id}`. Canonical link:
+ * `{origin}/#k.{payload}`. Older forms — `#k.{id}.{key}` and
+ * `/s/{id}#k.{key}` — are still parsed for links already issued.
  */
 export const SERVER_PREFIX = "k.";
 
@@ -463,73 +467,111 @@ export interface ServerShareRef {
     key: string;
 }
 
+/** A parsed `#k.…` fragment: the id (if present) plus the key. */
+export interface ParsedServerShareHash {
+    /** Null only for the key-only `#k.{key}` form (id lives in the /s/ path). */
+    id: string | null;
+    key: string;
+}
+
 /** 128-bit id, base64url-encoded (22 chars). */
 const SERVER_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 /** 256-bit key, base64url-encoded (43 chars). */
 const SERVER_KEY_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+/** Raw byte length of the canonical payload: id(16) ‖ key(32). */
+const SERVER_PAYLOAD_BYTES = 48;
 
 /** Whether a string is a well-formed server-link id. */
 export function isServerShareId(id: string): boolean {
     return SERVER_ID_PATTERN.test(id);
 }
 
-/** Builds the self-contained server-link hash: `k.{id}.{key}`. */
+/**
+ * Builds the self-contained server-link hash: `k.{payload}` where payload
+ * is base64url over the 48 raw bytes `id ‖ key` (one encoding instead of
+ * two saves the separator + padding: 64 chars instead of 66).
+ */
 export function buildServerShareHash(id: string, key: string): string {
-    return `${SERVER_PREFIX}${id}.${key}`;
+    const bytes = new Uint8Array(SERVER_PAYLOAD_BYTES);
+    bytes.set(base64UrlToBytes(id), 0);
+    bytes.set(base64UrlToBytes(key), 16);
+    return `${SERVER_PREFIX}${bytesToBase64Url(bytes)}`;
 }
 
 /**
- * Parses a `#k.{id}.{key}` hash (with or without the leading "#") into
- * its id and key; null if the format is invalid.
+ * Parses a `#k.…` hash (with or without the leading "#"). Accepted forms:
+ * the canonical `k.{payload}` (base64url of id‖key, 64 chars), the
+ * legacy `k.{id}.{key}`, and the key-only `k.{key}` used with `/s/{id}`
+ * paths. Null if the format is invalid.
  */
-export function parseServerShareHash(hash: string): ServerShareRef | null {
+export function parseServerShareHash(
+    hash: string,
+): ParsedServerShareHash | null {
     const bare = hash.startsWith("#") ? hash.slice(1) : hash;
     if (!bare.startsWith(SERVER_PREFIX)) return null;
-    const parts = bare.slice(SERVER_PREFIX.length).split(".");
-    if (parts.length !== 2) return null;
-    const [id, key] = parts;
-    if (!isServerShareId(id)) return null;
-    if (!SERVER_KEY_PATTERN.test(key)) return null;
+    const body = bare.slice(SERVER_PREFIX.length);
+    const parts = body.split(".");
+    if (parts.length === 2) {
+        // Legacy self-contained form: k.{id}.{key}
+        const [id, key] = parts;
+        if (!isServerShareId(id)) return null;
+        if (!SERVER_KEY_PATTERN.test(key)) return null;
+        return { id, key };
+    }
+    if (parts.length !== 1) return null;
+    const [part] = parts;
+    if (SERVER_KEY_PATTERN.test(part)) {
+        // Key-only form (id in the /s/{id} path).
+        return { id: null, key: part };
+    }
+    // Canonical form: base64url over the 48 raw bytes id(16) ‖ key(32).
+    let bytes: Uint8Array<ArrayBuffer>;
+    try {
+        bytes = base64UrlToBytes(part);
+    } catch {
+        return null;
+    }
+    if (bytes.length !== SERVER_PAYLOAD_BYTES) return null;
+    const id = bytesToBase64Url(bytes.subarray(0, 16));
+    const key = bytesToBase64Url(bytes.subarray(16));
+    if (!isServerShareId(id) || !SERVER_KEY_PATTERN.test(key)) return null;
     return { id, key };
 }
 
 /**
- * Builds the canonical server-link URL: `{origin}/s/{id}#k.{id}.{key}`.
- * Only the id reaches the server (in the path); the key stays in the
- * fragment, which is never sent in any HTTP request.
+ * Builds the canonical server-link URL: `{origin}/#k.{id}.{key}`.
+ * The whole payload lives in the fragment, which is never sent in any
+ * HTTP request — the app extracts id + key locally and only the id is
+ * sent to `/api/share/{id}`.
  */
 export function buildServerShareUrl(
     origin: string,
     id: string,
     key: string,
 ): string {
-    return `${origin}/s/${id}#${buildServerShareHash(id, key)}`;
+    return `${origin}/#${buildServerShareHash(id, key)}`;
 }
 
 /**
  * Parses a pasted or scanned server link — a full URL
- * (`https://…/s/{id}#k.…`) or a bare `#k.…` hash — into its id and key;
- * null if the input is not a server link. The fragment is self-contained,
- * so the path part is only used as a fallback when the fragment carries
- * just the key (`#k.{key}`).
+ * (`https://…/#k.{id}.{key}`) or a bare `#k.…` hash — into its id and
+ * key; null if the input is not a usable server link. The two-part
+ * fragment is self-contained; the one-part compact form (`#k.{key}`,
+ * issued as `/s/{id}#k.{key}`) takes the id from the path.
  */
 export function parseServerShareLink(input: string): ServerShareRef | null {
     const trimmed = input.trim();
     const hashIndex = trimmed.indexOf("#");
     if (hashIndex === -1) return null;
-    const hash = trimmed.slice(hashIndex);
-    const parsed = parseServerShareHash(hash);
-    if (parsed) return parsed;
-    // Fallback: /s/{id} path + `#k.{key}` fragment without id.
-    const bare = hash.startsWith("#") ? hash.slice(1) : hash;
-    if (!bare.startsWith(SERVER_PREFIX)) return null;
-    const key = bare.slice(SERVER_PREFIX.length);
-    if (!SERVER_KEY_PATTERN.test(key)) return null;
+    const parsed = parseServerShareHash(trimmed.slice(hashIndex));
+    if (!parsed) return null;
+    if (parsed.id) return { id: parsed.id, key: parsed.key };
+    // Compact fragment `k.{key}`: the id must come from the /s/{id} path.
     const pathMatch = /\/s\/([A-Za-z0-9_-]{22})(?:[/?#]|$)/.exec(
         trimmed.slice(0, hashIndex),
     );
     if (!pathMatch || !isServerShareId(pathMatch[1])) return null;
-    return { id: pathMatch[1], key };
+    return { id: pathMatch[1], key: parsed.key };
 }
 
 /** Human-readable hash size for the share warning (German UI). */

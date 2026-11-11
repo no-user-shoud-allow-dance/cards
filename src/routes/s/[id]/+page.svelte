@@ -3,7 +3,7 @@
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
-    import { parseServerShareHash } from "#lib/utils/share";
+    import { isServerShareId, parseServerShareHash } from "#lib/utils/share";
     import {
         fetchServerSharePayload,
         ServerShareError,
@@ -20,17 +20,26 @@
     onMount(() => {
         // The fragment is read locally and never sent anywhere: the fetch
         // inside fetchServerSharePayload goes to /api/share/{id} only.
-        const ref = parseServerShareHash(window.location.hash);
-        if (!ref) {
+        // Compact links carry only the key in the fragment (`#k.{key}`)
+        // and the id in the path; the legacy `#k.{id}.{key}` form is
+        // still accepted.
+        const parsed = parseServerShareHash(window.location.hash);
+        if (!parsed) {
             errorMessage =
                 "Der Link enthält keinen Schlüssel — erwartet wird ein Fragment der Form #k.… im Link.";
             return;
         }
         const pathId = page.params.id ?? "";
-        if (pathId && pathId !== ref.id) {
+        const id = parsed.id ?? pathId;
+        if (!id || !isServerShareId(id)) {
+            errorMessage = "Die Link-ID fehlt oder ist ungültig.";
+            return;
+        }
+        if (pathId && parsed.id && pathId !== parsed.id) {
             errorMessage = "Link-ID und Schlüssel passen nicht zusammen.";
             return;
         }
+        const ref = { id, key: parsed.key };
         void fetchServerSharePayload(ref)
             .then((hash) => {
                 // The decrypted string is an ordinary share hash

@@ -26,6 +26,7 @@
         LEGACY_DECK_PREFIX,
         parseServerShareLink,
         PROGRESS_PREFIX,
+        SERVER_PREFIX,
         type ProgressSharePayload,
     } from "#lib/utils/share";
     import {
@@ -99,6 +100,12 @@
         // share hash that flows through the normal path below. The key
         // from the fragment is never sent to the server.
         const serverRef = parseServerShareLink(linkInput);
+        if (!serverRef && extractShareHash(linkInput).startsWith("#" + SERVER_PREFIX)) {
+            toastStore.error(
+                "Server-Link unvollständig — bitte den kompletten Link einfügen (…/#k.{id}.{key}).",
+            );
+            return;
+        }
         if (serverRef) {
             busy = true;
             try {
@@ -190,7 +197,7 @@
         }
 
         toastStore.error(
-            "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.), kombinierter (t.) oder Server-Link (k. bzw. /s/…#k.…).",
+            "Der Link ist ungültig oder beschädigt. Erwartet wird ein Stapel- (c.), Fortschritt- (p.), kombinierter (t.) oder Server-Link (#k.…).",
         );
     }
 
@@ -227,7 +234,7 @@
 
 <PageHeader
     title="Importieren"
-    subtitle="Füge einen geteilten Link ein. Stapel-Links (c., t.) öffnen sich im Editor; Fortschritt-Links (p.) gelten für einen bestehenden Stapel; Server-Links (/s/…#k.…) werden lokal entschlüsselt."
+    subtitle="Füge einen geteilten Link ein. Stapel-Links (c., t.) öffnen sich im Editor; Fortschritt-Links (p.) gelten für einen bestehenden Stapel; Server-Links (#k.…) werden lokal entschlüsselt."
 />
 
 <Card class="panel" padding="lg">
@@ -236,7 +243,7 @@
         id="import-link"
         rows="3"
         bind:value={linkInput}
-        placeholder="https://…/#c.…, #p.…, #t.… oder Server-Link …/s/…#k.…"
+        placeholder="https://…/#c.…, #p.…, #t.… oder Server-Link …/#k.…"
         spellcheck="false"
     ></textarea>
     <QrScanner onScan={(value) => (linkInput = value)} />
