@@ -1,7 +1,3 @@
-<script lang="ts" module>
-    export const prerender = true;
-</script>
-
 <script lang="ts">
     import { resolve } from "$app/paths";
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
