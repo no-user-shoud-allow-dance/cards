@@ -10,7 +10,7 @@ NSC ist eine App zum Lernen von Vokabeln mit Karteikarten. Du legst eigene Stape
 
 - **Stapel verwalten** — eigene Karteikarten als Text (Markdown) erstellen, hochladen oder importieren und in Ordnern sortieren.
 - **Lernen** — jede Karte bewerten; das Leitner-System zeigt schwierige Karten automatisch öfter.
-- **Übersicht** — alle Karten eines Stapels ansehen, ohne den Lernfortschritt zu verändern.
+- **Übersicht** — alle Karten eines Stapels einzeln durchblättern (Vorder- und Rückseite), ohne den Lernfortschritt zu verändern.
 - **Teilen und synchronisieren** — Stapel als Link oder QR-Code teilen; zwei eigene Geräte direkt miteinander abgleichen.
 - **Offline nutzbar** — als App auf Handy oder Rechner installierbar und komplett ohne Internet verwendbar.
 
@@ -18,4 +18,4 @@ NSC ist eine App zum Lernen von Vokabeln mit Karteikarten. Du legst eigene Stape
 
 Alle Daten bleiben in deinem Browser auf deinem Gerät. Es gibt keine Registrierung, keine Werbung und kein Tracking. Die Details stehen in der Datenschutzerklärung im Footer.
 
-Den technischen Hintergrund für Entwickler:innen gibt es im Kapitel [Für Entwickler:innen](/docs/06-entwickler).
+Den technischen Hintergrund für Entwickler:innen gibt es im Kapitel [Für Entwickler:innen](/docs/07-entwickler).

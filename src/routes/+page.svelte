@@ -4,6 +4,10 @@
     import { decks } from "#lib/stores/data/deckStore.svelte";
     import { BOX_COUNT, type DeckType } from "#lib/types";
     import { computeProgressRatio, countCards } from "#lib/utils/pure";
+    import { parseDeck } from "#lib/utils/parser";
+    import { guessDeckType } from "#lib/utils/deckTypes";
+    import { dialogStore } from "#lib/stores/session/dialogStore.svelte";
+    import { toastStore } from "#lib/stores/session/toastStore.svelte";
     import { resolve } from "$app/paths";
     import Page from "#lib/components/shared/ui/Page.svelte";
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
@@ -21,8 +25,47 @@
     onMount(() => {
         decks.init().then(() => {
             ready = true;
+            void maybeOfferSampleDeck();
         });
     });
+
+    // Session-only flag so the offer appears at most once per tab session.
+    const SAMPLE_FLAG = "nsc_sample_dialog_shown";
+
+    // Empty-state offer: import a sample deck that shows what the app can do.
+    async function maybeOfferSampleDeck(): Promise<void> {
+        if (Object.keys(decks.decks).length > 0) return;
+        if (sessionStorage.getItem(SAMPLE_FLAG) === "1") return;
+        sessionStorage.setItem(SAMPLE_FLAG, "1");
+
+        const ok = await dialogStore.open({
+            title: "Noch keine Stapel",
+            message:
+                "Hi! Es sieht so aus, als hättest du noch keine Karten. Möchtest du einen Beispiel-Stapel importieren, der zeigt, was diese App kann?",
+            confirmLabel: "Beispiel-Stapel importieren",
+            cancelLabel: "Später",
+            bg: "info",
+        });
+        if (!ok) return;
+
+        try {
+            const res = await fetch("/sample-deck.md");
+            if (!res.ok) throw new Error(String(res.status));
+            const raw = await res.text();
+            const parsed = parseDeck(raw);
+            await decks.add(
+                raw,
+                "Beispiel",
+                parsed.title ?? "Beispiel-Stapel",
+                guessDeckType(raw),
+            );
+            toastStore.success(
+                "Beispiel-Stapel importiert — viel Spaß beim Lernen!",
+            );
+        } catch {
+            toastStore.error("Der Beispiel-Stapel konnte nicht geladen werden.");
+        }
+    }
 
     // All decks are user-uploaded, for totals and "Weiterlernen".
     const allEntries = $derived(

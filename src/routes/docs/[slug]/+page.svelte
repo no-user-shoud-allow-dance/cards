@@ -1,57 +1,63 @@
-<script lang="ts" module>
-    import type { Component } from "svelte";
-
-    interface DocModule {
-        default: Component;
-        metadata?: { title?: string; description?: string; icon?: string };
-    }
-
-    // All docs chapters, compiled from markdown by mdsvex (vite.config.ts).
-    const docs = import.meta.glob("/docs/*.md", {
-        eager: true,
-    }) as Record<string, DocModule>;
-</script>
-
 <script lang="ts">
     import { resolve } from "$app/paths";
-    import Page from "#lib/components/shared/ui/Page.svelte";
+    import { chapterMeta, neighbors } from "#lib/utils/docs";
 
     let { data }: { data: { slug: string } } = $props();
 
-    const mod = $derived(docs[`/docs/${data.slug}.md`]);
-    const title = $derived(mod?.metadata?.title ?? "Dokumentation");
-    const description = $derived(mod?.metadata?.description ?? "");
-    const icon = $derived(mod?.metadata?.icon ?? "");
+    const meta = $derived(chapterMeta(data.slug));
+    const pager = $derived(neighbors(data.slug));
 </script>
 
 <svelte:head>
-    <title>{title} – NSC</title>
-    {#if description}
-        <meta name="description" content={description} />
+    <title>{meta.title} – NSC</title>
+    {#if meta.description}
+        <meta name="description" content={meta.description} />
     {/if}
 </svelte:head>
 
-<Page>
-    <header class="doc-header" class:with-icon={icon !== ""}>
-        {#if icon}
-            <img class="doc-icon" src={icon} alt="" width="56" height="56" />
-        {/if}
-        <h1 class="doc-title">{title}</h1>
-        {#if description}
-            <p class="doc-subtitle">{description}</p>
-        {/if}
-    </header>
+<header class="doc-header" class:with-icon={meta.icon !== ""}>
+    {#if meta.icon}
+        <img class="doc-icon" src={meta.icon} alt="" width="56" height="56" />
+    {/if}
+    <h1 class="doc-title">{meta.title}</h1>
+    {#if meta.description}
+        <p class="doc-subtitle">{meta.description}</p>
+    {/if}
+</header>
 
-    <p class="docs-back">
-        <a href={resolve("/docs")}>← Alle Kapitel</a>
-    </p>
+<p class="docs-back">
+    <a href={resolve("/docs")}>← Alle Kapitel</a>
+</p>
 
-    <article class="docs-content">
-        {#if mod}
-            <svelte:component this={mod.default} />
-        {/if}
-    </article>
-</Page>
+<article class="docs-content">
+    {#if meta.mod}
+        <svelte:component this={meta.mod.default} />
+    {/if}
+</article>
+
+<nav class="docs-pager" aria-label="Weitere Kapitel">
+    {#if pager.prev}
+        <a
+            class="pager-link"
+            href={resolve("/docs/[slug]", { slug: pager.prev.slug })}
+        >
+            ← {pager.prev.title}
+        </a>
+    {:else}
+        <span></span>
+    {/if}
+    <a class="pager-all" href={resolve("/docs")}>Alle Kapitel</a>
+    {#if pager.next}
+        <a
+            class="pager-link"
+            href={resolve("/docs/[slug]", { slug: pager.next.slug })}
+        >
+            {pager.next.title} →
+        </a>
+    {:else}
+        <span></span>
+    {/if}
+</nav>
 
 <style>
     /* Grid layout: the icon spans both rows in the first column; the
@@ -121,5 +127,38 @@
 
     .docs-back a:hover {
         text-decoration: underline;
+    }
+
+    .docs-pager {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+
+        margin-top: 2.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .docs-pager a {
+        color: var(--primary);
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+
+    .docs-pager a:hover {
+        text-decoration: underline;
+    }
+
+    .pager-link {
+        max-width: 40%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pager-all {
+        flex: 0 0 auto;
+        color: var(--text-muted);
     }
 </style>

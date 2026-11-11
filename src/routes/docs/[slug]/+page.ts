@@ -1,13 +1,12 @@
 import { error } from "@sveltejs/kit";
-import type { EntryGenerator, PageLoad } from "./$types";
 
-// All docs chapters; the slug is the file name without .md.
-const slugs = Object.keys(import.meta.glob("/docs/*.md")).map((path) =>
-    path.split("/").pop()!.replace(/\.md$/, ""),
-);
+import { slugs } from "#lib/utils/docs";
+
+import type { EntryGenerator, PageLoad } from "./$types";
 
 export const prerender = true;
 
+// All docs chapters; the slug is the file name without .md.
 export const entries: EntryGenerator = () =>
     slugs.map((slug) => ({ slug }));
 

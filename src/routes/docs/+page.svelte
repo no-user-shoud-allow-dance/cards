@@ -1,33 +1,22 @@
 <script lang="ts" module>
-    import type { Component } from "svelte";
-
     export const prerender = true;
-
-    interface DocModule {
-        default: Component;
-        metadata?: { title?: string; description?: string; icon?: string };
-    }
-
-    // All docs chapters, compiled from markdown by mdsvex (vite.config.ts).
-    const docs = import.meta.glob("/docs/*.md", {
-        eager: true,
-    }) as Record<string, DocModule>;
 </script>
 
 <script lang="ts">
     import { resolve } from "$app/paths";
-    import Page from "#lib/components/shared/ui/Page.svelte";
     import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
+    import { chapterMeta, slugs } from "#lib/utils/docs";
 
     // Chapter order comes from the numeric prefix of the file name.
-    const chapters = Object.entries(docs)
-        .map(([path, mod]) => ({
-            slug: path.split("/").pop()!.replace(/\.md$/, ""),
-            title: mod.metadata?.title ?? path,
-            description: mod.metadata?.description ?? "",
-            icon: mod.metadata?.icon ?? "",
-        }))
-        .sort((a, b) => a.slug.localeCompare(b.slug));
+    const chapters = slugs.map((slug) => {
+        const meta = chapterMeta(slug);
+        return {
+            slug,
+            title: meta.title,
+            description: meta.description,
+            icon: meta.icon,
+        };
+    });
 </script>
 
 <svelte:head>
@@ -38,8 +27,7 @@
     />
 </svelte:head>
 
-<Page>
-    <PageHeader
+<PageHeader
         title="Dokumentation"
         subtitle="Anleitungen für alle — und technischer Hintergrund für Entwickler:innen."
     />
@@ -70,7 +58,6 @@
             </li>
         {/each}
     </ul>
-</Page>
 
 <style>
     .chapter-list {
@@ -102,11 +89,11 @@
     }
 
     .chapter:hover {
-        transform: scale(0.95);
+        transform: scale(1.02);
     }
 
     .chapter:active {
-        transform: scale(0.9);
+        transform: scale(0.97);
     }
 
     .chapter-link {

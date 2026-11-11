@@ -1,7 +1,7 @@
 ---
 title: Für Entwickler:innen
 description: Projekt lokal starten, Architektur, Speicher, Parsen, Sync und Konventionen.
-icon: "/icons/docs/06-entwickler.svg"
+icon: "/icons/docs/07-entwickler.svg"
 ---
 
 ## Lokal starten
@@ -77,4 +77,4 @@ Die Dokumentation liegt als Markdown im Ordner `docs/` im Projektverzeichnis und
 
 ## Diese Dokumentation erweitern
 
-Einfach eine neue Datei `docs/NN-thema.md` anlegen — mit Frontmatter (`title`, `description`, `icon`) erscheint sie automatisch im Inhaltsverzeichnis unter `/docs` und als Seite unter `/docs/NN-thema`. Die Kapitel-Reihenfolge ergibt sich aus der Nummer im Dateinamen; das Icon liegt als SVG unter `static/icons/docs/`.
+Einfach eine neue Datei `docs/NN-thema.md` anlegen — mit Frontmatter (`title`, `description`, `icon`) erscheint sie automatisch im Inhaltsverzeichnis unter `/docs` und als Seite unter `/docs/NN-thema`. Die Kapitel-Reihenfolge ergibt sich aus der Nummer im Dateinamen; das Icon liegt als SVG unter `static/icons/docs/`. Optional ergänzt du einen Eintrag in `PER_PAGE` in `src/routes/docs/+layout.svelte`, damit die Kapitel-Seite passende animierte Screenshots in der Seitenleiste zeigt — ohne Eintrag erscheint dort die Gesamtübersicht.

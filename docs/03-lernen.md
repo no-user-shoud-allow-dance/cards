@@ -6,7 +6,7 @@ icon: "/icons/docs/03-lernen.svg"
 
 Es gibt zwei Arten, einen Stapel anzusehen:
 
-- **Übersicht** — du siehst alle Karten auf einmal, Vorderseite und Rückseite. Bewerten tust du hier nicht; der Lernfortschritt bleibt unangetastet.
+- **Übersicht** — du blätterst eine Karte nach der anderen (gemischte Reihenfolge) und siehst Vorder- und Rückseite direkt auf der Karte. Bewerten tust du hier nicht; der Lernfortschritt bleibt unangetastet. Der Pur-Modus greift nur im Lernmodus.
 - **Lernmodus** — du gehst die Karten einzeln durch, siehst zuerst die Vorderseite und drehst um, um die Antwort zu sehen. Dann bewertest du, wie gut du die Karte kanntest.
 
 ## Das Leitner-System
