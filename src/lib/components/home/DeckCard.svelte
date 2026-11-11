@@ -1,17 +1,21 @@
 <script lang="ts">
     import { resolve } from "$app/paths";
     import { countCards } from "#lib/utils/pure";
+    import type { DeckType } from "#lib/types";
     import Card from "#lib/components/shared/ui/Card.svelte";
     import Badge from "#lib/components/shared/ui/Badge.svelte";
+    import LanguageIcon from "#lib/components/shared/ui/LanguageIcon.svelte";
 
     let {
         slug,
         name,
         count,
+        deckType,
     }: {
         slug: string;
         name: string;
         count: number;
+        deckType: DeckType;
     } = $props();
 </script>
 
@@ -21,6 +25,7 @@
     padding="md"
     class="deck-card"
 >
+    <span class="deck-icon"><LanguageIcon type={deckType} /></span>
     <div class="deck-body">
         <span class="deck-name">{name}</span>
         <Badge class="deck-count">{countCards(count)}</Badge>
@@ -39,11 +44,21 @@
     }
 
     /* Snippet content is scoped to this component — no :global needed. */
+    .deck-icon {
+        position: absolute;
+        top: 0.85rem;
+        right: 0.85rem;
+        line-height: 0;
+    }
+
     .deck-body {
         display: flex;
         flex-direction: column;
         justify-content: center;
         gap: 0.3rem;
+
+        /* Keep the text clear of the corner icon. */
+        padding-right: 2.6rem;
     }
 
     .deck-name {

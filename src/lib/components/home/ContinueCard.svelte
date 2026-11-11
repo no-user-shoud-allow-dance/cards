@@ -4,6 +4,7 @@
     import type { DeckType } from "#lib/types";
     import Card from "#lib/components/shared/ui/Card.svelte";
     import ProgressBar from "#lib/components/shared/ui/ProgressBar.svelte";
+    import LanguageIcon from "#lib/components/shared/ui/LanguageIcon.svelte";
 
     let {
         slug,
@@ -35,7 +36,10 @@
             <span class="continue-folder">{folder}</span>
             {name}
         </span>
-        <span class="continue-meta">{DECK_TYPES[deckType].label}</span>
+        <span class="continue-meta">
+            <LanguageIcon type={deckType} />
+            {DECK_TYPES[deckType].label}
+        </span>
         <ProgressBar {ratio} />
         <span class="continue-footer">
             <span class="continue-count">{learned} / {total} gelernt</span>
@@ -71,9 +75,18 @@
     }
 
     .continue-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+
         color: var(--text-muted);
         font-size: 0.78rem;
         font-weight: 500;
+    }
+
+    .continue-meta :global(.lang-icon) {
+        width: 1.15rem;
+        height: 1.15rem;
     }
 
     .continue-footer {

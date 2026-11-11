@@ -57,6 +57,16 @@
     --warning-border: #ead7a4;
     --warning-text: #8a6a1c;
 
+    /* Language icon chips: per-language background/foreground pairs.
+       Each chip carries its own light background, so the same pairs
+       read well in both themes (like --qr-bg). */
+    --lang-greek-bg: #e2e9f1;
+    --lang-greek-fg: #3d5a80;
+    --lang-latin-bg: #f3e3e0;
+    --lang-latin-fg: #a04a41;
+    --lang-english-bg: #e1ede4;
+    --lang-english-fg: #37714b;
+
     /* Overview: warm terracotta / brick */
     --overview: #a05a3c;
     --overview-hover: #8b4d32;

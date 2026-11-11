@@ -1,5 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
+    import type { DeckType } from "#lib/types";
     import SectionLabel from "#lib/components/shared/ui/SectionLabel.svelte";
     import DeckCard from "./DeckCard.svelte";
 
@@ -7,6 +8,7 @@
         slug: string;
         name: string;
         count: number;
+        deckType: DeckType;
     }
 
     let {
@@ -41,7 +43,12 @@
             out:fade={{ duration: 150 }}
         >
             {#each decks as deck (deck.slug)}
-                <DeckCard slug={deck.slug} name={deck.name} count={deck.count} />
+                <DeckCard
+                    slug={deck.slug}
+                    name={deck.name}
+                    count={deck.count}
+                    deckType={deck.deckType}
+                />
             {/each}
         </div>
     {/if}

@@ -138,7 +138,7 @@
         );
         const groups = new Map<
             string,
-            { slug: string; name: string; count: number }[]
+            { slug: string; name: string; count: number; deckType: DeckType }[]
         >();
         for (const deck of sorted) {
             const list = groups.get(deck.folder) ?? [];
@@ -146,6 +146,7 @@
                 slug: deck.slug,
                 name: deck.name,
                 count: decks.load(deck.slug)?.cards.length ?? 0,
+                deckType: deck.deckType,
             });
             groups.set(deck.folder, list);
         }
