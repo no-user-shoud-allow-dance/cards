@@ -1,188 +1,168 @@
 import Peer from "peerjs";
 import type { DataConnection } from "peerjs";
 
-import { applySyncPayload, buildSyncPayload } from "./payload";
-import { syncStore } from "./store/syncStore.svelte";
-import { toastStore } from "../stores/session/toastStore.svelte";
+import { errorMessage, SYNC } from "#messages/locale.svelte";
+import { isNscError } from "#lib/core/errors";
+import { makeDeckEntry } from "#lib/repositories/decksRepository";
+import { deckStore } from "#lib/state/decks.svelte";
+import { learningStore } from "#lib/state/learning.svelte";
+import { toastStore } from "#lib/state/toasts.svelte";
+import { decodeFullSync, encodeFullSync, type FullSyncItem } from "#lib/sync/protocol";
+import { applyRemoteDecks, localHash } from "#lib/sync/merge";
+import { syncStore } from "#lib/sync/store.svelte";
 
 /**
- * Peer ID scheme: "nsc-<random>" — the peer ID itself is the shared
- * secret, exchanged via QR/paste. There is no account UUID: it would be
- * embedded in the peer ID anyway, so it could not add any secrecy
- * beyond the peer ID. Trust boundary: whoever holds the peer ID.
+ * PeerJS wiring only. No named rooms: the host's peer ID IS the room
+ * identifier and the trust anchor. PeerId is built from
+ * crypto.getRandomValues (12 base-36 chars after the "nsc-" prefix) —
+ * whoever holds the ID is the trust anchor. The pairing payload (the
+ * bare peer ID, base64url-encoded) travels via the `s` route.
  */
-const PEER_PREFIX = "nsc-";
+export type PeerId = string & { readonly __brand: "PeerId" };
 
-/** Prefix of the tiny QR/paste payload that carries a host's peer ID. */
-export const PEER_LINK_PREFIX = "nsc-peer:";
+export const PEER_PREFIX = "nsc-";
 
-const deviceSuffix = (): string =>
-    Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+const PEER_ID_PATTERN = /^nsc-[a-z0-9]{12}$/;
 
-/** Log helpers: console AND the sync card's log textarea (via syncStore). */
-function fmtArgs(args: unknown[]): string {
-    return args
-        .map((a) => (typeof a === "string" ? a : JSON.stringify(a)))
-        .join(" ");
+/** The one checked constructor of PeerId. */
+export function makePeerId(value: string): PeerId {
+    if (!PEER_ID_PATTERN.test(value)) {
+        throw new Error(`invalid peer id: ${value}`);
+    }
+    return value as PeerId;
 }
 
-function syncLog(msg: string, ...args: unknown[]): void {
-    console.log("[sync]", msg, ...args);
-    syncStore.addLog(`[sync] ${msg}${args.length ? " " + fmtArgs(args) : ""}`);
+/** Fresh host peer ID from crypto.getRandomValues (base-36, unpredictable). */
+export function generatePeerId(): PeerId {
+    const bytes = crypto.getRandomValues(new Uint8Array(12));
+    let out = PEER_PREFIX;
+    for (const b of bytes) out += (b % 36).toString(36);
+    return makePeerId(out);
 }
 
-function syncWarn(msg: string, ...args: unknown[]): void {
-    console.warn("[sync]", msg, ...args);
-    syncStore.addLog(`[sync] ${msg}${args.length ? " " + fmtArgs(args) : ""}`);
+/** The one checked normalizer of PeerId input. */
+export function normalizePeerId(input: string): PeerId {
+    return makePeerId(input.trim());
 }
 
-function syncError(msg: string, ...args: unknown[]): void {
-    console.error("[sync]", msg, ...args);
-    syncStore.addLog(`[sync] ${msg}${args.length ? " " + fmtArgs(args) : ""}`);
+function log(msg: string, ...args: unknown[]): void {
+    const line = `[sync] ${msg}${args.length ? " " + args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ") : ""}`;
+    console.log(line);
+    syncStore.addLog(line);
 }
 
-/** Maps a PeerJS error type to a German UI message. */
-function peerErrorMessage(type: string): string {
+function peerErrorMessage(type: string | undefined): string {
     switch (type) {
         case "peer-unavailable":
-            return "Das andere Gerät ist nicht erreichbar — läuft dort der Host-Modus?";
+            return SYNC.peerUnreachable;
         case "network":
         case "server-error":
         case "socket-error":
         case "socket-closed":
-            return "Verbindung zum Signalisierungs-Server fehlgeschlagen — bitte Netzwerk prüfen.";
+            return SYNC.signalingFailed;
         case "unavailable-id":
-            return "Diese Peer-ID ist bereits vergeben — bitte erneut versuchen.";
+            return SYNC.idTaken;
         default:
-            return "Verbindung fehlgeschlagen.";
+            return SYNC.connectionFailed;
     }
 }
 
 function handlePeerError(err: { type?: string }): void {
-    syncError("peer error:", err.type ?? "unknown");
+    log("peer error:", err.type ?? "unknown");
     syncStore.status = "error";
-    syncStore.error = peerErrorMessage(err.type ?? "unknown");
+    syncStore.error = peerErrorMessage(err.type);
 }
 
-/** German success toast + log after a payload was merged. */
-function reportSyncSuccess(result: {
-    decksAdded: number;
-    progressApplied: number;
-}): void {
-    syncLog("applied payload:", result);
-    const decks =
-        result.decksAdded === 1
-            ? "1 neuer Stapel"
-            : `${result.decksAdded} neue Stapel`;
-    const progress =
-        result.progressApplied === 1
-            ? "1 Fortschritts-Eintrag"
-            : `${result.progressApplied} Fortschritts-Einträge`;
-    toastStore.success(
-        `Synchronisation erfolgreich — ${decks}, ${progress} übernommen.`,
-    );
+async function localFullSync(): Promise<string> {
+    await deckStore.init();
+    await learningStore.init();
+    // Wire items are keyed by content hash (peer matching); the local
+    // state lookup is slug-keyed.
+    const items: FullSyncItem[] = deckStore.entries.map((entry) => ({
+        hash: localHash(entry),
+        entry,
+        state: learningStore.states[entry.slug as string] ?? null,
+    }));
+    return encodeFullSync(items);
 }
 
-/**
- * Accepts and answers a data connection. The peer ID is the trust
- * anchor, so every connection to our (unguessable) host ID is accepted.
- */
-function wireConnection(conn: DataConnection): void {
-    conn.on("open", () => {
-        syncLog("connection open, peer:", conn.peer);
-        syncStore.status = "connected";
-        syncStore.error = null;
+async function applyRemotePayload(data: string): Promise<void> {
+    const decoded = decodeFullSync(data); // throws NscError on bad payloads
+    await deckStore.init();
+    await learningStore.init();
+    const local: FullSyncItem[] = deckStore.entries.map((entry) => {
+        const hash = localHash(entry);
+        return { hash, entry, state: learningStore.states[entry.slug as string] ?? null };
     });
+    const result = applyRemoteDecks(local, decoded, (doc) => makeDeckEntry(doc));
+    for (const item of result.items) {
+        const existing = deckStore.entries.find((e) => localHash(e) === item.hash);
+        if (!existing) await deckStore.put(item.entry);
+        if (item.state) {
+            const slug = (existing ?? item.entry).slug as string;
+            await learningStore.mergeRemote(slug, item.state);
+        }
+    }
+    await deckStore.refresh();
+    log(SYNC.applied(result.added, result.merged));
+    toastStore.success(result.added === 1 ? SYNC.doneOne : SYNC.doneMany(result.added));
+}
+
+function wireConnection(conn: DataConnection, _isHost: boolean): void {
     conn.on("data", (data) => {
-        void (async () => {
-            try {
-                syncLog("received payload, applying …");
-                const result = await applySyncPayload(data as string);
-                reportSyncSuccess(result);
-                // Answer with our own payload → two-way sync.
-                conn.send(await buildSyncPayload());
-                syncLog("sent own payload back");
-            } catch (err) {
-                syncError("could not apply payload:", err);
-            }
-        })();
+        void applyRemotePayload(data as string).catch((e: unknown) => {
+            log("apply failed:", isNscError(e) ? errorMessage(e.code) : String(e));
+            syncStore.status = "error";
+            syncStore.error = isNscError(e) ? errorMessage(e.code) : SYNC.packageInvalid;
+        });
+    });
+    conn.on("open", () => {
+        syncStore.status = "connected";
+        // Each side sends exactly one message on open: the full-sync payload.
+        void localFullSync().then((payload) => conn.send(payload));
     });
     conn.on("close", () => {
-        syncLog("connection closed — tschüss!");
-        if (syncStore.status === "connected") {
-            // Back to hosting (host side) or idle (joiner side).
-            syncStore.status = syncStore.peerId ? "hosting" : "idle";
-        }
+        log("connection closed");
     });
-    conn.on("error", () => handlePeerError({ type: "network" }));
+    conn.on("error", (err) => handlePeerError({ type: (err as { type?: string }).type }));
 }
 
-/**
- * Host: listen for the other device. The peer ID ("nsc-<random>") is
- * shown as text and QR for the other device.
- */
+/** Opens the host side: the peer ID is the room; QR/paste carries it via the `s` route. */
 export function hostSync(): void {
     syncStore.destroyPeer();
-    const peer = new Peer(`${PEER_PREFIX}${deviceSuffix()}`);
+    const peerId = generatePeerId();
+    const peer = new Peer(peerId);
     syncStore.peer = peer;
-    syncStore.status = "connecting";
+    syncStore.peerId = peerId;
+    syncStore.status = "hosting";
     syncStore.error = null;
-
-    peer.on("open", (id) => {
-        syncLog("hosting as", id);
-        syncStore.peerId = id;
-        syncStore.status = "hosting";
+    log("hosting as", peerId);
+    peer.on("connection", (conn) => {
+        log("incoming connection");
+        wireConnection(conn, true);
     });
-
-    peer.on("connection", wireConnection);
     peer.on("error", handlePeerError);
 }
 
-/**
- * Join: connect to a host's peer ID (pasted or scanned from its QR).
- */
+/** Joins the host identified by the peer ID. */
 export function joinSync(hostPeerId: string): void {
-    const target = hostPeerId.trim().replace(PEER_LINK_PREFIX, "");
-    if (!target.startsWith(PEER_PREFIX)) {
+    syncStore.destroyPeer();
+    let target: PeerId;
+    try {
+        target = normalizePeerId(hostPeerId);
+    } catch {
         syncStore.status = "error";
-        syncStore.error = "Ungültige Peer-ID — sie beginnt mit „nsc-“.";
+        syncStore.error = SYNC.invalidPeerId;
         return;
     }
-
-    syncStore.destroyPeer();
     const peer = new Peer();
     syncStore.peer = peer;
     syncStore.status = "connecting";
     syncStore.error = null;
-
+    log("joining", target);
     peer.on("open", () => {
-        syncLog("joining", target);
         const conn = peer.connect(target, { reliable: true });
-        conn.on("open", async () => {
-            syncLog("connection open, peer:", conn.peer);
-            syncStore.status = "connected";
-            syncStore.error = null;
-            try {
-                conn.send(await buildSyncPayload()); // send ours first
-                syncLog("sent own payload");
-            } catch {
-                // send failure — the host's answer may still arrive
-                syncError("could not send own payload");
-            }
-        });
-        conn.on("data", (data) => {
-            void applySyncPayload(data as string)
-                .then((result) => reportSyncSuccess(result))
-                .catch((err) => {
-                    syncError("could not apply payload:", err);
-                });
-        });
-        conn.on("close", () => {
-            syncLog("connection closed — tschüss!");
-            if (syncStore.status === "connected") syncStore.status = "idle";
-        });
-        conn.on("error", () => handlePeerError({ type: "network" }));
+        wireConnection(conn, false);
     });
-
     peer.on("error", handlePeerError);
 }

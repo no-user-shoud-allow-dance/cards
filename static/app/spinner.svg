@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 42 42">
+    <g stroke="#3d5a80" stroke-width="2.4">
+        <!-- First card -->
+        <g transform="rotate(-8 13.95 18.45) translate(16.95 22.95)">
+            <g>
+                <animateTransform
+                    attributeName="transform"
+                    type="scale"
+                    values="1 1; 1 1; -1 1; -1 1"
+                    keyTimes="0; 0.5; 0.75; 1"
+                    calcMode="spline"
+                    keySplines="0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1"
+                    dur="2s"
+                    repeatCount="indefinite"
+                />
+                <rect x="-7.65" y="-9.65" width="15.3" height="19.3" rx="3.5" fill="none" />
+            </g>
+        </g>
+
+        <!-- Second card -->
+        <g transform="rotate(8 20.05 16.05) translate(25.05 19.75)">
+            <g>
+                <animateTransform
+                    attributeName="transform"
+                    type="scale"
+                    values="1 1; -1 1; -1 1"
+                    keyTimes="0; 0.25; 1"
+                    calcMode="spline"
+                    keySplines="0.25 0.1 0.25 1; 0.25 0.1 0.25 1"
+                    dur="2s"
+                    repeatCount="indefinite"
+                />
+                <rect x="-7.65" y="-9.65" width="15.3" height="19.3" rx="3.5" fill="#ffffff55" />
+            </g>
+        </g>
+    </g>
+</svg>

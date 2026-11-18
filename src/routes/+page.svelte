@@ -1,28 +1,38 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { cardStore } from "#lib/stores/persistent/cardStore.svelte";
-    import { decks } from "#lib/stores/data/deckStore.svelte";
-    import { BOX_COUNT, type DeckType } from "#lib/types";
-    import { computeProgressRatio, countCards } from "#lib/utils/pure";
-    import { parseDeck } from "#lib/utils/parser";
-    import { guessDeckType } from "#lib/utils/deckTypes";
-    import { dialogStore } from "#lib/stores/session/dialogStore.svelte";
-    import { toastStore } from "#lib/stores/session/toastStore.svelte";
+    import { SvelteMap } from "svelte/reactivity";
+    import {
+        BoxIcon,
+        Card,
+        ContinueCard,
+        EmptyState,
+        FlashCard,
+        FolderSection,
+        Page,
+        PageHeader,
+        ReadyGate,
+        SectionLabel,
+        boxCountsOf,
+        decks,
+        folderLabel,
+    } from "#components";
+    import { UI } from "#messages/locale.svelte";
+    import { BOX_COUNT, STORAGE, core, dialogStore, foldersStore, toastStore } from "#lib";
+    import type { DeckType } from "#lib";
+    import type { LoadedDeck } from "#components";
+
     import { resolve } from "$app/paths";
-    import Page from "#lib/components/shared/ui/Page.svelte";
-    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
-    import SectionLabel from "#lib/components/shared/ui/SectionLabel.svelte";
-    import FolderSection from "#lib/components/home/FolderSection.svelte";
-    import ContinueCard from "#lib/components/home/ContinueCard.svelte";
-    import ShareImport from "#lib/components/sharing/ShareImport.svelte";
-    import Card from "#lib/components/shared/ui/Card.svelte";
-    import Button from "#lib/components/shared/ui/Button.svelte";
 
     // Decks live only in this browser (IndexedDB); wait for them before
     // rendering so the server render and the first client render agree.
     let ready = $state(false);
 
+    // H2: the hero is a real, flippable mini-flashcard (sample word of the
+    // app's domain), not a static banner.
+    let heroFlipped = $state(false);
+
     onMount(() => {
+        void foldersStore.init();
         decks.init().then(() => {
             ready = true;
             void maybeOfferSampleDeck();
@@ -30,38 +40,37 @@
     });
 
     // Session-only flag so the offer appears at most once per tab session.
-    const SAMPLE_FLAG = "nsc_sample_dialog_shown";
+    const SAMPLE_FLAG = STORAGE.sessionStorage.sampleDialogDismissed;
 
     // Empty-state offer: import a sample deck that shows what the app can do.
     async function maybeOfferSampleDeck(): Promise<void> {
-        if (Object.keys(decks.decks).length > 0) return;
         if (sessionStorage.getItem(SAMPLE_FLAG) === "1") return;
-        sessionStorage.setItem(SAMPLE_FLAG, "1");
+        if (Object.keys(decks.decks).length > 0) return;
 
         const ok = await dialogStore.open({
             title: "Noch keine Stapel",
             message:
-                "Hi! Es sieht so aus, als hättest du noch keine Karten. Möchtest du einen Beispiel-Stapel importieren, der zeigt, was diese App kann?",
+                "Hier ist noch alles leer. Importiere den Beispiel-Stapel und sieh dir an, wie das Lernen mit NSC funktioniert.",
             confirmLabel: "Beispiel-Stapel importieren",
             cancelLabel: "Später",
             bg: "info",
         });
         if (!ok) return;
 
+        sessionStorage.setItem(SAMPLE_FLAG, "1");
+
         try {
-            const res = await fetch("/sample-deck.md");
+            const res = await fetch("/decks/sample-deck.md");
             if (!res.ok) throw new Error(String(res.status));
             const raw = await res.text();
-            const parsed = parseDeck(raw);
+            const { doc } = core.parseCollect(core.makeRawMarkdown(raw));
             await decks.add(
                 raw,
                 "Beispiel",
-                parsed.title ?? "Beispiel-Stapel",
-                guessDeckType(raw),
+                doc ? String(doc.title) : "Beispiel-Stapel",
+                doc?.type ?? "english"
             );
-            toastStore.success(
-                "Beispiel-Stapel importiert — viel Spaß beim Lernen!",
-            );
+            toastStore.success("Beispiel-Stapel importiert – viel Spaß beim Lernen!");
         } catch {
             toastStore.error("Der Beispiel-Stapel konnte nicht geladen werden.");
         }
@@ -70,89 +79,139 @@
     // All decks are user-uploaded, for totals and "Weiterlernen".
     const allEntries = $derived(
         Object.values(decks.decks).map((deck) => ({
-            folder: deck.folder,
+            folders: deck.folders,
             slug: deck.slug,
             name: deck.name,
             deckType: deck.deckType,
-        })),
+            createdAt: deck.createdAt,
+        }))
     );
 
-    // Totals shown in the page header.
-    const totals = $derived.by(() => {
-        let cards = 0;
-        for (const entry of allEntries) {
-            cards += decks.load(entry.slug)?.cards.length ?? 0;
-        }
-        return { decks: allEntries.length, cards };
-    });
+    // One »Weiterlernen« item — the ContinueCard input shape.
+    interface ContinueItem {
+        slug: string;
+        name: string;
+        folder: string;
+        deckType: DeckType;
+        learned: number;
+        total: number;
+        /** Card count per Leitner box, overview-only cards excluded. */
+        boxCounts: number[];
+        /** Cards seen in the overview but never answered (strip segment). */
+        overviewOnly: number;
+        lastSeen: number;
+        createdAt: number;
+        pinned: boolean;
+    }
 
-    // Decks with existing progress that still have unlearned cards,
-    // most recently active first.
-    const inProgress = $derived.by(() => {
-        const items: {
-            slug: string;
-            name: string;
-            folder: string;
-            deckType: DeckType;
-            learned: number;
-            total: number;
-            ratio: number;
-            lastSeen: number;
-        }[] = [];
-        for (const entry of allEntries) {
-            const deck = decks.load(entry.slug);
-            if (!deck || deck.cards.length === 0) continue;
-            let learned = 0;
-            let lastSeen = 0;
-            let hasProgress = false;
-            for (const card of deck.cards) {
-                const state = cardStore.states[card.id];
-                if (state) {
-                    hasProgress = true;
-                    if (state.box === BOX_COUNT) learned++;
-                    if (state.lastSeen > lastSeen) lastSeen = state.lastSeen;
-                }
-            }
-            // Fully learned decks have nothing left to continue with.
-            const allLearned = learned === deck.cards.length;
-            if (hasProgress && !allLearned) {
-                items.push({
-                    slug: entry.slug,
-                    name: entry.name,
-                    folder: entry.folder,
-                    deckType: entry.deckType,
-                    learned,
-                    total: deck.cards.length,
-                    ratio: computeProgressRatio(deck.cards, cardStore.states),
-                    lastSeen,
-                });
+    // Deck progress values for the »Weiterlernen« items. Cards seen in
+    // the overview but never answered leave box 1 and surface as their
+    // own --overview segment on the strip.
+    function progressOf(cards: LoadedDeck["cards"]): Pick<
+        ContinueItem,
+        "learned" | "total" | "boxCounts" | "overviewOnly" | "lastSeen"
+    > & {
+        hasProgress: boolean;
+    } {
+        const boxCounts = boxCountsOf(cards);
+        let learned = 0;
+        let lastSeen = 0;
+        let hasProgress = false;
+        let overviewOnly = 0;
+        for (const card of cards) {
+            const state = card.state;
+            if (!state) continue;
+            hasProgress = true;
+            if (state.box === BOX_COUNT) learned++;
+            if ((state.lastReviewed ?? 0) > lastSeen) lastSeen = state.lastReviewed ?? 0;
+            if (state.overviewDone && state.lastReviewed === null) {
+                overviewOnly++;
+                boxCounts[0]!--;
             }
         }
-        return items.sort((a, b) => b.lastSeen - a.lastSeen);
+        return { learned, total: cards.length, boxCounts, overviewOnly, lastSeen, hasProgress };
+    }
+
+    // »Weiterlernen«: pinned decks lead (a pin even shows fresh and
+    // fully learned decks, and beats the `#exclude-from-continue-learning`
+    // tag — the former »Angeheftet« section folded in here); below them,
+    // decks with progress that still have unlearned cards. Most
+    // recently active first within both halves.
+    const continueItems = $derived.by(() => {
+        const pinnedItems: ContinueItem[] = [];
+        const progressItems: ContinueItem[] = [];
+        for (const entry of allEntries) {
+            const pinned = entry.folders.includes(core.SPECIAL_FOLDERS.pinned);
+            const excluded = entry.folders.includes(core.SPECIAL_FOLDERS.excludeFromContinue);
+            if (!pinned && excluded) continue;
+            const cards = decks.load(entry.slug)?.cards ?? [];
+            const progress = progressOf(cards);
+            // Fully learned decks have nothing left to continue with —
+            // only a pin keeps them in the list.
+            if (!(pinned || (progress.hasProgress && progress.learned !== progress.total)))
+                continue;
+            const item: ContinueItem = {
+                slug: entry.slug,
+                name: entry.name,
+                folder: folderLabel(entry.folders),
+                deckType: entry.deckType,
+                ...progress,
+                createdAt: entry.createdAt,
+                pinned,
+            };
+            (pinned ? pinnedItems : progressItems).push(item);
+        }
+        const recency = (a: ContinueItem, b: ContinueItem) =>
+            b.lastSeen - a.lastSeen || b.createdAt - a.createdAt;
+        return [...pinnedItems.sort(recency), ...progressItems.sort(recency)];
     });
 
-    // User-uploaded decks grouped by their folder, newest first within a folder.
+    // User-uploaded decks grouped by their simple folder, newest first
+    // within a folder. `#special` folders are tags, not sections: decks
+    // without a simple folder fall under the default folder.
     const folders = $derived.by(() => {
-        const sorted = Object.values(decks.decks).sort(
-            (a, b) => b.createdAt - a.createdAt,
-        );
-        const groups = new Map<
+        const sorted = Object.values(decks.decks).sort((a, b) => b.createdAt - a.createdAt);
+        const groups = new SvelteMap<
             string,
-            { slug: string; name: string; count: number; deckType: DeckType }[]
+            {
+                slug: string;
+                name: string;
+                count: number;
+                deckType: DeckType;
+                pinned: boolean;
+                excluded: boolean;
+                draft: boolean;
+            }[]
         >();
         for (const deck of sorted) {
-            const list = groups.get(deck.folder) ?? [];
+            const key = core.firstSimpleFolder(deck.folders) ?? core.FOLDER_DEFAULT;
+            const list = groups.get(key) ?? [];
             list.push({
                 slug: deck.slug,
                 name: deck.name,
-                count: decks.load(deck.slug)?.cards.length ?? 0,
+                count: deck.count,
                 deckType: deck.deckType,
+                pinned: deck.folders.includes(core.SPECIAL_FOLDERS.pinned),
+                excluded: deck.folders.includes(core.SPECIAL_FOLDERS.excludeFromContinue),
+                draft: deck.folders.includes(core.DRAFT_FOLDER),
             });
-            groups.set(deck.folder, list);
+            groups.set(key, list);
         }
         return [...groups.entries()]
             .map(([folder, decks]) => ({ folder, decks }))
             .sort((a, b) => a.folder.localeCompare(b.folder));
+    });
+
+    function togglePin(slug: string): void {
+        void decks.togglePinned(slug);
+    }
+
+    function hideFromContinue(slug: string): void {
+        void decks.toggleHiddenFromContinue(slug);
+    }
+
+    onMount(() => {
+        console.log(continueItems);
     });
 </script>
 
@@ -160,53 +219,32 @@
     <title>NSC</title>
 </svelte:head>
 
-{#if ready}
+<ReadyGate bind:ready>
     <Page>
-        <img
-            class="banner"
-            src="/banner.svg"
-            alt="NSC – Banner mit wabernden Formen und Karteikarten"
-            width="1280"
-            height="480"
-        />
-
-        <ShareImport />
-
-        <Card href={resolve("/docs")} hover bg="primary" class="docs-card">
-            <div class="docs-card-body">
-                <div class="docs-card-texts">
-                    <span class="docs-card-title">Dokumentation</span>
-                    <span class="docs-card-text">
-                        So funktioniert NSC — einfach erklärt, inklusive
-                        technischem Hintergrund für Entwickler:innen.
-                    </span>
-                </div>
-                <span class="docs-card-arrow" aria-hidden="true">→</span>
+        <!-- H2/H3: a live, flippable mini-flashcard as the hero — the
+             banner's hardcoded light background is gone with it. -->
+        <section class="hero" aria-label={UI.heroTitle}>
+            <div class="hero-text">
+                <h1 class="hero-title">{UI.heroTitle}</h1>
+                <p class="hero-sub">{UI.heroText}</p>
             </div>
-        </Card>
+            <div class="hero-card">
+                <FlashCard
+                    compact
+                    frontText="μανθάνω"
+                    backText={UI.heroCardBack}
+                    flipped={heroFlipped}
+                    onFlip={() => (heroFlipped = !heroFlipped)}
+                />
+                <span class="hero-hint">{UI.heroFlipHint}</span>
+            </div>
+        </section>
 
-        <PageHeader
-            title="Ordner"
-            subtitle="Wähle einen Stapel zum Lernen."
-            compact
-        >
-            {#snippet actions()}
-                <div class="hero-meta">
-                    <p class="hero-stats">
-                        {totals.decks} Stapel · {countCards(totals.cards)}
-                    </p>
-                    <Button href={resolve("/(io)/create")}>
-                        Stapel erstellen
-                    </Button>
-                </div>
-            {/snippet}
-        </PageHeader>
-
-        {#if inProgress.length > 0}
-            <section class="continue-section" aria-label="Weiterlernen">
-                <SectionLabel>Weiterlernen</SectionLabel>
+        {#if continueItems.length > 0}
+            <section class="continue-section" aria-label={UI.continueLearning}>
+                <SectionLabel>{UI.continueLearning}</SectionLabel>
                 <div class="continue-grid">
-                    {#each inProgress as item (item.slug)}
+                    {#each continueItems as item (item.slug)}
                         <ContinueCard
                             slug={item.slug}
                             name={item.name}
@@ -214,33 +252,58 @@
                             deckType={item.deckType}
                             learned={item.learned}
                             total={item.total}
-                            ratio={item.ratio}
+                            boxCounts={item.boxCounts}
+                            overviewCount={item.overviewOnly}
+                            pinned={item.pinned}
+                            onTogglePin={item.pinned ? () => togglePin(item.slug) : undefined}
+                            onHide={item.pinned ? undefined : () => hideFromContinue(item.slug)}
                         />
                     {/each}
                 </div>
             </section>
         {/if}
 
+        <PageHeader title={UI.foldersHeading} subtitle={UI.foldersSubtitle} oneliner></PageHeader>
+
         {#if folders.length === 0}
-            <p class="empty">
-                Keine Stapel gefunden.
-                <a href={resolve("/(io)/upload")}
-                    >Lade einen eigenen Stapel hoch</a
-                >.
-            </p>
+            <EmptyState
+                message={UI.emptyHome}
+                action={{ href: resolve("/(io)/upload"), label: UI.emptyHomeAction }}
+            >
+                {#snippet icon()}
+                    <BoxIcon size={40} />
+                {/snippet}
+            </EmptyState>
         {/if}
 
         {#each folders as folder (folder.folder)}
-            <FolderSection folder={folder.folder} decks={folder.decks} />
+            <FolderSection
+                folder={folder.folder}
+                decks={folder.decks}
+                onTogglePin={togglePin}
+                opened={foldersStore.openedOf(folder.folder)}
+                onToggle={() => void foldersStore.toggle(folder.folder)}
+            />
         {/each}
-    </Page>
-{/if}
 
-<style>
+        <!-- H4: the docs card sits below the user's own decks. -->
+        <Card href={resolve("/(docs)/docs")} hover bg="primary" class="docs-card">
+            <div class="docs-card-body">
+                <div class="docs-card-texts">
+                    <span class="docs-card-title">{UI.docsCardTitle}</span>
+                    <span class="docs-card-text">{UI.docsCardText}</span>
+                </div>
+                <span class="docs-card-arrow" aria-hidden="true">→</span>
+            </div>
+        </Card>
+    </Page>
+</ReadyGate>
+
+<style lang="postcss">
     /* The class lands on the Card root (a child component), so :global.
        The hover border needs to out-specify Card's own .card.hover:hover. */
     :global(.docs-card) {
-        margin-bottom: 2rem;
+        margin-top: 2rem;
     }
 
     :global(.card.docs-card.hover:hover) {
@@ -268,7 +331,7 @@
 
     .docs-card-text {
         color: var(--text-muted);
-        font-size: 0.9rem;
+        font-size: var(--fs-4);
     }
 
     .docs-card-arrow {
@@ -285,45 +348,59 @@
         transform: translateX(4px);
     }
 
-    .banner {
-        display: block;
-        width: 100%;
-        height: auto;
+    /* H2 hero: welcome line left, live mini-flashcard right. */
+    .hero {
+        display: flex;
+        align-items: center;
+        gap: clamp(1.5rem, 4dvw, 3.5rem);
 
         margin-bottom: 1.75rem;
+    }
 
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-card);
+    .hero-text {
+        flex: 1 1 55%;
+        min-width: 0;
+    }
+
+    .hero-title {
+        margin: 0 0 0.6rem;
+        font-size: var(--fs-7);
+        letter-spacing: -0.01em;
+    }
+
+    .hero-sub {
+        margin: 0;
+        max-width: 34rem;
+        color: var(--text-muted);
+        font-size: var(--fs-4);
+        line-height: 1.65;
+    }
+
+    .hero-card {
+        flex: 0 1 340px;
+        min-width: 0;
+        text-align: center;
+    }
+
+    .hero-hint {
+        display: inline-block;
+        margin-top: 0.5rem;
+        color: var(--text-muted);
+        font-size: var(--fs-2);
+        font-weight: 500;
     }
 
     @media (max-width: 540px) {
-        .banner {
+        .hero {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1.25rem;
             margin-bottom: 1.25rem;
         }
-    }
 
-    .empty {
-        margin: 1rem 0;
-        color: var(--text-muted);
-        font-size: 0.95rem;
-    }
-
-    .hero-meta {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.9rem;
-
-        margin-bottom: 1.75rem;
-    }
-
-    .hero-stats {
-        margin: 0;
-        color: var(--text-muted);
-        font-size: 0.85rem;
-        font-weight: 500;
-        font-variant-numeric: tabular-nums;
+        .hero-card {
+            flex-basis: auto;
+        }
     }
 
     .continue-section {
@@ -332,7 +409,7 @@
 
     .continue-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
         gap: 0.8rem;
     }
 </style>

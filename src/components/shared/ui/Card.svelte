@@ -1,0 +1,192 @@
+<script lang="ts">
+    import type { Snippet } from "svelte";
+    import type { HTMLAttributes } from "svelte/elements";
+
+    // `class` arrives via rest and is merged into the class expression;
+    // aria-*/id/… fall through to the root element via {...rest}.
+    let {
+        href,
+        hover = false,
+        padding = "md",
+        bg = "surface",
+        onclick,
+        children,
+        header,
+        footer,
+        ...rest
+    }: {
+        href?: string;
+        hover?: boolean;
+        padding?: "sm" | "md" | "lg";
+        bg?:
+            "surface" | "soft" | "primary" | "success" | "danger" | "warning" | "info" | "overview";
+        onclick?: (event: MouseEvent | KeyboardEvent) => void;
+        children: Snippet;
+        header?: Snippet;
+        footer?: Snippet;
+    } & HTMLAttributes<HTMLElement> = $props();
+
+    // The non-link branch renders role="button": activate it with
+    // Enter/Space as well, not only with a click.
+    function handleKeydown(event: KeyboardEvent): void {
+        if (!onclick) return;
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onclick(event);
+        }
+    }
+</script>
+
+{#if href}
+    <!-- Callers pass an already resolve()d route; resolving again would fail at runtime. -->
+    <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+    <a {...rest} class={["card", padding, `bg-${bg}`, rest.class]} class:hover {href} {onclick}>
+        {#if header}<div class="card-header">{@render header()}</div>{/if}
+        <div class="card-body">{@render children()}</div>
+        {#if footer}<div class="card-footer">{@render footer()}</div>{/if}
+    </a>
+{:else}
+    <!-- role/tabindex are set together (button only when the card is clickable). -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <div
+        {...rest}
+        class={["card", padding, `bg-${bg}`, rest.class]}
+        class:hover
+        role={onclick ? "button" : undefined}
+        {onclick}
+        onkeydown={handleKeydown}
+        tabindex={onclick ? 0 : undefined}
+    >
+        {#if header}<div class="card-header">{@render header()}</div>{/if}
+        <div class="card-body">{@render children()}</div>
+        {#if footer}<div class="card-footer">{@render footer()}</div>{/if}
+    </div>
+{/if}
+
+<style lang="postcss">
+    .card {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        color: var(--text);
+        text-decoration: none;
+        box-shadow: var(--shadow-card);
+
+        &.hover {
+            transition:
+                border-color var(--transition-fast),
+                background var(--transition-fast),
+                box-shadow var(--transition-fast),
+                transform var(--transition-spring);
+
+            &:hover {
+                border-color: var(--border-strong);
+                transform: translateY(-2px);
+            }
+
+            &:active {
+                transform: translateY(0) scale(0.98);
+            }
+        }
+    }
+
+    a.card.hover {
+        cursor: pointer;
+    }
+
+    /* ── Background variants ────────────────────────────────────── */
+    .card.bg-surface {
+        background: var(--surface);
+    }
+    .card.bg-soft {
+        background: var(--surface-soft);
+    }
+    .card.bg-primary {
+        background: var(--primary-soft);
+    }
+    .card.bg-success {
+        background: var(--success-bg);
+    }
+    .card.bg-danger {
+        background: var(--danger-bg);
+    }
+    .card.bg-warning {
+        background: var(--warning-bg);
+    }
+    .card.bg-info {
+        background: var(--info-bg);
+    }
+    .card.bg-overview {
+        background: var(--overview-soft);
+    }
+
+    /* Hover grades: slightly darker shade of each background. */
+    .card.hover.bg-surface:hover {
+        background: var(--surface-hover);
+    }
+    .card.hover.bg-soft:hover {
+        background: var(--surface-hover);
+    }
+    .card.hover.bg-primary:hover {
+        background: color-mix(in srgb, var(--primary-soft) 82%, var(--primary));
+    }
+    .card.hover.bg-success:hover {
+        background: var(--success-hover);
+    }
+    .card.hover.bg-danger:hover {
+        background: var(--danger-hover);
+    }
+    .card.hover.bg-warning:hover {
+        background: var(--warning-hover);
+    }
+    .card.hover.bg-info:hover {
+        background: var(--info-hover);
+    }
+    .card.hover.bg-overview:hover {
+        background: color-mix(in srgb, var(--overview-soft) 82%, var(--overview));
+    }
+
+    /* ── Padding variants ───────────────────────────────────────── */
+    .card.sm {
+        padding: 0.75rem 0.9rem;
+    }
+    .card.md {
+        padding: 1.1rem 1.2rem;
+    }
+    .card.lg {
+        padding: 1.5rem 1.6rem;
+    }
+
+    .card-header {
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+        & + .card-body {
+            padding-top: 0.75rem;
+        }
+    }
+
+    .card-body {
+        flex: 1;
+
+        & + .card-footer {
+            margin-top: 0.75rem;
+        }
+    }
+
+    .card-footer {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 540px) {
+        .card.lg {
+            padding: 1.1rem 1rem;
+        }
+    }
+</style>

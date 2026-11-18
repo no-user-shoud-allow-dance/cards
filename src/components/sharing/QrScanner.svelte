@@ -1,0 +1,201 @@
+<script lang="ts">
+    import Button from "#components/shared/ui/Button.svelte";
+    import FullscreenOverlay from "#components/sharing/FullscreenOverlay.svelte";
+    import { toastStore } from "#lib/state/toasts.svelte";
+
+    let { onScan }: { onScan: (value: string) => void } = $props();
+
+    // BarcodeDetector is a native browser API (Chrome/Edge, Safari 17+);
+    // the types are declared locally because lib.dom does not ship them
+    // everywhere yet.
+    interface DetectedBarcode {
+        rawValue: string;
+    }
+
+    interface BarcodeDetectorLike {
+        detect(source: HTMLVideoElement): Promise<DetectedBarcode[]>;
+    }
+
+    type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => BarcodeDetectorLike;
+
+    let scanButton = $state<HTMLDivElement | null>(null);
+    let video = $state<HTMLVideoElement | null>(null);
+    let scanning = $state(false);
+
+    let stream: MediaStream | null = null;
+    let detector: BarcodeDetectorLike | null = null;
+    let scanTimer: number | null = null;
+
+    function getBarcodeDetector(): BarcodeDetectorConstructor | null {
+        return (
+            (window as unknown as { BarcodeDetector?: BarcodeDetectorConstructor })
+                .BarcodeDetector ?? null
+        );
+    }
+
+    function scannerSupported(): boolean {
+        return (
+            typeof navigator !== "undefined" &&
+            typeof navigator.mediaDevices?.getUserMedia === "function" &&
+            getBarcodeDetector() !== null
+        );
+    }
+
+    function openScanner(): void {
+        if (!scannerSupported()) {
+            toastStore.error(
+                "QR-Scanner wird von diesem Browser nicht unterstützt – füge den Link stattdessen manuell ein."
+            );
+            return;
+        }
+        scanning = true;
+    }
+
+    function closeScanner(): void {
+        scanning = false;
+    }
+
+    function stopCamera(): void {
+        if (scanTimer !== null) {
+            clearInterval(scanTimer);
+            scanTimer = null;
+        }
+        stream?.getTracks().forEach((track) => track.stop());
+        stream = null;
+        detector = null;
+        if (video) video.srcObject = null;
+    }
+
+    async function scan(): Promise<void> {
+        if (!detector || !video || video.readyState < video.HAVE_CURRENT_DATA) {
+            return;
+        }
+        try {
+            const codes = await detector.detect(video);
+            const value = codes[0]?.rawValue;
+            if (value) {
+                closeScanner();
+                onScan(value);
+            }
+        } catch {
+            // Transient detection errors (empty frame, …) are ignored.
+        }
+    }
+
+    // Start the camera once the overlay's video element exists; the
+    // cleanup stops it again when the overlay closes.
+    $effect(() => {
+        if (!scanning) return;
+        const element = video;
+        const Detector = getBarcodeDetector();
+        if (!element || !Detector) return;
+        let cancelled = false;
+        void (async () => {
+            try {
+                detector = new Detector({ formats: ["qr_code"] });
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    // The rear camera scans codes far more reliably.
+                    video: { facingMode: { ideal: "environment" } },
+                });
+                if (cancelled) {
+                    stopCamera();
+                    return;
+                }
+                element.srcObject = stream;
+                element.muted = true;
+                await element.play();
+                if (cancelled) {
+                    stopCamera();
+                    return;
+                }
+                scanTimer = window.setInterval(() => void scan(), 300);
+            } catch {
+                if (!cancelled) {
+                    // Close the overlay again — the toast explains what
+                    // happened.
+                    scanning = false;
+                    toastStore.error(
+                        "Kamera nicht verfügbar – bitte erlaube den Kamerazugriff oder füge den Link manuell ein."
+                    );
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+            stopCamera();
+        };
+    });
+</script>
+
+<div class="qr-scanner" bind:this={scanButton} tabindex="-1">
+    <Button onclick={openScanner}>QR-Code scannen</Button>
+</div>
+
+<FullscreenOverlay
+    open={scanning}
+    label="QR-Code scannen"
+    onclose={closeScanner}
+    restoreFocus={() => scanButton}
+>
+    <div class="scanner-frame">
+        <video bind:this={video} class="scanner-video" autoplay playsinline muted></video>
+        <div class="scanner-reticle" aria-hidden="true"></div>
+    </div>
+    <p class="scanner-hint">QR-Code vor die Kamera halten – der Link wird automatisch übernommen</p>
+</FullscreenOverlay>
+
+<style lang="postcss">
+    .qr-scanner {
+        margin-top: 0.6rem;
+    }
+
+    .scanner-frame {
+        position: relative;
+
+        width: min(100%, 22rem);
+        aspect-ratio: 1;
+        overflow: hidden;
+
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-lg);
+
+        background: var(--scanner-bg);
+        box-shadow: var(--shadow-card);
+    }
+
+    .scanner-video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Reticle: the square the QR code should be held into. */
+    .scanner-reticle {
+        position: absolute;
+        inset: 12%;
+
+        border: 2px solid color-mix(in srgb, var(--on-backdrop) 85%, transparent);
+        border-radius: var(--radius-md);
+
+        animation: reticle-pulse 2.2s ease-in-out infinite;
+
+        pointer-events: none;
+    }
+
+    @keyframes reticle-pulse {
+        50% {
+            opacity: 0.45;
+        }
+    }
+
+    .scanner-hint {
+        margin: 0;
+
+        color: color-mix(in srgb, var(--on-backdrop) 80%, transparent);
+        font-size: var(--fs-3);
+        line-height: 1.5;
+        text-align: center;
+    }
+</style>

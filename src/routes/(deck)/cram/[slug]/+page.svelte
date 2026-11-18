@@ -1,19 +1,21 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { decks } from "#lib/stores/data/deckStore.svelte";
-    import { useCramSession } from "#lib/composables/useCramSession.svelte";
-    import FlashCard from "#lib/components/learning/cram/FlashCard.svelte";
-    import StudyControls from "#lib/components/learning/StudyControls.svelte";
-    import StatusBar from "#lib/components/learning/cram/StatusBar.svelte";
-    import BoxOverview from "#lib/components/learning/cram/BoxOverview.svelte";
-    import SessionComplete from "#lib/components/learning/cram/SessionComplete.svelte";
-    import { useStudyTimer } from "#lib/composables/useStudyTimer.svelte";
-    import StudyClock from "#lib/components/learning/cram/StudyClock.svelte";
-    import CramIntro from "#lib/components/learning/cram/CramIntro.svelte";
-    import CramBreak from "#lib/components/learning/cram/CramBreak.svelte";
-    import StudyLayout from "#lib/components/learning/StudyLayout.svelte";
-    import type { LoadedDeck } from "#lib/types";
-    import DeckEmpty from "#lib/components/decks/DeckEmpty.svelte";
+    import {
+        BoxStrip,
+        DeckEmpty,
+        FlashCard,
+        SessionComplete,
+        StatusBar,
+        StudyControls,
+        StudyLayout,
+        decks,
+        useCramSession,
+        useMediaQuery,
+        useStudyTime,
+    } from "#components";
+    import type { LoadedDeck } from "#components";
+    import { messages, toastStore } from "#lib";
+    import { UI } from "#messages/locale.svelte";
 
     let { data } = $props();
 
@@ -22,81 +24,41 @@
 
     const session = useCramSession(() => decks.load(data.slug));
 
-    const timer = useStudyTimer(() => data.slug);
-    timer.observe(session);
-
-    // Intro sequence: the timer flies to center and the user picks a
-    // session duration. Only shown when no timer is configured yet.
-    // The parent layout mounts this page only after the user's decks
-    // (IndexedDB) are loaded, so no extra gating is needed here.
-    let introCompleted = $state(false);
-
-    const showIntro = $derived(
-        !introCompleted &&
-            deck.cards.length > 0 &&
-            !session.finished &&
-            timer.durationMs === null &&
-            timer.remainingMs === null &&
-            timer.finishedAt === null,
-    );
-
-    function completeIntro(): void {
-        introCompleted = true;
-    }
+    // Active learning time: every learning action resets the inactivity
+    // pause; the measured time is flushed through the facade.
+    const studyTime = useStudyTime(() => data.slug);
+    studyTime.observe(session);
 
     // On mobile the box overview moves from the top (above the progress
     // bar) to the bottom, above the controls.
-    let isMobile = $state(false);
-
-    onMount(() => {
-        const mobileQuery = window.matchMedia("(max-width: 700px)");
-        isMobile = mobileQuery.matches;
-        const handleChange = (event: MediaQueryListEvent) => {
-            isMobile = event.matches;
-        };
-        mobileQuery.addEventListener("change", handleChange);
-        return () => mobileQuery.removeEventListener("change", handleChange);
-    });
-
-    // While the interface is blurred (break dialog or inactivity pause),
-    // the first interaction only lifts the blur: a keypress or click's
-    // action runs on the next one, once the interface is interactive
-    // again. With the timer overlay open, keys are left alone so the
-    // overlay stays keyboard-accessible.
-    function liftBlur(): void {
-        if (timer.finishedAt !== null) {
-            timer.acknowledge();
-        } else {
-            timer.notifyActivity();
-        }
-    }
+    const isMobile = useMediaQuery("(max-width: 700px)");
 
     function handleKeydown(event: KeyboardEvent): void {
-        if (timer.menuOpen) return;
-
-        if (!timer.interfaceBlurred || showIntro) {
-            session.handleKeydown(event);
-            return;
-        }
-
-        // Let typing in form fields through untouched.
-        const target = event.target;
-        if (
-            target instanceof HTMLElement &&
-            target.closest("input, textarea, select, [contenteditable='true']")
-        ) {
-            return;
-        }
-
-        // Swallow the key so it cannot flip, answer or open a search.
-        event.preventDefault();
-
-        liftBlur();
+        session.handleKeydown(event);
     }
 
     onMount(() => {
         session.start();
     });
+
+    // Moon button: hides the current card (trailing `*`) and advances
+    // the queue; the store keeps the raw markdown inside storage.
+    async function moonCurrent(): Promise<void> {
+        if (!session.currentCard) return;
+        await session.moonCurrent();
+        toastStore.success(messages.UI.mooned);
+    }
+
+    // H16: grade flash on the card edge for ~150ms after answering.
+    let flash = $state<"right" | "wrong" | null>(null);
+    let flashTimer: ReturnType<typeof setTimeout> | undefined;
+
+    function answer(right: boolean): void {
+        flash = right ? "right" : "wrong";
+        clearTimeout(flashTimer);
+        flashTimer = setTimeout(() => (flash = null), 150);
+        session.answer(right);
+    }
 </script>
 
 <svelte:head>
@@ -105,23 +67,20 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<StudyLayout
-    blurred={timer.interfaceBlurred && !showIntro}
-    onBlurredInteract={liftBlur}
-    fullHeight
->
+<StudyLayout fullHeight>
     {#snippet top()}
         {#if session.currentCard}
-            {#if !isMobile}
-                <BoxOverview
-                    boxCounts={session.boxCounts}
+            {#if !isMobile.matches}
+                <BoxStrip
+                    variant="labeled"
+                    counts={session.boxCounts}
                     currentBox={session.currentBox}
                 />
             {/if}
             <StatusBar
                 learnedCount={session.learnedCount}
-                totalCards={deck.cards.length}
-                progressRatio={session.progressRatio}
+                totalCards={session.totalCards}
+                boxCounts={session.boxCounts}
             />
         {/if}
     {/snippet}
@@ -134,19 +93,20 @@
                 <FlashCard
                     frontText={session.frontText}
                     backText={session.backText}
-                    frontImages={session.frontImages}
-                    backImages={session.backImages}
+                    contextText={session.contextText}
+                    tags={session.currentCard?.tags ?? []}
+                    image={session.image}
                     flipped={session.revealed}
                     onFlip={session.toggleFlip}
+                    onMoon={moonCurrent}
+                    mooned={session.currentHidden}
+                    {flash}
                 />
             {/key}
         {:else if session.finished}
-            <SessionComplete
-                slug={data.slug}
-                cardIds={deck.cards.map((c) => c.id)}
-            />
+            <SessionComplete slug={data.slug} cardIds={deck.cards.map((c) => c.cardId)} />
         {:else}
-            <DeckEmpty text="Keine Karten verfügbar." />
+            <DeckEmpty text={UI.emptyNoCards} />
         {/if}
     {/snippet}
 
@@ -157,33 +117,18 @@
                 canGoBack={session.undoStack.length > 0}
                 onGoBack={session.undo}
                 onFlip={session.toggleFlip}
-                onWrong={() => session.answer(false)}
-                onRight={() => session.answer(true)}
+                onWrong={() => answer(false)}
+                onRight={() => answer(true)}
                 onHelp={session.openHelpSearch}
                 onMnemonic={session.openMnemonicSearch}
             />
-            {#if isMobile}
-                <BoxOverview
-                    boxCounts={session.boxCounts}
+            {#if isMobile.matches}
+                <BoxStrip
+                    variant="labeled"
+                    counts={session.boxCounts}
                     currentBox={session.currentBox}
                 />
             {/if}
         {/if}
-    {/snippet}
-
-    {#snippet overlays()}
-        {#if showIntro}
-            <CramIntro {timer} onDone={completeIntro} />
-        {/if}
-
-        {#if timer.finishedAt !== null}
-            <CramBreak {timer} />
-        {/if}
-
-        <StudyClock
-            {timer}
-            intro={showIntro}
-            breakMode={timer.finishedAt !== null}
-        />
     {/snippet}
 </StudyLayout>

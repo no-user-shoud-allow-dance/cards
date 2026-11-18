@@ -1,0 +1,83 @@
+---
+title: Für Entwickler:innen
+description: Projekt lokal starten, Architektur, Speicher, Parsen, Sync und Konventionen.
+icon: "/docs/icons/07-entwickler.svg"
+---
+
+## Lokal starten
+
+Voraussetzung: [Bun](https://bun.sh) oder Node.js 18+.
+
+```bash
+bun install     # Abhängigkeiten installieren
+bun run dev     # Dev-Server starten
+bun run check   # Typprüfung
+bun run build   # Produktions-Build
+bun run preview # Build lokal ansehen
+```
+
+## Architektur
+
+NSC ist **local-first**: Es gibt kein Backend. Alle Daten liegen im Browser – Stapel in der IndexedDB, Fortschritt/Einstellungen/Lernzeit im Local Storage.
+
+Stack: SvelteKit + Svelte 5 (Runes), TypeScript, Vite, adapter-vercel; Laufzeit-Bibliotheken: PeerJS (Sync), qr-code-styling (QR-Codes), detectincognitojs (Privatmodus-Erkennung).
+
+```
+src/
+├── routes/            # SvelteKit-Seiten
+│   ├── +page.svelte   # Startseite (Ordner, Weiterlernen)
+│   ├── (docs)/
+│   │   ├── docs/      # diese Dokumentation – je Kapitel ein Ordner mit +page.svx
+│   │   └── legal/     # Impressum, Datenschutz, Lizenzen
+│   ├── account/       # Konto: Sync (Host/Join), Daten löschen
+│   ├── (io)/          # Stapel erstellen / hochladen / importieren
+│   ├── (deck)/        # deck/[slug], cram/[slug], overview/[slug], edit, export
+│   └── (protocols)/   # Share-/Sync-Links (c, p, t, s, k)
+└── lib/
+    ├── core/          # reine Domänenlogik: Deck, Lernen, Share, Sync (keine Importe nach oben)
+    ├── ui/            # Komponenten (ui/components), Composables (ui/composables), View-Model (ui/model)
+    ├── storage/       # Repositorien + Engines (IndexedDB / Local Storage / Memory)
+    ├── state/         # Stores (Runes) über den Repositorien: deckStore, learningStore, settingsStore, toastStore, dialogStore, studyTimeStore
+    ├── sync/          # Geräte-Sync über PeerJS/WebRTC + Protokoll
+    ├── messages/      # UI-Texte (Deutsch), Fehler als Codes
+    └── utils/         # draft, share, serverShare, time, transitions
+```
+
+Die Dokumentation liegt als `.svx`-Kapitel in je einem Ordner unter `src/routes/(docs)/docs/` – jede Datei ist direkt eine Route (`+page.svx`), die mdsvex zur Build-Zeit zu einer Svelte-Komponente kompiliert (`vite.config.ts`), gerendert unter `/docs`. Inhaltsverzeichnis, Kapitel-Chrome (Titel, Icon, Pager) und Screenshot-Leiste lesen dieselben Module über die Registry `chapters.ts` im selben Ordner, damit alles übereinstimmt.
+
+## Speicher und Datenfluss
+
+- **IndexedDB** – die Stapel als versionierte Records (`deck:<slug>`, gzip-komprimiertes Roh-Markdown), verwaltet über das `DeckRepository` (`src/lib/storage/deckRepository.ts`) und die `decks`-Fassade (`src/lib/ui/model/decks.svelte.ts`). Jeder Stapel hat einen `slug` (aus Inhalts-Hash + Zufallsuffix) und einen `DeckHash` (Hash aus Titel + Typ + Karten); darüber werden Duplikate beim Hinzufügen erkannt.
+- **Kleiner Engine** (Local Storage, Fallback IndexedDB/Session/Memory) – Lernfortschritt (`state:<hash>`), Einstellungen (`kk-settings`) und Lernzeit (`kk-study-time`) über `smallEngine` (`src/lib/storage/detect.ts`) bzw. die Repositorien in `src/lib/repositories/`, und die Stores in `src/lib/state/` (`learningStore`, `settingsStore`, `studyTimeStore`).
+- Der Lernfortschritt liegt in `learningStore`, keyed by `DeckHash` mit pro-Karte `CardState` (Card-Id = Inhalts-Hash der Karte); `BOX_COUNT = 6` in `src/lib/core/learning/leitner.ts` – eine Karte in Box VI gilt als gelernt.
+- **Zentrale Storage-Karte**: `src/lib/storage/keys.ts` (`STORAGE`) definiert einmalig alle Schlüssel – IndexedDB (DB `nsc`, Store `decks`), localStorage (`kk-settings`, `kk-study-time`, Probe), sessionStorage (`kk-import`, `kk_draft_deck`, `kk_sample_dialog_shown`) sowie die Record-Präfixe `deck:` / `state:` samt Key-Buildern (`deckRecordKey`, `stateRecordKey`) und `isAppLocalKey`. Nirgends sonst steht ein Storage-Key als Literal.
+
+## Deck-Format, Parsen und Rendering
+
+- **Parsen**: `src/lib/core/deck/parse.ts` – einzelner Parser für das Deck-Format, Bild-URL-Validierung (nur `https://`, max. 1 Bild pro Karte), Hints und Tags.
+- **Sprachtyp-Erkennung**: `src/lib/ui/model/deckTypes.ts` (Englisch/Latein/Griechisch, inkl. Pur-Modus je Typ) auf Basis von `detectDeckType` in `core/deck/identity.ts`.
+- **Inline-Formatierung**: `core/deck/inline.ts` (Parser: Rohtext → `StyledText` mit Offset-Spans) und `core/deck/editor.ts` (Editor-Hilfen auf der Rohquelle: Tokenizer, Wrap/Entfernen von Delimiter-Paaren) – Allowlist der Stile (`bold, italic, code, underline, strike, mark, sup, sub`); `StyledText` wird von `CardFace.svelte` ohne `{@html}` gerendert (sicher gegen fremde Decks aus Share-Links).
+- **Anzeigetexte**: `src/lib/ui/model/display.ts` (`displayFront` / `displayBack` / `purePrompt` mit Diakritika-Ersetzung über `ui/model/replacements.ts`).
+
+## Lernen: Sessions, Leitner und Lernzeit
+
+- Die Session-Logik liegt in den Composables `useCramSession` und `useOverviewSession` (`src/lib/ui/composables/`), die aktive Lernzeit in `useStudyTime`; Bewertungen und Such-Aktionen laufen über `src/lib/ui/model/studyActions.ts`.
+- `displayFront`/`displayBack` aus `ui/model/display.ts` blenden im Normalmodus die Klammern von [Hints](/docs/05-deck-format) aus, im Pur-Modus zusätzlich den Hinweis-Text und normalisieren Diakritika (Griechisch ohne Atemzeichen/Tonos, Latein ohne Makrons).
+
+## Teilen und Sync
+
+- **Share-Protokoll**: `src/lib/core/share/links.ts` – Pfad-Links `/c/…` (Deck), `/p/…` (Fortschritt), `/t/…` (kombiniert), `/s/…` (Peer-ID) und verschlüsselte Server-Links `/k/{id}.{key}`; Payload ist gzip-komprimiertes, base64url-kodiertes JSON im Pfad, der Schlüssel des Server-Links verlässt das Gerät nie.
+- **QR-Codes**: erzeugt von `qr-code-styling` in `src/lib/ui/components/sharing/QrCode.svelte`, gescannt über `QrScanner.svelte`.
+- **Geräte-Sync**: `src/lib/sync/peer.ts` – Host mit Peer-ID `nsc-<zufall>`, Join per QR-Code/Paste; die Peer-ID ist der Trust-Anchor. Der Signalisierungs-Server sieht nur den Handshake (IP/Port), die Daten laufen danach direkt und verschlüsselt per WebRTC.
+- **Sync-Paket**: `src/lib/sync/protocol.ts` – alle Decks als `t`-Body (Roh-Markdown plus Fortschritt je `DeckHash`); Merge über `mergeDeckStates` („die höhere Box gewinnt"), die Study-Time bleibt gerätelokal.
+
+## Konventionen (siehe auch AGENTS.md)
+
+- **Sprache**: UI-Texte auf Deutsch, Code-Kommentare und Bezeichner auf Englisch.
+- **Svelte 5 Runes** (`$state`, `$derived`, `$effect`, `$props`) – keine Legacy-Syntax.
+- **Styling**: Farben, Radien, Schatten und Übergänge nur über CSS-Variablen aus `src/app.pcss`; komponenten-lokale `<style>`-Blöcke; mobile-first mit `@media (max-width: 540px)`.
+- **Neue Abhängigkeiten** nur nach Rückfrage; Eintrag dann zusätzlich in die Lizenzseite (`/legal/lizenzen`) und in `CREDITS`.
+
+## Diese Dokumentation erweitern
+
+Einfach einen neuen Ordner `src/routes/(docs)/docs/NN-thema/` mit einer `+page.svx` anlegen und das Modul in `chapters.ts` registrieren – mit Frontmatter (`title`, `description`, `icon`) erscheint das Kapitel im Inhaltsverzeichnis unter `/docs` und als eigene Seite unter `/docs/NN-thema`. Die Kapitel-Reihenfolge ergibt sich aus der Reihenfolge in `chapters.ts` (Nummer im Ordnernamen); das Icon liegt als SVG unter `static/docs/icons/`. Optional ergänzt du einen Eintrag in `PER_PAGE` in `src/routes/(docs)/docs/+layout.svelte`, damit die Kapitel-Seite passende animierte Screenshots in der Seitenleiste zeigt – ohne Eintrag erscheint dort die Gesamtübersicht.

@@ -1,0 +1,9 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Vendored agent skills (managed by the skill tooling, not this repo's style)
+.vibe/

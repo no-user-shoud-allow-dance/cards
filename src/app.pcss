@@ -1,0 +1,569 @@
+:root {
+    color-scheme: light;
+
+    /* ── Type system ──────────────────────────────────────────────────
+       Three typefaces, two shelves of tokens:
+       --family-* are bare stacks — use them where a rule sets
+       font-family on its own.
+       --font-* are complete `font` shorthands (style weight 1rem
+       family) for roles: pair them as `font: var(--font-display);
+       font-size: var(--fs-6);` — the explicit font-size always
+       overrides the shorthand's 1rem. Re-theme a role (italic, bolder,
+       serif instead of sans) in its one line here. */
+    --family-sans: "Open Sans", sans-serif;
+    --family-serif: "Literata", serif;
+    --family-mono: "Cascadia Code", monospace;
+
+    /* Text roles — display (brand titles + card faces), heading
+       (upright serif section headings), label (muted sans for labels
+       and dialog titles), body (the base text everything falls back
+       to). */
+    --font-display: italic 600 1rem var(--family-serif);
+    --font-heading: 600 1rem var(--family-serif);
+    --font-label: 600 1rem var(--family-sans);
+    --font-body: 400 1rem var(--family-sans);
+
+    /* Type scale (H12): eight ranked steps, 1 (footnotes, kbd) to
+       8 (card faces) — 2 secondary labels, 3 ui controls, 4 body text,
+       5 lead paragraphs, 6 section headings, 7 page titles. */
+    --fs-1: 0.68rem;
+    --fs-2: 0.78rem;
+    --fs-3: 0.85rem;
+    --fs-4: 0.9rem;
+    --fs-5: 1rem;
+    --fs-6: 1.2rem;
+    --fs-7: clamp(1.7rem, 4dvw, 2.1rem);
+    --fs-8: clamp(1.5rem, 3.5dvw, 2.1rem);
+
+    /* ── Colour system ─────────────────────────────────────────────────
+       One warm paper hue (48°, 8% saturation) carries every neutral;
+       one base tone carries each colour family, and the derived tokens
+       are generated from it. Family roles follow one grammar: the bare
+       name is the base, -on is text sitting on a base fill, -hover is
+       the base's hover tone, and -soft/-bg/-border are 12/10/25% tints
+       into white (-bg marks message surfaces; feedback families add
+       -text, their readable accent tone on paper).
+
+       Light theme: tints mix into white, hovers shade toward ink.
+       Dark theme: the base tones flip and the derived tokens are
+       hue-preserving hsl(from …) projections of each dark base, so
+       dark surfaces keep their colour casts. Only base tones are
+       hand-picked (ramp steps and family HSL parameters) — everything
+       else follows automatically. */
+
+    /* Warm paper ramp: the complete lightness ladder of the paper hue,
+       kept whole even where unused — new tones pick a step here rather
+       than a new hex. */
+    @each $step in 100, 97, 94, 91, 87, 83, 79, 75, 71, 67, 63, 59, 55, 51, 47, 43, 41, 39, 35, 31,
+        27, 23, 19, 15, 12 {
+        --warm-$(step): hsl(48, 8%, $step%);
+    }
+
+    /* Surfaces, borders, text: the ramp steps the app reads by name. */
+    @each $name,
+        $lightness in
+            (bg, surface, surface-soft, surface-hover, border, border-strong, text-muted, text),
+        (97%, 100%, 94%, 91%, 87%, 75%, 41%, 12%) {
+        --$(name): hsl(48, 8%, $lightness);
+    }
+
+    /* Accent: a single muted, desaturated blue. */
+    --primary: #3d5a80;
+    --primary-hover: color-mix(in srgb, var(--primary), #191813 22%);
+    --primary-on: #ffffff;
+    --primary-soft: color-mix(in srgb, var(--primary) 12%, #ffffff);
+    --focus-ring: color-mix(in srgb, var(--primary) 55%, transparent);
+
+    /* Co-accents, ranked: overview (terracotta brick — the archive/deck
+       accent) and tertiary (muted violet) flank --primary with one
+       recipe: hover shades 22% toward ink, soft/border are 12/25% tints
+       into white, -on sits on the base fill. */
+    @each $name, $hue, $saturation, $lightness in (overview, tertiary), (18, 254), (45%, 19%),
+        (43%, 49%) {
+        $base: hsl($hue, $saturation, $lightness);
+
+        --$(name): $base;
+        --$(name)-hover: color-mix(in srgb, $base, #191813 22%);
+        --$(name)-on: #ffffff;
+        --$(name)-soft: color-mix(in srgb, $base 12%, #ffffff);
+        --$(name)-border: color-mix(in srgb, $base 25%, #ffffff);
+    }
+
+    /* Feedback families (success, danger, info, warning): one base tone
+       per family; every derived token below is generated from it. The
+       -text recipe (hue +6, saturation -32pp, lightness +2pp) lands on
+       the hand-tuned accent tones; bg/hover/border are 10/15/25% of the
+       base mixed into white. */
+    @each $name, $hue, $saturation, $lightness in (success, danger, info, warning),
+        (135, 0, 208, 37), (67%, 74%, 67%, 98%), (31%, 42%, 35%, 31%) {
+        $base: hsl($hue, $saturation, $lightness);
+
+        --$(name): $base;
+        --$(name)-text: hsl(calc($hue + 6), calc($saturation - 32%), calc($lightness + 2%));
+        --$(name)-bg: color-mix(in srgb, $base 10%, #ffffff);
+        --$(name)-hover: color-mix(in srgb, $base 15%, #ffffff);
+        --$(name)-border: color-mix(in srgb, $base 25%, #ffffff);
+    }
+
+    /* Stone: true neutral grays (no warm paper tint) — used for the moon
+       (anti-star) UI, which must read as "asleep", not as feedback. One
+       lightness scale serves every role. */
+    @each $role, $lightness in (bg, hover, border, text), (96%, 91%, 83%, 35%) {
+        --stone-$(role): hsl(0, 0%, $lightness);
+    }
+
+    /* Language icon chips: per-language foreground plus a light background
+       tinted from it (12% into white). Each chip carries its own light
+       pair, so the same values read well in both themes (like --qr-bg).
+       The *-dark tones hand the icon its dark-theme accents. */
+    --lang-greek-fg: #3d5a80;
+    --lang-greek-bg: color-mix(in srgb, var(--lang-greek-fg) 12%, #ffffff);
+    --lang-greek-dark: hsl(214, 35%, 17%);
+
+    --lang-latin-fg: #a04a41;
+    --lang-latin-bg: color-mix(in srgb, var(--lang-latin-fg) 12%, #ffffff);
+    --lang-latin-dark: hsl(6, 42%, 24%);
+
+    --lang-english-fg: #37714b;
+    --lang-english-bg: color-mix(in srgb, var(--lang-english-fg) 12%, #ffffff);
+    --lang-english-dark: hsl(141, 35%, 13%);
+
+    /* Leitner boxes: a blue→green ramp of base tones — box 1 sits near
+       --primary/--info, the learned box (BOX_COUNT) near --success. The
+       soft tints are 12% of each base into white. Drives the flashcard
+       index tab (H1), BoxStrip (H5), the BoxTabs compartments (H13) and
+       the account pie (H11). */
+    @each $box, $base in (1, 2, 3, 4, 5, 6), (#3d5a80, #40657c, #436e6f, #41755f, #3a7453, #37714b) {
+        --box-$(box): $base;
+        --box-$(box)-soft: color-mix(in srgb, $base 12%, #ffffff);
+    }
+
+    /* Chip token families (H10): one chip vocabulary. The families
+       reference the semantic vars above, so they adapt to dark mode
+       automatically. Folder and moon are one-off pairs; every language
+       chip aliases its --lang-* pair and every box chip aliases its
+       --box-N / --box-N-soft pair. */
+    --chip-folder-bg: var(--surface-soft);
+    --chip-folder-fg: var(--text-muted);
+    --chip-folder-border: var(--border);
+
+    --chip-moon-bg: var(--stone-bg);
+    --chip-moon-fg: var(--stone-text);
+    --chip-moon-border: var(--stone-border);
+
+    @each $lang in greek, latin, english {
+        --chip-lang-$(lang)-bg: var(--lang-$(lang)-bg);
+        --chip-lang-$(lang)-fg: var(--lang-$(lang)-fg);
+    }
+
+    @each $box in 1, 2, 3, 4, 5, 6 {
+        --chip-box-$(box)-bg: var(--box-$(box)-soft);
+        --chip-box-$(box)-fg: var(--box-$(box));
+    }
+
+    /* Overlays: backdrops for dialogs (--backdrop) and the fullscreen
+       QR / scanner views (--backdrop-strong); text above them uses
+       --on-backdrop. */
+    --backdrop: rgb(33 32 28 / 40%);
+    --backdrop-strong: rgb(33 32 28 / 82%);
+    --on-backdrop: #ffffff;
+
+    /* Capture scenes: the scanner frame stays black and the QR background
+       white in both themes — scanners need the hard contrast. */
+    --scanner-bg: #000000;
+    --qr-bg: #ffffff;
+
+    /* Print paper: the frozen light steps of the warm ramp above, so the
+       on-screen sheet previews the printed page (WYSIWYG) in both themes.
+       --warm-* is never re-declared by the dark theme, so these aliases
+       hold light values while the live neutrals flip. */
+    --paper: var(--warm-100);
+    --paper-ink: var(--warm-12);
+    --paper-muted: var(--warm-41);
+    --paper-border: var(--warm-87);
+    --paper-zebra: var(--warm-94);
+
+    /* Shape */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+    --radius-pill: 999px;
+
+    /* Elevation: barely-there */
+    --shadow-sm: 0 1px 2px rgb(33 32 28 / 5%);
+    --shadow-card: 0 1px 3px rgb(33 32 28 / 6%);
+
+    /* Motion: short, plain eases */
+    --transition-fast: 150ms ease;
+    --transition-normal: 200ms ease;
+    --transition-flip: 420ms ease-in-out;
+
+    /* Springy overshoot (easeOutBack) for presses, hovers and pop-ins. */
+    --transition-spring: 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Layout */
+    --content-width: 880px;
+
+    --header-h: 3.5rem;
+    --footer-h: 3.25rem;
+
+    /* Phones get a compact single-line app bar instead of the
+       logo + breadcrumb header. */
+    @media (max-width: 700px) {
+        --header-h: 3.25rem;
+    }
+
+    /* One coherent dark theme, rather than isolated dark-mode fixes.
+       Only base tones flip; the derived tokens are hue-preserving
+       hsl(from …) projections of each base (needs relative color
+       syntax), so dark surfaces keep their colour casts. */
+    @media (prefers-color-scheme: dark) {
+        color-scheme: dark;
+
+        /* Warm paper steps: the dark band of the same hue. */
+        @each $name,
+            $lightness in
+                (bg, surface, surface-soft, surface-hover, border, border-strong, text-muted, text),
+            (9%, 11%, 15%, 18%, 20%, 28%, 60%, 91%) {
+            --$(name): hsl(48, 8%, $lightness);
+        }
+
+        /* Bases flip; hover lightens toward white, softs/borders project
+           onto the dark band of the base hue. */
+        --primary: #93a9c4;
+        --primary-hover: color-mix(in srgb, var(--primary), #ffffff 22%);
+        --primary-on: #191813;
+        --primary-soft: hsl(from var(--primary) h 20% 18%);
+
+        /* Co-accent bases flip; the tints project onto their dark band. */
+        @each $name, $base in (overview, tertiary), (#c98d6b, #b5aad3) {
+            --$(name): $base;
+            --$(name)-hover: color-mix(in srgb, $base, #ffffff 22%);
+            --$(name)-on: #191813;
+            --$(name)-soft: hsl(from $base h 20% 18%);
+            --$(name)-border: hsl(from $base h 20% 28%);
+        }
+
+        /* Feedback families: bright accents, surfaces projected from them
+           onto the dark band of their hue. */
+        @each $name, $base in (success, danger, info, warning), (#8fc7a4, #e0a49b, #a9bdd6, #e3c98a) {
+            --$(name)-text: $base;
+            --$(name)-bg: hsl(from $base h 20% 18%);
+            --$(name)-hover: hsl(from $base h 22% 20%);
+            --$(name)-border: hsl(from $base h 20% 28%);
+        }
+
+        /* Stone: true neutral grays for the dark theme — one darker
+           lightness scale. */
+        @each $role, $lightness in (bg, hover, border, text), (15%, 20%, 27%, 64%) {
+            --stone-$(role): hsl(0, 0%, $lightness);
+        }
+
+        /* Leitner box ramp: dark bases, projected softs. */
+        @each $box, $base in (1, 2, 3, 4, 5, 6),
+            (#93a9c4, #9db3c0, #a3bcae, #a3c2a0, #9cc7a6, #8fc7a4) {
+            --box-$(box): $base;
+            --box-$(box)-soft: hsl(from $base h 20% 18%);
+        }
+
+        --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+        --shadow-card: 0 1px 3px rgb(0 0 0 / 35%);
+
+        --backdrop: rgb(0 0 0 / 55%);
+        --backdrop-strong: rgb(0 0 0 / 82%);
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scrollbar-gutter: stable;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font: var(--font-body);
+    font-size: var(--fs-5);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+::selection {
+    background: var(--primary-soft);
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    color: inherit;
+
+    &:disabled {
+        cursor: not-allowed;
+    }
+}
+
+a {
+    color: inherit;
+}
+
+h1 {
+    font: var(--font-display);
+    line-height: 1.25;
+}
+
+h2 {
+    font: var(--font-heading);
+    line-height: 1.25;
+}
+
+button,
+a,
+input {
+    &:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 3px;
+    }
+}
+
+kbd {
+    display: inline-block;
+    padding: 0.05rem 0.38rem;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: var(--fs-1);
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* ── Global content styles ─────────────────────────────────────────
+   These target elements rendered by child routes/components, so they
+   cannot be scoped — app.pcss is the one place where global rules live. */
+
+/* Prose shared by the legal pages (impressum, datenschutz, lizenzen) and
+   the docs chapters (/docs): the content elements come from child route
+   pages and mdsvex-compiled markdown, so these rules must be global. */
+.legal,
+.docs-content {
+    & p {
+        margin: 0 0 0.9rem;
+    }
+
+    & ul {
+        margin: 0 0 0.9rem;
+        padding-left: 1.25rem;
+    }
+
+    & li {
+        margin-bottom: 0.35rem;
+    }
+
+    & a {
+        color: var(--primary);
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.legal {
+    & h2 {
+        margin: 2.25rem 0 0.6rem;
+        font-size: var(--fs-6);
+    }
+
+    & address {
+        margin: 0 0 0.9rem;
+        font-style: normal;
+        line-height: 1.7;
+    }
+}
+
+.docs-content {
+    & h1 {
+        margin: 0 0 1rem;
+        font-size: var(--fs-7);
+    }
+
+    & h2 {
+        margin: 2rem 0 0.6rem;
+        font-size: var(--fs-6);
+    }
+
+    & h3 {
+        margin: 1.5rem 0 0.4rem;
+        font-size: var(--fs-5);
+    }
+
+    & ol {
+        margin: 0 0 0.9rem;
+        padding-left: 1.25rem;
+    }
+
+    & li {
+        & > ul,
+        & > ol {
+            margin-top: 0.35rem;
+        }
+    }
+
+    & code {
+        padding: 0.06em 0.35em;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface-soft);
+        font-family: var(--family-mono);
+        font-size: 0.82em;
+    }
+
+    & pre {
+        margin: 0 0 0.9rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface-soft);
+        overflow-x: auto;
+
+        & code {
+            padding: 0;
+            border: 0;
+            background: none;
+            font-size: var(--fs-3);
+        }
+    }
+
+    & blockquote {
+        margin: 0 0 0.9rem;
+        padding-left: 1rem;
+        border-left: 3px solid var(--border-strong);
+        color: var(--text-muted);
+    }
+
+    & table {
+        display: block;
+        width: 100%;
+        margin: 0 0 0.9rem;
+        overflow-x: auto;
+        border-collapse: collapse;
+        font-size: var(--fs-4);
+    }
+
+    & th,
+    & td {
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--border);
+        text-align: left;
+    }
+
+    & th {
+        background: var(--surface-soft);
+        font-weight: 600;
+    }
+
+    & hr {
+        margin: 1.25rem 0;
+        border: 0;
+        border-top: 1px solid var(--border);
+    }
+
+    & img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    & figure {
+        margin: 0 0 1rem;
+        padding: 0.75rem;
+
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        box-shadow: var(--shadow-card);
+
+        /* Embedded demo components (e.g. <LeitnerBoxes />) inside. */
+        & > svg {
+            display: block;
+            width: 100%;
+            max-width: 20rem;
+            margin: 0 auto;
+        }
+    }
+
+    & figcaption {
+        margin-top: 0.5rem;
+        color: var(--text-muted);
+        font-size: var(--fs-3);
+        line-height: 1.5;
+
+        & strong {
+            color: var(--text);
+        }
+    }
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    /* Hover/press feedback must not move elements at all. */
+    .btn,
+    .card.hover,
+    .chapter,
+    .chapter-icon,
+    .settings-link,
+    .back-button,
+    .add-link,
+    .brand,
+    .pin-button,
+    .box-tab,
+    .hero-card,
+    .docs-card-arrow,
+    .continue-arrow,
+    .deck-arrow,
+    .due-banner {
+        transform: none !important;
+    }
+}
+
+/* ── Print ───────────────────────────────────────────────────────── */
+
+/* Paper margins for the print layouts (/print/…); the sheets themselves
+   carry the page breaks. */
+@page {
+    margin: 12mm;
+}
+
+@media print {
+    /* Controls, headers and other chrome never reach the paper. */
+    .no-print {
+        display: none !important;
+    }
+}
