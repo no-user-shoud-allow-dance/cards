@@ -63,6 +63,17 @@ export type { FolderState, FoldersRepository } from "#lib/repositories/foldersRe
 // NOTE: ./server/kv is server-only ($lib/server) and deliberately NOT
 // re-exported here — only +server.ts endpoints may import it directly.
 
+// ── One-shot data migration 1.0.0 → 2.0.0 ───────────────────────────
+// Relative specifier on purpose: module ids with dots (…-v1.0.0-…)
+// do not resolve through the #lib/* alias mapping.
+export { hasV1Data, migrateV1ToV2 } from "./migration-v1.0.0-v2.0.0";
+export type {
+    V1toV2DeckOutcome,
+    V1toV2DeckReport,
+    V1toV2Report,
+    V1toV2SettingsOutcome,
+} from "./migration-v1.0.0-v2.0.0";
+
 // ── State (stores) ──────────────────────────────────────────────
 // NOTE: `deckStore` and `learningStore` are deliberately NOT exported
 // here — they are storage internals. The UI works on compiled deck
