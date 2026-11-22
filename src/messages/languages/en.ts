@@ -171,6 +171,15 @@ export const en: Messages = {
         updateAction: "Update",
     },
 
+    MIGRATION: {
+        title: "Migration – NSC",
+        running: "Your data from version 1 is being transferred – one moment, please.",
+        failedTitle: "Transfer failed",
+        failedText:
+            "Your data from version 1 could unfortunately not be transferred. It remains stored locally and is not deleted.",
+        continueAction: "Continue",
+    },
+
     SYNC: {
         peerUnreachable: "The other device is unreachable – is it running host mode?",
         signalingFailed: "Connection to the signaling server failed – please check the network.",
