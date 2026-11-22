@@ -2,21 +2,16 @@
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fade } from "svelte/transition";
-    import Page from "#lib/components/shared/ui/Page.svelte";
-    import Card from "#lib/components/shared/ui/Card.svelte";
-    import Button from "#lib/components/shared/ui/Button.svelte";
+    import { Button, Card, Page } from "#components";
 
     const title = $derived(
-        page.status === 404
-            ? "Seite nicht gefunden"
-            : "Etwas ist schiefgelaufen",
+        page.status === 404 ? "Seite nicht gefunden" : "Etwas ist schiefgelaufen"
     );
 
     const message = $derived(
         page.status === 404
             ? "Die angeforderte Seite existiert nicht oder wurde verschoben."
-            : (page.error?.message ??
-                  "Ein unerwarteter Fehler ist aufgetreten."),
+            : (page.error?.message ?? "Ein unerwarteter Fehler ist aufgetreten.")
     );
 </script>
 
@@ -31,15 +26,15 @@
             <h1 class="error-title">{title}</h1>
             <p class="error-message">{message}</p>
             <div class="error-actions">
-                <Button variant="primary" class="error-btn" href={resolve("/")}
-                    >Zur Startseite</Button
-                >
+                <Button variant="primary" class="error-btn" href={resolve("/")}>
+                    Zur Startseite
+                </Button>
             </div>
         </Card>
     </div>
 </Page>
 
-<style>
+<style lang="postcss">
     /* Classes passed to Page/Card land on child component roots, so they are
        targeted via :global. */
     :global(.error-page) {
@@ -59,9 +54,8 @@
     .error-status {
         margin: 0 0 0.5rem;
 
-        font-family: var(--font-serif);
+        font: var(--font-display);
         font-size: clamp(2.5rem, 7dvw, 3.5rem);
-        font-weight: 600;
         line-height: 1;
         color: var(--primary);
         font-variant-numeric: tabular-nums;
@@ -71,7 +65,6 @@
         margin: 0 0 0.6rem;
 
         font-size: 1.6rem;
-        font-weight: 600;
         letter-spacing: -0.01em;
     }
 
@@ -80,7 +73,7 @@
         margin: 0 auto 1.75rem;
 
         color: var(--text-muted);
-        font-size: 0.95rem;
+        font-size: var(--fs-5);
         line-height: 1.65;
     }
 

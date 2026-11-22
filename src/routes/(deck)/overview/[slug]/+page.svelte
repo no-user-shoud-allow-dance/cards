@@ -1,14 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { decks } from "#lib/stores/data/deckStore.svelte";
-    import { useOverviewSession } from "#lib/composables/useOverviewSession.svelte";
-    import OverviewCard from "#lib/components/learning/overview/OverviewCard.svelte";
-    import OverviewComplete from "#lib/components/learning/overview/OverviewComplete.svelte";
-    import StudyControls from "#lib/components/learning/StudyControls.svelte";
-    import ProgressBar from "#lib/components/shared/ui/ProgressBar.svelte";
-    import StudyLayout from "#lib/components/learning/StudyLayout.svelte";
-    import type { LoadedDeck } from "#lib/types";
-    import DeckEmpty from "#lib/components/decks/DeckEmpty.svelte";
+    import {
+        DeckEmpty,
+        FlashCard,
+        OverviewComplete,
+        ProgressBar,
+        StudyControls,
+        StudyLayout,
+        decks,
+        useOverviewSession,
+    } from "#components";
+    import type { LoadedDeck } from "#components";
+    import { messages, toastStore } from "#lib";
 
     let { data } = $props();
 
@@ -17,7 +20,7 @@
 
     const session = useOverviewSession(
         () => decks.load(data.slug),
-        () => data.slug,
+        () => data.slug
     );
 
     onMount(() => {
@@ -25,6 +28,15 @@
         // (IndexedDB) are loaded, so the session can start right away.
         session.start();
     });
+
+    // Moon button: toggles the trailing `*` on the current card. The
+    // overview keeps mooned cards visible — only the marker changes.
+    async function moonCurrent(): Promise<void> {
+        if (!session.currentCard) return;
+        const wasHidden = session.hidden;
+        await session.moonCurrent();
+        toastStore.success(wasHidden ? messages.UI.wake : messages.UI.mooned);
+    }
 </script>
 
 <svelte:head>
@@ -36,18 +48,13 @@
 <StudyLayout fullHeight>
     {#snippet top()}
         {#if session.currentCard}
-            <div class="overview-banner">
-                Übersichtsmodus — Karten werden nicht bewertet
-            </div>
+            <div class="overview-banner">Übersichtsmodus – Karten werden nicht bewertet</div>
             <div class="overview-progress">
                 <span class="overview-progress-label">
                     {session.seenCount} / {session.totalCards} Karten angesehen
                 </span>
                 <span class="overview-progress-bar">
-                    <ProgressBar
-                        ratio={session.progressRatio}
-                        color="overview"
-                    />
+                    <ProgressBar ratio={session.progressRatio} color="overview" />
                 </span>
             </div>
         {/if}
@@ -57,18 +64,18 @@
         {#if deck.cards.length === 0}
             <DeckEmpty />
         {:else if session.finished}
-            <OverviewComplete
-                slug={data.slug}
-                totalCards={session.totalCards}
-            />
+            <OverviewComplete slug={data.slug} totalCards={session.totalCards} />
         {:else if session.currentCard}
             {#key session.currentCardId}
-                <OverviewCard
+                <FlashCard
                     frontText={session.frontText}
                     backText={session.backText}
-                    frontImages={session.frontImages}
-                    backImages={session.backImages}
+                    contextText={session.contextText}
+                    tags={session.tags}
+                    mooned={session.hidden}
+                    image={session.image}
                     onclick={session.next}
+                    onMoon={moonCurrent}
                 />
             {/key}
         {:else}
@@ -91,7 +98,7 @@
     {/snippet}
 </StudyLayout>
 
-<style>
+<style lang="postcss">
     .overview-banner {
         padding: 0.5rem 0.85rem;
 
@@ -101,7 +108,7 @@
         background: var(--overview-soft);
         color: var(--overview);
 
-        font-size: 0.82rem;
+        font-size: var(--fs-3);
         font-weight: 600;
         text-align: center;
     }
@@ -116,7 +123,7 @@
 
     .overview-progress-label {
         color: var(--text-muted);
-        font-size: 0.82rem;
+        font-size: var(--fs-3);
         font-weight: 600;
         font-variant-numeric: tabular-nums;
     }

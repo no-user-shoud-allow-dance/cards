@@ -2,8 +2,7 @@
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
-    import { decks } from "#lib/stores/data/deckStore.svelte";
-    import Page from "#lib/components/shared/ui/Page.svelte";
+    import { Page, ReadyGate, decks } from "#components";
 
     let { children } = $props();
 
@@ -39,7 +38,7 @@
     ];
 </script>
 
-{#if ready}
+<ReadyGate bind:ready>
     <Page>
         <nav class="io-tabs" aria-label="Stapel erstellen, hochladen und importieren">
             {#each tabs as tab (tab.href)}
@@ -49,9 +48,7 @@
                     class:import={tab.kind === "import"}
                     class:active={page.url.pathname === tab.href}
                     href={tab.href}
-                    aria-current={page.url.pathname === tab.href
-                        ? "page"
-                        : undefined}
+                    aria-current={page.url.pathname === tab.href ? "page" : undefined}
                 >
                     {tab.label}
                 </a>
@@ -59,9 +56,9 @@
         </nav>
         {@render children()}
     </Page>
-{/if}
+</ReadyGate>
 
-<style>
+<style lang="postcss">
     /* Segmented tabs in the NSC-Intro look: one bordered box with soft
        segments (like the intro dropdown on the home page) — but plain
        tabs, no collapsible dropdown. */
@@ -91,7 +88,7 @@
         background: transparent;
         color: var(--text-muted);
 
-        font-size: 0.85rem;
+        font-size: var(--fs-3);
         font-weight: 600;
         text-align: center;
         text-decoration: none;
@@ -99,20 +96,40 @@
         transition:
             background var(--transition-fast),
             color var(--transition-fast);
-    }
 
-    .io-tab:last-child {
-        border-right: 0;
-    }
+        &:last-child {
+            border-right: 0;
+        }
 
-    .io-tab:hover {
-        background: var(--surface-hover);
-        color: var(--text);
-    }
+        &:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+        }
 
-    .io-tab.active {
-        background: var(--surface-soft);
-        color: var(--text);
+        &.active {
+            background: var(--surface-soft);
+            color: var(--text);
+        }
+
+        &.create:hover {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        &.create.active {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        &.import:hover {
+            background: var(--success-hover);
+            color: var(--success-text);
+        }
+
+        &.import.active {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
     }
 
     /* Create tabs carry the "making" color: primary blue. */
@@ -120,28 +137,8 @@
         color: var(--primary);
     }
 
-    .io-tab.create:hover {
-        background: var(--primary-soft);
-        color: var(--primary);
-    }
-
-    .io-tab.create.active {
-        background: var(--primary-soft);
-        color: var(--primary);
-    }
-
     /* Import tabs carry the "receiving" color: green. */
     .io-tab.import {
-        color: var(--success-text);
-    }
-
-    .io-tab.import:hover {
-        background: var(--success-hover);
-        color: var(--success-text);
-    }
-
-    .io-tab.import.active {
-        background: var(--success-bg);
         color: var(--success-text);
     }
 </style>

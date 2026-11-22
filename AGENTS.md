@@ -1,100 +1,49 @@
-# AGENTS.md — NSC
+# AGENTS
 
-NSC is a local-first flashcard app for vocabulary learning with the Leitner
-spaced-repetition system. SvelteKit + Svelte 5 (runes) + TypeScript + Vite.
-All data lives in the browser (IndexedDB); there is no backend.
+NSC is a local-first flashcard app for vocabulary learning with the Leitner spaced-repetition system. SvelteKit + Svelte 5 (runes) + TypeScript strict + Vite + Bun. All learning data lives in the browser; the only server is a pseudonymized share-link KV endpoint.
 
-## Hard rules
+## Rules
 
-- **No checks.** Do not run `bun run check`, `svelte-check`, `tsc`, linters,
-  or any test/build command unless the user explicitly asks. The user handles
-  verification themselves.
-- **Bun for checks.** If a check is undeniably needed (user asked), use
-  `bun` — e.g. `bun run check`, `bun x tsc --noEmit`. Prefer `bun` over
-  `npx`/`npm` for any ad-hoc tooling.
+- **Tools.**
+  Stick to `bun`. `npx` and `npm` are off-limits: they can silently break things. Use `bunx` and `bun` instead.
 
-## Language
+- **Languages**
+  All user-facing strings (labels, buttons, notes, errors, confirmations) ship in **German (default) and English**: every string is added to both locales (`src/messages/languages/de.ts` and `src/messages/languages/en.ts`, typed by the shared `Messages` interface) in the same change, and import sites use the reactive accessor `#messages/locale.svelte`. Code comments and identifiers stay **English**. Legal pages (impressum/datenschutz/lizenzen) and docs chapters stay German-only.
 
-- **UI text is German.** All user-facing strings (labels, buttons, notes,
-  errors, confirmations) must be in German.
-- Code comments and identifiers are in English.
+- **Dependencies.**
+  No new dependencies without permission. Ask first.
+  Once approved: `bun add <package>` (`-d` for dev-only), then document the license in **both** `src/routes/(docs)/legal/lizenzen.md` and `CREDITS` (append at end). Each entry needs: package name, short German description, project URL, verbatim license text. Keep both files in sync.
 
-## Svelte 5 conventions
+## Svelte 5
 
-- Use **runes** (`$state`, `$derived`, `$effect`, `$props`) — never the
-  legacy `$:` syntax or `export let`.
-- Component props are declared via `let { … } = $props()`.
-- Shared UI components live in `src/lib/components/shared/ui/` (plus
-  `src/lib/components/shared/` for app-level wrappers like ResetButton).
-- Feature components live under `src/lib/components/<feature>/`
-  (decks, home, learning, sharing, layout).
-- Composable logic (session/timer state) lives in `src/lib/composables/`.
+- Runes only: `$state`, `$derived`, `$effect`, `$props`. No legacy `$:` or `export let`.
+- Props: `let { … } = $props()` with an explicit `Props` interface.
+
+## Architecture
+
+- **One dependency direction:** `core` → `storage` → `state` → `sync`/`ui` → `routes`. Never import against it. Routes import only via `src/lib/index.ts`.
+- **`core/` is pure:** functions and types only. No DOM, no Svelte, no stores, no fetch.
+- **Markdown stays in L0.** Raw deck markdown lives only in storage, wire payloads, and the editor textarea (`getRaw`/`putRaw`, the single exception). Everything else works on the `DeckDocument` JSON model. Never parse markdown elsewhere.
+- **Errors are codes.** `core` throws typed `NscError`s (`error.code`). German sentences live only in `src/messages/languages/de.ts`. The UI catches once at the boundary and maps code → message. Never hard-code German strings in core/sync logic.
+- **Branded types carry invariants.** One branded type (`CardId`, `DeckHash`, `Slug`, `Box`, `EpochMs`, …) means exactly one checked constructor. Plain primitives only at the edges.
+- **Persistence is a capability, not a location.** Everything above `storage/` sees only repository interfaces. Never branch on the engine. `storage/engines.ts` decides IndexedDB vs. localStorage vs. memory.
+- **UI wording is normative.** Use exactly the German terms from the proposal's terminology table. No synonyms per concept.
 
 ## Styling
 
-- All colors, radii, shadows, and transitions come from CSS custom properties
-  defined in `src/app.css` (e.g. `var(--surface)`, `var(--border)`,
-  `var(--radius-lg)`, `var(--shadow-card)`, `var(--primary)`).
-- Never hardcode hex colors in component styles; use the variables.
-- Component-scoped `<style>` blocks; use `:global()` only when targeting
-  child component classes.
-- Mobile-first: there is a `@media (max-width: 540px)` breakpoint pattern
-  used across pages.
+- All colors, radii, shadows, and transitions come from CSS variables in `src/app.pcss` (`--surface`, `--border`, `--radius-lg`, `--shadow-card`, `--primary`, …). Never hardcode hex colors.
+- Component-scoped `<style>` blocks. `:global()` only to target child component classes.
+- Nesting through `&`: express selector families inside parents (`&:hover`, `&.modifier`, `& .child`, `& > .child`). Keep a selector flat only when nesting would visibly re-order the cascade against same-property siblings.
+- Mobile-first. Shared breakpoint: `@media (max-width: 540px)`.
 
-## Architecture notes
+## Code Review Standards
 
-- **Decks** are stored in IndexedDB via the `decks` store
-  (`src/lib/stores/data/deckStore.svelte.ts`). Each deck has a `slug`
-  (derived from content hash + random suffix) and a `contentHash` (hash of
-  raw markdown + deck type). Adding a deck dedups by `contentHash`.
-- **Share links** carry data in the URL hash: `#c.…` (deck), `#p.…`
-  (progress), `#t.…` (combined). Payloads are gzip-compressed + base64url
-  encoded. See `src/lib/utils/share.ts` for the full protocol.
-- **Learning state** (Leitner boxes, overview done, study time, timer) is in
-  `src/lib/stores/persistent/` — persisted to `localStorage` through the
-  typed schema helpers in `src/lib/storages/localStorage.ts` (prefix `kk_`;
-  raw keys outside the schema must use the exported `PREFIX`).
-- **Deck types**: `english`, `latin`, `greek`. Latin and Greek support "pure
-  mode" (hides translations until revealed).
+After completing any implementation, review the code for:
 
-## Adding a new library
+- Functions longer than 30 lines (likely doing too much)
+- Logic duplicated more than twice (extract to utility)
+- Any `any` type usage in TypeScript (replace with real types)
+- Components with more than 3 props that could be grouped into an object
+- Missing error handling on async operations
 
-If a new dependency is ever needed, follow this order:
-
-1. **Prompt the user first.** Ask for permission before installing anything.
-   Do not install packages unilaterally.
-2. **On approval, install** with `bun add <package>` (or `bun add -d` for
-   dev-only deps).
-3. **Add it to the licenses page** — `src/routes/legal/lizenzen/+page.svelte`.
-   Add an entry to the `libraries` array with the package name, a short
-   German description, the project URL, and the verbatim license text.
-4. **Add it to `CREDITS`** — append a section at the end of the `CREDITS`
-   file with the same information: name, description, package/project links,
-   and the full license text.
-
-Both the licenses page and `CREDITS` must stay in sync — every runtime
-dependency must appear in both.
-
-## File layout
-
-```
-src/
-  lib/
-    components/         — feature + layout components
-      shared/ui/        — generic UI (Button, Card, Dialog, Page, …)
-      shared/           — app-level wrappers (ResetButton, ResetProgress)
-      decks|home|learning|sharing|layout/
-    composables/        — useCramSession, useOverviewSession, useStudyTimer
-    stores/
-      data/             — IndexedDB-backed stores (deckStore, IndexedDbStore)
-      persistent/       — localStorage-backed stores (LocalStorageStore)
-      session/          — dialog + toast stores
-    storages/           — typed localStorage / IndexedDB wrappers
-    sync/               — local profile (account) + avatar
-    types/              — shared types
-    utils/              — pure helpers (parser, share, pure, studyActions, …)
-  routes/
-    (deck)/             — deck-scoped pages (deck, cram, overview, edit, export)
-    (io)/               — create / upload / import pages
-    +page.svelte        — home (deck list)
-```
+Run /simplify before presenting code to the user.

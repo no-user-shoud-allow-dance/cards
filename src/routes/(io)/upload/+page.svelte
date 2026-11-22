@@ -1,31 +1,18 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
-    import { guessDeckType } from "#lib/utils/deckTypes";
-    import { parseDeck } from "#lib/utils/parser";
-    import { stashDraftDeck } from "#lib/utils/draftDeck";
-    import { toastStore } from "#lib/stores/session/toastStore.svelte";
-    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
-    import Card from "#lib/components/shared/ui/Card.svelte";
+    import { Card, PageHeader, startDraft } from "#components";
+    import { toastStore } from "#lib";
 
-    // Selecting a file reads it, stashes the content as a draft, and
-    // redirects to the create page where the user can review and edit.
+    // Selecting a file creates a draft deck (`Draft-{n}`) in "Drafts" with
+    // the file's content and opens it in the editor.
     async function onFileChange(event: Event): Promise<void> {
         const input = event.currentTarget as HTMLInputElement;
         const file = input.files?.[0];
         if (!file) return;
         try {
-            const raw = await file.text();
-            const parsed = parseDeck(raw);
-            stashDraftDeck({
-                raw,
-                deckType: guessDeckType(raw),
-                name: file.name.replace(/\.md$/i, ""),
-                title: parsed.title,
-            });
-            goto(resolve("/(io)/create"));
+            await startDraft(await file.text());
         } catch {
             toastStore.error("Die Datei konnte nicht gelesen werden.");
+        } finally {
             // Reset the input so the same file can be selected again.
             input.value = "";
         }
@@ -38,7 +25,7 @@
 
 <PageHeader
     title="Hochladen"
-    subtitle="Wähle eine .md-Datei aus — der Inhalt wird im Editor geöffnet, wo du ihn prüfen und anpassen kannst."
+    subtitle="Wähle eine .md-Datei aus – daraus wird ein Entwurf „Draft-{'{n}'}“ im Ordner „Drafts“, den du im Editor prüfen und anpassen kannst."
 />
 
 <Card class="upload-card" padding="lg" aria-label="Hochladen">
@@ -56,7 +43,7 @@
     </p>
 </Card>
 
-<style>
+<style lang="postcss">
     /* The passed class lands on the Card root (a child component). */
     :global(.upload-card) {
         display: flex;
@@ -68,7 +55,7 @@
 
     .field-label {
         color: var(--text-muted);
-        font-size: 0.82rem;
+        font-size: var(--fs-3);
         font-weight: 600;
     }
 
@@ -81,28 +68,28 @@
         border-radius: var(--radius-md);
         background: var(--surface);
         color: var(--text);
-    }
 
-    .file-input::file-selector-button,
-    .file-input::-webkit-file-upload-button {
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
+        &::file-selector-button,
+        &::-webkit-file-upload-button {
+            font: inherit;
+            font-size: var(--fs-4);
+            font-weight: 600;
 
-        margin-right: 0.75rem;
-        padding: 0.45rem 0.9rem;
+            margin-right: 0.75rem;
+            padding: 0.45rem 0.9rem;
 
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
 
-        background: var(--surface-soft);
-        color: var(--text);
+            background: var(--surface-soft);
+            color: var(--text);
 
-        cursor: pointer;
+            cursor: pointer;
 
-        transition:
-            border-color var(--transition-fast),
-            background var(--transition-fast);
+            transition:
+                border-color var(--transition-fast),
+                background var(--transition-fast);
+        }
     }
 
     .file-input::file-selector-button:hover,
@@ -114,7 +101,7 @@
     .hint {
         margin: 0;
         color: var(--text-muted);
-        font-size: 0.82rem;
+        font-size: var(--fs-3);
         line-height: 1.6;
     }
 </style>

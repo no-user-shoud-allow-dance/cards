@@ -2,9 +2,26 @@
     "extends": "$app/tsconfig",
     "compilerOptions": {
         "strict": true,
+        "types": ["$app/types", "node", "bun"],
         "paths": {
-            "#lib/*": ["./src/lib/*"]
+            "#components": ["./src/components/index.ts"],
+            "#components/*": ["./src/components/*"],
+            "#lib": ["./src/lib/index.ts"],
+            "#lib/*": ["./src/lib/*"],
+            "#server": ["./src/server/index.ts"],
+            "#server/*": ["./src/server/*"],
+            "#messages/*": ["./src/messages/*"],
+            "#static/*": ["./static/*"]
         }
     },
-    "include": ["src", "vite.config.ts"]
+    "include": [
+        ".no-push/scriptsh/scripts",
+        "src",
+        "tests",
+        "eslint.config.ts",
+        "mdsvex.config.ts",
+        "prettier.config.ts",
+        "vite.config.ts"
+    ],
+    "exclude": ["src/service-worker"]
 }

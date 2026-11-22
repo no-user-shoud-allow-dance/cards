@@ -1,69 +1,16 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
-    import { DECK_TYPE_OPTIONS } from "#lib/utils/deckTypes";
-    import { decks } from "#lib/stores/data/deckStore.svelte";
-    import { applyPendingProgressFor } from "#lib/utils/pendingProgress";
-    import { parseDeck } from "#lib/utils/parser";
-    import { readDraftDeck } from "#lib/utils/draftDeck";
-    import type { DeckType } from "#lib/types";
-    import PageHeader from "#lib/components/shared/ui/PageHeader.svelte";
-    import Card from "#lib/components/shared/ui/Card.svelte";
-    import TextInput from "#lib/components/shared/ui/TextInput.svelte";
-    import Button from "#lib/components/shared/ui/Button.svelte";
-    import DeckEditor, {
-        serializeDeckMarkdown,
-        type EditCard,
-    } from "#lib/components/decks/DeckEditor.svelte";
+    import { Button, Card, PageHeader, startDraft } from "#components";
+    import { UI } from "#messages/locale.svelte";
 
-    let title = $state("");
-    let cards = $state<EditCard[]>([{ id: 0, front: "", back: "" }]);
-    let name = $state("");
-    let folder = $state("Eigene");
-    let deckType = $state<DeckType>("latin");
     let busy = $state(false);
-    let saveError = $state<string | null>(null);
 
-    // Pre-fill the editor when arriving from the upload or import page
-    // with a stashed draft.
-    onMount(() => {
-        const draft = readDraftDeck();
-        if (!draft) return;
-        const parsed = parseDeck(draft.raw);
-        title = draft.title ?? draft.name;
-        name = draft.name;
-        deckType = draft.deckType;
-        if (parsed.cards.length > 0) {
-            cards = parsed.cards.map((c, i) => ({
-                id: i,
-                front: c.front,
-                back: c.back,
-            }));
-        }
-    });
-
-    async function save(): Promise<void> {
-        saveError = null;
-        if (!name.trim()) {
-            saveError = "Bitte gib einen Namen für den Stapel ein.";
-            return;
-        }
-        const valid = cards.filter((c) => c.front.trim() && c.back.trim());
-        if (valid.length === 0) {
-            saveError =
-                "Der Stapel braucht mindestens eine Karte mit Vorder- und Rückseite.";
-            return;
-        }
+    // "Create deck": an empty draft (`Draft-{n}`) in "Drafts", straight
+    // into its editor.
+    async function create(): Promise<void> {
         busy = true;
         try {
-            const raw = serializeDeckMarkdown(title, cards, name);
-            const { deck } = await decks.add(raw, folder, name, deckType);
-            // A progress link shared before this deck may target it.
-            await applyPendingProgressFor(deck.contentHash);
-            goto(resolve("/(deck)/deck/[slug]", { slug: deck.slug }));
-        } catch {
-            saveError = "Der Stapel konnte nicht erstellt werden.";
+            await startDraft(null);
+        } finally {
             busy = false;
         }
     }
@@ -75,127 +22,50 @@
 
 <PageHeader
     title="Stapel erstellen"
-    subtitle="Erstelle einen neuen Stapel Karte für Karte — oder füge Karten per Markdown ein."
-    compact
+    subtitle="Legt einen leeren Entwurf „Draft-{'{n}'}“ im Ordner „Drafts“ an und öffnet ihn direkt im Editor."
 />
 
-<!-- Deck metadata -->
-<Card padding="lg" class="meta-section" aria-label="Stapel-Details">
-    <div class="field-row">
-        <TextInput label="Ordner" id="create-folder" class="field-input" bind:value={folder} />
-        <TextInput
-            label="Name"
-            id="create-name"
-            class="field-input"
-            bind:value={name}
-            placeholder="z. B. Lektion 22"
-        />
-        <div class="select-field">
-            <label class="field-label" for="create-type">Typ</label>
-            <select
-                id="create-type"
-                value={deckType}
-                onchange={(event) =>
-                    (deckType = (event.currentTarget as HTMLSelectElement)
-                        .value as DeckType)}
-            >
-                {#each DECK_TYPE_OPTIONS as [value, config]}
-                    <option {value}>{config.label}</option>
-                {/each}
-            </select>
-        </div>
+<Card class="create-card" padding="lg" aria-label="Neuen Stapel erstellen">
+    <p class="hint">
+        Der Entwurf heißt automatisch <code>Draft-{"{n}"}</code> (n = letzter Entwurf + 1) und liegt
+        im Ordner <code>Drafts</code>. Nach dem Speichern im Editor wählst du den endgültigen
+        Ordner.
+    </p>
+    <div class="actions">
+        <Button variant="primary" onclick={create} {busy} busyLabel={UI.busyCreating}>
+            Neuen Stapel erstellen
+        </Button>
     </div>
 </Card>
 
-<DeckEditor
-    bind:title
-    bind:cards
-    defaultFileName={name.trim() || "stapel"}
-/>
-
-<div class="save-actions">
-    <Button variant="primary" onclick={save} disabled={busy}>
-        {busy ? "Wird erstellt …" : "Stapel erstellen"}
-    </Button>
-    <Button href={resolve("/")}>Abbrechen</Button>
-</div>
-{#if saveError}
-    <p class="note-error">{saveError}</p>
-{/if}
-
-<style>
-    /* The class passed to Card targets its root element — a child component
-       — so it needs :global. */
-    :global(.meta-section) {
-        margin-bottom: 1.25rem;
+<style lang="postcss">
+    :global(.create-card) {
+        margin-bottom: 2rem;
     }
 
-    .field-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.9rem;
-    }
+    .hint {
+        margin: 0 0 1rem;
 
-    .field-row :global(.field-input) {
-        flex: 1;
-        min-width: 10rem;
-    }
-
-    .select-field {
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        gap: 0.4rem;
-        min-width: 8rem;
-    }
-
-    .field-label {
         color: var(--text-muted);
-        font-size: 0.82rem;
-        font-weight: 600;
+        font-size: var(--fs-3);
+        line-height: 1.6;
+
+        & code {
+            padding: 0.05em 0.3em;
+
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+
+            background: var(--surface-soft);
+
+            font-family: var(--family-mono);
+            font-size: 0.85em;
+        }
     }
 
-    .select-field select {
-        width: 100%;
-        min-height: 2.65rem;
-        padding: 0.55rem 0.8rem;
-
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-
-        background: var(--surface);
-        color: var(--text);
-
-        font: inherit;
-        font-size: 0.9rem;
-    }
-
-    .select-field select:focus {
-        border-color: var(--primary);
-        outline: none;
-        box-shadow: 0 0 0 3px var(--focus-ring);
-    }
-
-    .save-actions {
+    .actions {
         display: flex;
         flex-wrap: wrap;
-        align-items: center;
         gap: 0.75rem;
-
-        margin-top: 0.5rem;
-    }
-
-    .note-error {
-        margin: 0.75rem 0;
-
-        color: var(--danger-text);
-        font-size: 0.85rem;
-        line-height: 1.6;
-    }
-
-    @media (max-width: 540px) {
-        .field-row {
-            flex-direction: column;
-        }
     }
 </style>
