@@ -18,6 +18,13 @@ export const STORAGE = {
         settings: "kk-settings",
         folders: "kk-folders",
         persistenceProbe: "kk-__probe__-persistence",
+        /**
+         * Run-once marker of the 1.0.0 → 2.0.0 data migration: the boot
+         * gate reads it synchronously (before hydration) to decide
+         * whether to bounce to /migrate. Deliberately NOT wiped by the
+         * account reset — a fresh start must not resurrect v1 progress.
+         */
+        v1Migration: "kk-v1-migration",
     },
     /** sessionStorage keys (tab-scoped hand-offs and one-shot flags). */
     sessionStorage: {
@@ -61,6 +68,7 @@ export function isAppLocalKey(key: string): boolean {
         key === STORAGE.localStorage.settings ||
         key === STORAGE.localStorage.folders ||
         key === STORAGE.localStorage.persistenceProbe ||
+        key === STORAGE.localStorage.v1Migration ||
         key.startsWith(STORAGE.recordPrefix.deck) ||
         key.startsWith(STORAGE.recordPrefix.state) ||
         key.startsWith(STORAGE.recordPrefix.recovery)

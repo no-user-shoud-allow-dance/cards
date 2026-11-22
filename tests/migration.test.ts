@@ -5,9 +5,12 @@ import {
     buildV1Source,
     groupV1States,
     hasV1Data,
+    migrateV1Once,
     migrateV1ToV2,
+    v1MigrationPending,
 } from "../src/lib/migration-v1.0.0-v2.0.0";
 import { parse, validate } from "#lib/core/deck/parse";
+import { STORAGE } from "#lib/storage/keys";
 
 // bun tests run without the Web Storage API — a minimal in-memory
 // sessionStorage-shaped polyfill drives the localStorage-backed paths.
@@ -96,9 +99,24 @@ describe("migrateV1ToV2 (localStorage-backed)", () => {
 
     test("seeds nothing when the browser has no 1.0.0 data", async () => {
         expect(hasV1Data()).toBe(false);
+        expect(v1MigrationPending()).toBe(false);
         const report = await migrateV1ToV2();
         expect(report.settings).toBe("none");
         expect(report.decks).toEqual([]);
+    });
+
+    test("migrateV1Once: pending until run, then marked done", async () => {
+        localStorage.setItem("kk_pure", "true");
+        expect(v1MigrationPending()).toBe(true);
+        await migrateV1Once();
+        // The boot gate reads this marker synchronously.
+        expect(localStorage.getItem(STORAGE.localStorage.v1Migration)).toBe("1");
+        expect(v1MigrationPending()).toBe(false);
+        // The settings merge ran within the one-shot (see the suite above).
+        expect(JSON.parse(localStorage.getItem("kk-settings")!).pureMode).toBe(true);
+        // A second (cached) call never re-runs anything.
+        await migrateV1Once();
+        expect(JSON.parse(localStorage.getItem("kk-settings")!).pureMode).toBe(true);
     });
 
     test("merges the v1 settings into kk-settings exactly once", async () => {

@@ -66,7 +66,12 @@ export type { FolderState, FoldersRepository } from "#lib/repositories/foldersRe
 // ── One-shot data migration 1.0.0 → 2.0.0 ───────────────────────────
 // Relative specifier on purpose: module ids with dots (…-v1.0.0-…)
 // do not resolve through the #lib/* alias mapping.
-export { hasV1Data, migrateV1ToV2 } from "./migration-v1.0.0-v2.0.0";
+export {
+    hasV1Data,
+    migrateV1Once,
+    migrateV1ToV2,
+    v1MigrationPending,
+} from "./migration-v1.0.0-v2.0.0";
 export type {
     V1toV2DeckOutcome,
     V1toV2DeckReport,

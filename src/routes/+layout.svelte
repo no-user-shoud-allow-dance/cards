@@ -1,3 +1,26 @@
+<script module lang="ts">
+    // Super-early boot gate of the 1.0.0 → 2.0.0 data migration: browsers
+    // with pending v1 data bounce to /migrate BEFORE any component or
+    // store initializes (module scripts run ahead of the component tree),
+    // so no store ever caches a pre-migration state. The /migrate page
+    // runs the migration, marks it done and bounces back to `back`.
+    // Synchronous on purpose: hydration must not even start on the
+    // pre-migration state.
+    import { v1MigrationPending } from "#lib";
+
+    if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.startsWith("/migrate") &&
+        v1MigrationPending()
+    ) {
+        window.location.replace(
+            `/migrate?back=${encodeURIComponent(
+                window.location.pathname + window.location.search + window.location.hash
+            )}`
+        );
+    }
+</script>
+
 <script lang="ts">
     import "../app.pcss";
     import { onMount } from "svelte";

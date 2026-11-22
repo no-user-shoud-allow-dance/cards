@@ -20,11 +20,13 @@
  *   skipped (reported with the parse-error code), together with its
  *   progress — nothing is half-migrated.
  *
- * Run it once during app boot, BEFORE the deck/learning/settings stores
- * initialize (e.g. in +layout.svelte's onMount, ahead of decks.init()):
- * the stores then load the migrated records as if they had always been
- * 2.0.0 data. The v1 card identity `<slug>/<index>` is remapped to the
- * 2.0.0 content-hash CardId through the re-parsed document; boxes carry
+ * Run it via `migrateV1Once()`: the root layout bounces browsers with
+ * pending v1 data to /migrate before anything initializes (see
+ * routes/+layout.svelte's module script and routes/migrate), the page
+ * runs the migration there and bounces back — the stores then load the
+ * migrated records as if they had always been 2.0.0 data. The v1 card
+ * identity `<slug>/<index>` is remapped to the 2.0.0 content-hash
+ * CardId through the re-parsed document; boxes carry
  * over 1:1 (both versions run the same six-box Leitner system, default
  * box 1). v1 `overview_done` was deck-level, so it sets `overviewDone`
  * on every card of that deck. The v1 folder becomes the deck's single
@@ -169,6 +171,56 @@ export function hasV1Data(): boolean {
             return false;
         }
     });
+}
+
+// ── Run-once gate (boot redirect on /migrate) ──────────────────────
+
+/**
+ * Whether the run-once marker is set. Read synchronously and directly:
+ * the boot gate decides in the root layout's module script, before the
+ * component tree (and any async engine) exists. Whenever localStorage
+ * is unavailable, hasV1Data() is false too, so the gate stays closed
+ * and no loop is possible.
+ */
+function v1MigrationMarked(): boolean {
+    try {
+        return (
+            typeof localStorage !== "undefined" &&
+            localStorage.getItem(STORAGE.localStorage.v1Migration) !== null
+        );
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * The boot gate: 1.0.0 data exists and has not been migrated yet —
+ * the browser should bounce to /migrate before anything initializes.
+ */
+export function v1MigrationPending(): boolean {
+    return hasV1Data() && !v1MigrationMarked();
+}
+
+let once: Promise<void> | null = null;
+
+/**
+ * Runs the pending migration exactly once per browser: the first call
+ * migrates (the run itself is idempotent per record) and writes the
+ * marker either way — even on failure, so the boot gate can never
+ * bounce into a loop; a failed run leaves all v1 records intact.
+ * Rejections propagate to the caller (the /migrate page explains).
+ */
+export function migrateV1Once(): Promise<void> {
+    once ??= (async () => {
+        if (!v1MigrationPending()) return;
+        try {
+            await migrateV1ToV2();
+        } finally {
+            const engine = await smallEngine();
+            await engine.set(STORAGE.localStorage.v1Migration, "1");
+        }
+    })();
+    return once;
 }
 
 // ── v1 IndexedDB reader (read-only, creates nothing) ────────────────

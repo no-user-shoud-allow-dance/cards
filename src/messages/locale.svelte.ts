@@ -37,6 +37,7 @@ function reactiveSection<K extends keyof Messages>(key: K): Messages[K] {
 
 /** Normative UI wording in the current locale (reactive). */
 export const UI = reactiveSection("UI");
+export const MIGRATION = reactiveSection("MIGRATION");
 export const SYNC = reactiveSection("SYNC");
 export const SHARE = reactiveSection("SHARE");
 

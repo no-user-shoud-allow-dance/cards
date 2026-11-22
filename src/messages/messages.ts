@@ -137,6 +137,22 @@ export interface Messages {
         updateAvailable: string;
         updateAction: string;
     };
+    /**
+     * The 1.0.0 → 2.0.0 data migration (the /migrate landing page the
+     * boot gate bounces to).
+     */
+    MIGRATION: {
+        /** Document title on /migrate. */
+        title: string;
+        /** Spinner label while the migration runs. */
+        running: string;
+        /** Heading shown when the migration failed. */
+        failedTitle: string;
+        /** Body shown when the migration failed (v1 data stays intact). */
+        failedText: string;
+        /** Continue button after a failed migration. */
+        continueAction: string;
+    };
     /** Device-pairing (sync) wording and error sentences. */
     SYNC: {
         peerUnreachable: string;

@@ -172,6 +172,15 @@ export const de: Messages = {
         updateAction: "Aktualisieren",
     },
 
+    MIGRATION: {
+        title: "Migration – NSC",
+        running: "Deine Daten aus Version 1 werden übernommen – einen Moment bitte.",
+        failedTitle: "Übernahme fehlgeschlagen",
+        failedText:
+            "Deine Daten aus Version 1 konnten leider nicht übernommen werden. Sie bleiben lokal gespeichert und werden nicht gelöscht.",
+        continueAction: "Weiter",
+    },
+
     SYNC: {
         peerUnreachable: "Das andere Gerät ist nicht erreichbar – läuft dort der Host-Modus?",
         signalingFailed:
